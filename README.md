@@ -128,44 +128,24 @@ The final version of ARGOS is planned to become a fully autonomous indoor securi
 
 
 
-\## System Architecture
+## System Architecture
 
-
-
-```text
-
-&#x20;                  Home Server
-
-&#x20;           (MQTT • Dashboard • Logs)
-
-&#x20;                        -
-
-&#x20;                    Wi-Fi (Future)
-
-&#x20;                        -
-
-&#x20;               Raspberry Pi / SBC
-
-&#x20;                        -
-
-&#x20;                   UART / SPI
-
-&#x20;                        -
-
-&#x20;               STM32 Main Controller
-
-&#x20;       -¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦+¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¬
-
-&#x20;       -                -                -
-
-&#x20;  Motor Control     Sensor System    Power System
-
-&#x20;       -                -                -
-
-&#x20; Encoder Motors    IMU • ToF       Battery • BMS
-
-```
-
+                   Home Server
+             (MQTT - Dashboard - Logs)
+                         |
+                   Wi-Fi (Future)
+                         |
+                Raspberry Pi / SBC
+                         |
+                    UART / SPI
+                         |
+                STM32 Main Controller
+                         |
+        +----------------+----------------+
+        |                |                |
+   Motor Control    Sensor System    Power System
+        |                |                |
+  Encoder Motors     IMU - ToF      Battery - BMS
 
 
 \## Development Roadmap
