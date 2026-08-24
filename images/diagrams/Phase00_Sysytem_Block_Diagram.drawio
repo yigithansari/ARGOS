@@ -1,0 +1,75 @@
+<mxfile host="Electron">
+  <diagram name="Sayfa-1" id="EGmcY5Tr1WUUbFhXx34s">
+    <mxGraphModel dx="1030" dy="626" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="f72p30JL2nbDEU1X5m3J-9" edge="1" parent="1" source="f72p30JL2nbDEU1X5m3J-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="f72p30JL2nbDEU1X5m3J-8" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f72p30JL2nbDEU1X5m3J-11" edge="1" parent="1" source="f72p30JL2nbDEU1X5m3J-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="f72p30JL2nbDEU1X5m3J-10" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f72p30JL2nbDEU1X5m3J-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="BUCK CONVERTER&lt;div&gt;(LM2596)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="250" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="f72p30JL2nbDEU1X5m3J-6" edge="1" parent="1" source="f72p30JL2nbDEU1X5m3J-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="f72p30JL2nbDEU1X5m3J-5" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f72p30JL2nbDEU1X5m3J-3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="12V BATTERY&lt;div&gt;3S BMS&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="250" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="f72p30JL2nbDEU1X5m3J-7" edge="1" parent="1" source="f72p30JL2nbDEU1X5m3J-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="f72p30JL2nbDEU1X5m3J-2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f72p30JL2nbDEU1X5m3J-5" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="MAİN POWER&lt;div&gt;SW&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="80" x="270" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="f72p30JL2nbDEU1X5m3J-15" edge="1" parent="1" source="f72p30JL2nbDEU1X5m3J-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="f72p30JL2nbDEU1X5m3J-14" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f72p30JL2nbDEU1X5m3J-17" edge="1" parent="1" source="f72p30JL2nbDEU1X5m3J-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="f72p30JL2nbDEU1X5m3J-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f72p30JL2nbDEU1X5m3J-8" parent="1" style="whiteSpace=wrap;html=1;rounded=0;" value="STM32F446RE" vertex="1">
+          <mxGeometry height="60" width="120" x="90" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="f72p30JL2nbDEU1X5m3J-13" edge="1" parent="1" source="f72p30JL2nbDEU1X5m3J-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="f72p30JL2nbDEU1X5m3J-12" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f72p30JL2nbDEU1X5m3J-18" edge="1" parent="1" source="f72p30JL2nbDEU1X5m3J-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.75;entryDx=0;entryDy=0;" target="f72p30JL2nbDEU1X5m3J-8">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="360" y="515" />
+              <mxPoint x="360" y="515" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f72p30JL2nbDEU1X5m3J-10" parent="1" style="whiteSpace=wrap;html=1;rounded=0;" value="MOTOR DRİVER X2&lt;div&gt;(BTS7960B)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="414" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="f72p30JL2nbDEU1X5m3J-12" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;rounded=0;" value="12V 80RPM ENCODER DC MOTOR X2" vertex="1">
+          <mxGeometry height="60" width="120" x="414" y="610" as="geometry" />
+        </mxCell>
+        <mxCell id="f72p30JL2nbDEU1X5m3J-14" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;rounded=0;" value="PC&lt;div&gt;(USB SERIAL)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="90" y="610" as="geometry" />
+        </mxCell>
+        <mxCell id="f72p30JL2nbDEU1X5m3J-16" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="UART" vertex="1">
+          <mxGeometry height="30" width="60" x="150" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="f72p30JL2nbDEU1X5m3J-19" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="PWM" vertex="1">
+          <mxGeometry height="30" width="60" x="260" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="f72p30JL2nbDEU1X5m3J-20" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="ENCODER" vertex="1">
+          <mxGeometry height="30" width="60" x="260" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="f72p30JL2nbDEU1X5m3J-21" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="12V" vertex="1">
+          <mxGeometry height="30" width="60" x="420" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="f72p30JL2nbDEU1X5m3J-22" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="5V" vertex="1">
+          <mxGeometry height="30" width="60" x="150" y="290" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
