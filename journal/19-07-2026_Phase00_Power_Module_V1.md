@@ -1,4 +1,4 @@
-# Phase 00 - Power Module V1
+﻿# Phase 00 - Power Module V1
 
 **Date:** 2026-07-19
 
@@ -45,8 +45,8 @@ It allows every subsystem to share a common power source while remaining protect
 Related files:
 
 - images/diagrams/Phase00_System_Block_Diagram.png
-- images/hardware/2026-07-19_Power_Module_01.jpg
-- images/hardware/2026-07-19_Power_Module_02.jpg
+- images/hardware/19-07-2026-power_module_front.jpeg
+- images/hardware/19-07-2026-power_module_back.jpeg
 
 ---
 

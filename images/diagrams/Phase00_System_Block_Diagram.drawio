@@ -22,7 +22,7 @@
         <mxCell id="f72p30JL2nbDEU1X5m3J-7" edge="1" parent="1" source="f72p30JL2nbDEU1X5m3J-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="f72p30JL2nbDEU1X5m3J-2" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="f72p30JL2nbDEU1X5m3J-5" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="MAİN POWER&lt;div&gt;SW&lt;/div&gt;" vertex="1">
+        <mxCell id="f72p30JL2nbDEU1X5m3J-5" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="MAIN POWER&lt;div&gt;SW&lt;/div&gt;" vertex="1">
           <mxGeometry height="80" width="80" x="270" y="160" as="geometry" />
         </mxCell>
         <mxCell id="f72p30JL2nbDEU1X5m3J-15" edge="1" parent="1" source="f72p30JL2nbDEU1X5m3J-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="f72p30JL2nbDEU1X5m3J-14" value="">
@@ -45,7 +45,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="f72p30JL2nbDEU1X5m3J-10" parent="1" style="whiteSpace=wrap;html=1;rounded=0;" value="MOTOR DRİVER X2&lt;div&gt;(BTS7960B)&lt;/div&gt;" vertex="1">
+        <mxCell id="f72p30JL2nbDEU1X5m3J-10" parent="1" style="whiteSpace=wrap;html=1;rounded=0;" value="MOTOR DRIVER X2&lt;div&gt;(BTS7960B)&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="120" x="414" y="470" as="geometry" />
         </mxCell>
         <mxCell id="f72p30JL2nbDEU1X5m3J-12" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;rounded=0;" value="12V 80RPM ENCODER DC MOTOR X2" vertex="1">

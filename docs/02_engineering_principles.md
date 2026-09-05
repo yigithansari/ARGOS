@@ -1,9 +1,9 @@
-# ARGOS Engineering Principles
+﻿# ARGOS Engineering Principles
 
-**Document ID:** DOC-002  
-**Document Title:** Engineering Principles  
-**Version:** 1.0 (Draft)  
-**Status:** Active  
+**Document ID:** DOC-002
+**Document Title:** Engineering Principles
+**Version:** 1.0 (Draft)
+**Status:** Active
 **Project:** ARGOS – Autonomous Robotic Guard & Observation System
 
 ---
