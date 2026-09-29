@@ -1,0 +1,8 @@
+firmware/esp32_c3_argos_bridge/wifi_secrets.h
+
+# Generated build and runtime artifacts
+**/Debug/
+**/Release/
+**/__pycache__/
+*.py[cod]
+.codex_cubeide_verify*/

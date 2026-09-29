@@ -1,4 +1,5 @@
 #include "argos_platform.h"
+#include "argos_oled.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -13,6 +14,7 @@ static void TestPlatform_HandleCommand(uint8_t command);
 static void TestPlatform_HandleLine(char *line);
 static void TestPlatform_Printf(const char *format, ...);
 static void TestPlatform_PrintLine(const char *text);
+static uint8_t UartRx_Pop(uint8_t *value);
 static uint8_t I2C_WaitFlagSet(volatile uint32_t *reg, uint32_t flag, uint32_t timeout_ms);
 static uint8_t I2C_WaitFlagClear(volatile uint32_t *reg, uint32_t flag, uint32_t timeout_ms);
 static void I2C1_BusInit(void);
@@ -45,6 +47,7 @@ static void Encoder_UpdateOne(volatile uint8_t *old_state, uint8_t new_state, vo
 static void Encoder_ReconfigureInputs(uint32_t pull);
 static uint16_t PercentToPwm(int16_t percent);
 static int16_t ClampPercent(int16_t percent);
+static void Motor_ConfigPwmPins(void);
 static void Motor_WriteLeft(int16_t percent);
 static void Motor_WriteRight(int16_t percent);
 static void Motor_Init(void);
@@ -53,6 +56,8 @@ static void Motor_Stop(void);
 static void Motor_Task(void);
 static void Motor_ResetEncoders(void);
 static void Run_MotorStatus(void);
+static void Run_MotorPinTest(void);
+static void Run_MotorRampTest(void);
 static void Run_EncoderRawMonitor(void);
 static void Run_EncoderPullDiagnostic(void);
 static void Print_ToFGPIOState(void);
@@ -94,6 +99,8 @@ static uint8_t tof_stream_enabled = 0U;
 #define MOTOR_DIRECTION_CHANGE_STOP_MS 60U
 #define ENCODER_RAW_MONITOR_MS 8000U
 #define ENCODER_COUNTS_PER_REV 1440L
+#define UART_RX_BUFFER_SIZE 256U
+#define UART_RX_BUFFER_MASK (UART_RX_BUFFER_SIZE - 1U)
 
 static int16_t gyro_offset_x = 0;
 static int16_t gyro_offset_y = 0;
@@ -104,31 +111,42 @@ static uint8_t tof_left_ready = 0U;
 static uint8_t tof_right_ready = 0U;
 static uint8_t tof_left_initialized = 0U;
 static uint8_t tof_right_initialized = 0U;
+static uint16_t oled_tof_left_mm = 0U;
+static uint16_t oled_tof_right_mm = 0U;
+static uint8_t oled_tof_left_ok = 0U;
+static uint8_t oled_tof_right_ok = 0U;
 static int16_t left_motor_percent = 0;
 static int16_t right_motor_percent = 0;
 static volatile int32_t left_encoder_count = 0;
 static volatile int32_t right_encoder_count = 0;
 static volatile uint8_t left_encoder_state = 0U;
 static volatile uint8_t right_encoder_state = 0U;
-static uint8_t motor_status_stream_enabled = 1U;
+static uint8_t motor_status_stream_enabled = 0U;
 static uint32_t last_motor_command_ms = 0U;
 static uint8_t motor_timeout_latched = 0U;
 static int32_t last_left_encoder_report = 0;
 static int32_t last_right_encoder_report = 0;
 static uint32_t last_motor_report_ms = 0U;
+static uint8_t uart_rx_byte = 0U;
+static volatile uint8_t uart_rx_buffer[UART_RX_BUFFER_SIZE];
+static volatile uint16_t uart_rx_head = 0U;
+static volatile uint16_t uart_rx_tail = 0U;
+static volatile uint32_t uart_rx_overflow_count = 0U;
 
 static void TestPlatform_Init(void)
 {
   I2C1_BusInit();
   Motor_Init();
   Motor_Stop();
+  Argos_Oled_Init();
+  (void)HAL_UART_Receive_IT(&huart2, &uart_rx_byte, 1U);
   ToF_AssignAddresses();
   TestPlatform_PrintLine("\r\nARGOS test platform hazir.");
   TestPlatform_PrintLine("MPU6050: SCL PB8/CN10-3, SDA PB9/CN10-5, INT PB10/CN10-25, AD0 GND => 0x68");
   TestPlatform_PrintLine("VL53L0X Left: XSHUT PA8, INT PC7, assigned 0x30");
   TestPlatform_PrintLine("VL53L0X Right: XSHUT PA9, INT PA10, assigned 0x31");
-  TestPlatform_PrintLine("Motors: LEFT PC6/PC8, RIGHT PB14/PB15, encoders L PC4/PC5 R PC2/PC3");
-  TestPlatform_PrintMenu();
+  TestPlatform_PrintLine("Motors: LEFT PC6/PC8, RIGHT PA0/PA1, encoders L PC4/PC5 R PC2/PC3");
+  TestPlatform_PrintLine("Panelden SYSTEM TEST ile toplu dogrulama calistir.");
 }
 
 static void TestPlatform_Task(void)
@@ -141,8 +159,9 @@ static void TestPlatform_Task(void)
   static uint32_t last_motor_status_ms = 0U;
 
   Motor_Task();
+  Argos_Oled_Task();
 
-  if (HAL_UART_Receive(&huart2, &command, 1U, 0U) == HAL_OK)
+  while (UartRx_Pop(&command) != 0U)
   {
     if ((command == '\r') || (command == '\n'))
     {
@@ -194,6 +213,8 @@ static void TestPlatform_PrintMenu(void)
   TestPlatform_PrintLine("  R : sag ToF test (0x31)");
   TestPlatform_PrintLine("  g : GPIO/LED/buton/MPU INT testi");
   TestPlatform_PrintLine("  E : motor/encoder durumunu yazdir");
+  TestPlatform_PrintLine("  K : motor pin testi (PC6/PC8/PA0/PA1)");
+  TestPlatform_PrintLine("  Y : motor ramp + encoder tablo testi");
   TestPlatform_PrintLine("  Q : encoder raw A/B izle (8 sn, sonra motor akisini durdurur)");
   TestPlatform_PrintLine("  V : encoder pull-up/pull-down teshisi");
   TestPlatform_PrintLine("  Z : encoder sayaclarini sifirla");
@@ -205,12 +226,65 @@ static void TestPlatform_PrintMenu(void)
   TestPlatform_PrintLine("UART: 115200 8N1");
 }
 
+static uint8_t UartRx_Pop(uint8_t *value)
+{
+  if (uart_rx_tail == uart_rx_head)
+  {
+    return 0U;
+  }
+
+  *value = uart_rx_buffer[uart_rx_tail];
+  uart_rx_tail = (uint16_t)((uart_rx_tail + 1U) & UART_RX_BUFFER_MASK);
+  return 1U;
+}
+
 static void TestPlatform_HandleLine(char *line)
 {
   int left;
   int right;
+  int enabled;
+  char network_mode[4];
+  char network_address[16];
 
   TestPlatform_Printf("\r\n> %s\r\n", line);
+
+  if (sscanf(line, "S MPU %d", &enabled) == 1)
+  {
+    mpu_stream_enabled = (enabled != 0) ? 1U : 0U;
+    TestPlatform_Printf("MPU6050 surekli akis: %s\r\n", (mpu_stream_enabled != 0U) ? "ACIK" : "KAPALI");
+    return;
+  }
+
+  if (sscanf(line, "S TOF %d", &enabled) == 1)
+  {
+    tof_stream_enabled = (enabled != 0) ? 1U : 0U;
+    if ((tof_stream_enabled != 0U) && (tof_addresses_assigned == 0U))
+    {
+      ToF_AssignAddresses();
+    }
+    TestPlatform_Printf("ToF surekli akis: %s\r\n", (tof_stream_enabled != 0U) ? "ACIK" : "KAPALI");
+    return;
+  }
+
+  if ((line[0] == 'N') || (line[0] == 'n'))
+  {
+    int connected = 0;
+    if (sscanf(line + 1, "%d", &connected) == 1)
+    {
+      Argos_Oled_SetNetwork((connected != 0) ? 1U : 0U);
+      TestPlatform_Printf("ARGOS LINK | STM:ONLINE | WIFI:%s\r\n",
+                          (connected != 0) ? "ONLINE" : "OFFLINE");
+    }
+    return;
+  }
+
+  if ((line[0] == 'W') &&
+      (sscanf(line + 1, "%3s %15s", network_mode, network_address) == 2))
+  {
+    Argos_Oled_SetNetworkInfo(network_mode, network_address);
+    TestPlatform_Printf("ARGOS NET | %s %s\r\n", network_mode, network_address);
+    return;
+  }
 
   if ((line[0] == 'P') || (line[0] == 'p'))
   {
@@ -286,6 +360,16 @@ static void TestPlatform_HandleCommand(uint8_t command)
 
     case 'E':
       Run_MotorStatus();
+      break;
+
+    case 'K':
+    case 'k':
+      Run_MotorPinTest();
+      break;
+
+    case 'Y':
+    case 'y':
+      Run_MotorRampTest();
       break;
 
     case 'Q':
@@ -690,6 +774,7 @@ static void Run_MPU6050Test(void)
 
   if (I2C1_ReadReg(MPU6050_ADDR, MPU6050_WHO_AM_I, &who_am_i) == 0U)
   {
+    Argos_Oled_SetImu(0U);
     TestPlatform_PrintLine("MPU6050 yok/cevap yok. Beklenen adres 0x68.");
     return;
   }
@@ -717,6 +802,7 @@ static void Run_MPU6050Test(void)
 
   if (MPU6050_ReadAll(&ax, &ay, &az, &temp_raw, &gx, &gy, &gz) == 0U)
   {
+    Argos_Oled_SetImu(0U);
     TestPlatform_PrintLine("MPU6050 veri okuma hatasi.");
     return;
   }
@@ -725,10 +811,10 @@ static void Run_MPU6050Test(void)
   gy_cal = (int16_t)(gy - gyro_offset_y);
   gz_cal = (int16_t)(gz - gyro_offset_z);
 
-  TestPlatform_Printf("MPU OK | WHO:0x%02X | ACC raw X:%6d Y:%6d Z:%6d | ACC mg X:%5ld Y:%5ld Z:%5ld | GYR raw X:%6d Y:%6d Z:%6d | GYR cdps X:%6ld Y:%6ld Z:%6ld | TEMP cC:%5ld | INT:%u\r\n",
-                      who_am_i, ax, ay, az,
+  Argos_Oled_SetImu(1U);
+  TestPlatform_Printf("MPU OK | WHO:0x%02X | ACC mg X:%5ld Y:%5ld Z:%5ld | GYR cdps X:%6ld Y:%6ld Z:%6ld | TEMP cC:%5ld | INT:%u\r\n",
+                      who_am_i,
                       RawAccelToMg(ax), RawAccelToMg(ay), RawAccelToMg(az),
-                      gx, gy, gz,
                       RawGyroToCentiDps(gx_cal), RawGyroToCentiDps(gy_cal), RawGyroToCentiDps(gz_cal),
                       RawTempToCentiC(temp_raw),
                       (HAL_GPIO_ReadPin(MPU_INT_GPIO_Port, MPU_INT_Pin) == GPIO_PIN_SET) ? 1U : 0U);
@@ -980,6 +1066,12 @@ static void Run_ToFStreamSample(void)
   HAL_Delay(TOF_INTER_SENSOR_MS);
   right_ok = (tof_right_initialized != 0U) ? VL53L0X_ReadRangeMm(VL53L0X_RIGHT_ADDR, &right_mm) : 0U;
 
+  Argos_Oled_SetTof(left_mm, left_ok, right_mm, right_ok);
+  oled_tof_left_mm = left_mm;
+  oled_tof_right_mm = right_mm;
+  oled_tof_left_ok = left_ok;
+  oled_tof_right_ok = right_ok;
+
   TestPlatform_Printf("TOF RANGE | LEFT:%s %u mm | RIGHT:%s %u mm | YAW L:%d R:%d | UP:%d | BASE:%d\r\n",
                       (left_ok != 0U) ? "OK" : "YOK",
                       (left_ok != 0U) ? left_mm : 0U,
@@ -1026,6 +1118,19 @@ static void Run_ToFSingleTest(const char *name, uint8_t address, GPIO_TypeDef *i
   (void)I2C1_ReadReg(address, VL53L0X_MODEL_ID_REG, &model);
   (void)I2C1_ReadReg(address, VL53L0X_MODULE_ID_REG, &module);
   (void)I2C1_ReadReg(address, VL53L0X_REVISION_REG, &revision);
+
+  if (address == VL53L0X_LEFT_ADDR)
+  {
+    oled_tof_left_mm = range_mm;
+    oled_tof_left_ok = range_ok;
+  }
+  else if (address == VL53L0X_RIGHT_ADDR)
+  {
+    oled_tof_right_mm = range_mm;
+    oled_tof_right_ok = range_ok;
+  }
+  Argos_Oled_SetTof(oled_tof_left_mm, oled_tof_left_ok,
+                    oled_tof_right_mm, oled_tof_right_ok);
 
   TestPlatform_Printf("TOF %s | ADDR 0x%02X | STATUS:OK | MODEL:0x%02X MODULE:0x%02X REV:0x%02X | RANGE:%s %u mm | INT:%u\r\n",
                       name, address, model, module, revision,
@@ -1142,26 +1247,47 @@ static void Motor_WriteRight(int16_t percent)
 
   if (percent > 0)
   {
-    TIM12->CCR1 = pwm;
-    TIM12->CCR2 = 0U;
+    TIM2->CCR1 = pwm;
+    TIM2->CCR2 = 0U;
   }
   else if (percent < 0)
   {
-    TIM12->CCR1 = 0U;
-    TIM12->CCR2 = pwm;
+    TIM2->CCR1 = 0U;
+    TIM2->CCR2 = pwm;
   }
   else
   {
-    TIM12->CCR1 = 0U;
-    TIM12->CCR2 = 0U;
+    TIM2->CCR1 = 0U;
+    TIM2->CCR2 = 0U;
   }
+}
+
+static void Motor_ConfigPwmPins(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  GPIO_InitStruct.Pin = LEFT_MOTOR_RPWM_Pin | LEFT_MOTOR_LPWM_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF2_TIM3;
+  HAL_GPIO_Init(LEFT_MOTOR_Port, &GPIO_InitStruct);
+
+  GPIO_InitStruct.Pin = RIGHT_MOTOR_RPWM_Pin | RIGHT_MOTOR_LPWM_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
+  HAL_GPIO_Init(RIGHT_MOTOR_Port, &GPIO_InitStruct);
 }
 
 static void Motor_Init(void)
 {
   __HAL_RCC_TIM3_CLK_ENABLE();
-  __HAL_RCC_TIM12_CLK_ENABLE();
+  __HAL_RCC_TIM2_CLK_ENABLE();
 
+  TIM3->CCER = 0U;
+  TIM3->CR1 = 0U;
   TIM3->PSC = 0U;
   TIM3->ARR = MOTOR_PWM_MAX;
   TIM3->CCR1 = 0U;
@@ -1170,18 +1296,23 @@ static void Motor_Init(void)
   TIM3->CCMR1 |= (6U << TIM_CCMR1_OC1M_Pos) | TIM_CCMR1_OC1PE;
   TIM3->CCMR2 &= ~TIM_CCMR2_OC3M;
   TIM3->CCMR2 |= (6U << TIM_CCMR2_OC3M_Pos) | TIM_CCMR2_OC3PE;
+
+  TIM2->CCER = 0U;
+  TIM2->CR1 = 0U;
+  TIM2->PSC = 0U;
+  TIM2->ARR = MOTOR_PWM_MAX;
+  TIM2->CCR1 = 0U;
+  TIM2->CCR2 = 0U;
+  TIM2->CCMR1 &= ~(TIM_CCMR1_OC1M | TIM_CCMR1_OC2M);
+  TIM2->CCMR1 |= (6U << TIM_CCMR1_OC1M_Pos) | TIM_CCMR1_OC1PE |
+                 (6U << TIM_CCMR1_OC2M_Pos) | TIM_CCMR1_OC2PE;
+
+  Motor_ConfigPwmPins();
+
   TIM3->CCER |= TIM_CCER_CC1E | TIM_CCER_CC3E;
   TIM3->CR1 |= TIM_CR1_ARPE | TIM_CR1_CEN;
-
-  TIM12->PSC = 0U;
-  TIM12->ARR = MOTOR_PWM_MAX;
-  TIM12->CCR1 = 0U;
-  TIM12->CCR2 = 0U;
-  TIM12->CCMR1 &= ~(TIM_CCMR1_OC1M | TIM_CCMR1_OC2M);
-  TIM12->CCMR1 |= (6U << TIM_CCMR1_OC1M_Pos) | TIM_CCMR1_OC1PE |
-                  (6U << TIM_CCMR1_OC2M_Pos) | TIM_CCMR1_OC2PE;
-  TIM12->CCER |= TIM_CCER_CC1E | TIM_CCER_CC2E;
-  TIM12->CR1 |= TIM_CR1_ARPE | TIM_CR1_CEN;
+  TIM2->CCER |= TIM_CCER_CC1E | TIM_CCER_CC2E;
+  TIM2->CR1 |= TIM_CR1_ARPE | TIM_CR1_CEN;
 
   left_encoder_state = Encoder_ReadState(LEFT_ENC_Port, LEFT_ENC_A_Pin, LEFT_ENC_B_Pin);
   right_encoder_state = Encoder_ReadState(RIGHT_ENC_Port, RIGHT_ENC_A_Pin, RIGHT_ENC_B_Pin);
@@ -1209,6 +1340,8 @@ static void Motor_SetSpeeds(int16_t left_percent, int16_t right_percent)
   motor_timeout_latched = 0U;
   Motor_WriteLeft(left_motor_percent);
   Motor_WriteRight(right_motor_percent);
+  Argos_Oled_SetMotors(left_motor_percent, right_motor_percent,
+                       ((left_motor_percent == 0) && (right_motor_percent == 0)) ? "STOP" : "RUN");
 }
 
 static void Motor_Stop(void)
@@ -1226,6 +1359,7 @@ static void Motor_Task(void)
     Motor_WriteLeft(0);
     Motor_WriteRight(0);
     motor_timeout_latched = 1U;
+    Argos_Oled_SetMotors(0, 0, "TIMEOUT");
   }
 }
 
@@ -1290,13 +1424,144 @@ static void Run_MotorStatus(void)
                       left_rpm_x100,
                       left_state,
                       right_motor_percent,
-                      TIM12->CCR1,
-                      TIM12->CCR2,
+                      TIM2->CCR1,
+                      TIM2->CCR2,
                       right_count,
                       right_delta,
                       right_rpm_x100,
                       right_state,
                       (motor_timeout_latched != 0U) ? "TIMEOUT_STOP" : (((left_motor_percent == 0) && (right_motor_percent == 0)) ? "STOP" : "RUN"));
+}
+
+static void Run_MotorPinTest(void)
+{
+  const uint16_t pwm = (uint16_t)((MOTOR_PWM_MAX * 60U) / 100U);
+
+  TestPlatform_PrintLine("MOTOR PIN TEST basladi. Her kanal 600 ms tek tek surulecek.");
+  Motor_Stop();
+  HAL_Delay(250U);
+
+  TestPlatform_PrintLine("PIN TEST | PC6  TIM3_CH1  LEFT_RPWM aday");
+  TIM3->CCR1 = pwm;
+  TIM3->CCR3 = 0U;
+  TIM2->CCR1 = 0U;
+  TIM2->CCR2 = 0U;
+  HAL_Delay(600U);
+
+  TestPlatform_PrintLine("PIN TEST | PC8  TIM3_CH3  LEFT_LPWM aday");
+  TIM3->CCR1 = 0U;
+  TIM3->CCR3 = pwm;
+  TIM2->CCR1 = 0U;
+  TIM2->CCR2 = 0U;
+  HAL_Delay(600U);
+
+  TestPlatform_PrintLine("PIN TEST | PA0  TIM2_CH1  RIGHT_RPWM aday");
+  TIM3->CCR1 = 0U;
+  TIM3->CCR3 = 0U;
+  TIM2->CCR1 = pwm;
+  TIM2->CCR2 = 0U;
+  HAL_Delay(600U);
+
+  TestPlatform_PrintLine("PIN TEST | PA1  TIM2_CH2  RIGHT_LPWM aday");
+  TIM3->CCR1 = 0U;
+  TIM3->CCR3 = 0U;
+  TIM2->CCR1 = 0U;
+  TIM2->CCR2 = pwm;
+  HAL_Delay(600U);
+
+  TIM3->CCR1 = 0U;
+  TIM3->CCR3 = 0U;
+  TIM2->CCR1 = 0U;
+  TIM2->CCR2 = 0U;
+  left_motor_percent = 0;
+  right_motor_percent = 0;
+  motor_timeout_latched = 0U;
+  TestPlatform_PrintLine("MOTOR PIN TEST bitti. Gozlem: hangi satirda hangi motor oynadi?");
+}
+
+static void Run_MotorRampTest(void)
+{
+  static const int16_t speeds[] = {50, 60, 70, 80};
+  static const struct
+  {
+    const char *label;
+    int8_t side;
+    int8_t dir;
+  } cases[] = {
+    {"LEFT_FWD", 0, 1},
+    {"LEFT_REV", 0, -1},
+    {"RIGHT_FWD", 1, 1},
+    {"RIGHT_REV", 1, -1}
+  };
+
+  TestPlatform_PrintLine("MOTOR RAMP TEST basladi. Her satir: komut, PWM, encoder delta ve RPMx100.");
+  TestPlatform_PrintLine("MOTOR RAMP | CASE       CMD  L_PWM R_PWM  L_DENC R_DENC  L_RPMx100 R_RPMx100  L_AB R_AB");
+
+  motor_status_stream_enabled = 0U;
+  Motor_Stop();
+  HAL_Delay(300U);
+  Motor_ResetEncoders();
+
+  for (uint8_t c = 0U; c < (uint8_t)(sizeof(cases) / sizeof(cases[0])); c++)
+  {
+    for (uint8_t i = 0U; i < (uint8_t)(sizeof(speeds) / sizeof(speeds[0])); i++)
+    {
+      int16_t command = (int16_t)(speeds[i] * cases[c].dir);
+      int16_t left_command = (cases[c].side == 0) ? command : 0;
+      int16_t right_command = (cases[c].side == 1) ? command : 0;
+      uint32_t start_ms;
+      uint32_t elapsed_ms;
+      int32_t left_start;
+      int32_t right_start;
+      int32_t left_delta;
+      int32_t right_delta;
+      int32_t left_rpm_x100;
+      int32_t right_rpm_x100;
+
+      __disable_irq();
+      left_start = left_encoder_count;
+      right_start = right_encoder_count;
+      __enable_irq();
+
+      start_ms = HAL_GetTick();
+      Motor_SetSpeeds(left_command, right_command);
+      HAL_Delay(900U);
+
+      elapsed_ms = HAL_GetTick() - start_ms;
+      if (elapsed_ms == 0U)
+      {
+        elapsed_ms = 1U;
+      }
+
+      __disable_irq();
+      left_delta = left_encoder_count - left_start;
+      right_delta = right_encoder_count - right_start;
+      __enable_irq();
+
+      left_rpm_x100 = (int32_t)(((int64_t)left_delta * 6000000LL) /
+                                ((int64_t)ENCODER_COUNTS_PER_REV * (int64_t)elapsed_ms));
+      right_rpm_x100 = (int32_t)(((int64_t)right_delta * 6000000LL) /
+                                 ((int64_t)ENCODER_COUNTS_PER_REV * (int64_t)elapsed_ms));
+
+      TestPlatform_Printf("MOTOR RAMP | %-10s %+4d  %5lu %5lu  %+6ld %+6ld  %+9ld %+9ld  %4u %4u\r\n",
+                          cases[c].label,
+                          command,
+                          (unsigned long)((cases[c].side == 0) ? PercentToPwm(command) : 0U),
+                          (unsigned long)((cases[c].side == 1) ? PercentToPwm(command) : 0U),
+                          left_delta,
+                          right_delta,
+                          left_rpm_x100,
+                          right_rpm_x100,
+                          left_encoder_state,
+                          right_encoder_state);
+
+      Motor_Stop();
+      HAL_Delay(250U);
+    }
+  }
+
+  Motor_Stop();
+  TestPlatform_PrintLine("MOTOR RAMP TEST bitti.");
 }
 
 static void Run_EncoderRawMonitor(void)
@@ -1443,6 +1708,35 @@ void Argos_Platform_Init(void)
 void Argos_Platform_Task(void)
 {
   TestPlatform_Task();
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart->Instance == USART2)
+  {
+    uint16_t next = (uint16_t)((uart_rx_head + 1U) & UART_RX_BUFFER_MASK);
+    if (next != uart_rx_tail)
+    {
+      uart_rx_buffer[uart_rx_head] = uart_rx_byte;
+      uart_rx_head = next;
+    }
+    else
+    {
+      uart_rx_overflow_count++;
+    }
+    (void)HAL_UART_Receive_IT(&huart2, &uart_rx_byte, 1U);
+  }
+}
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+  if (huart->Instance == USART2)
+  {
+    (void)HAL_UART_AbortReceive(huart);
+    __HAL_UART_CLEAR_PEFLAG(huart);
+    huart->ErrorCode = HAL_UART_ERROR_NONE;
+    (void)HAL_UART_Receive_IT(&huart2, &uart_rx_byte, 1U);
+  }
 }
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {

@@ -136,7 +136,7 @@ Future support:
 
 The Perception Layer allows ARGOS to understand its surroundings.
 
-Phase 1 sensors:
+Phase 01 sensors:
 
 - Wheel Encoders
 - IMU
@@ -186,10 +186,11 @@ Instead, it communicates with the Motion Control Layer.
 
 The Communication Layer exchanges information with external systems.
 
-Phase 1:
+Phase 01:
 
 - UART
 - USB Debug
+- ESP32-C3 development bridge
 
 Future:
 

@@ -17,8 +17,8 @@ The objective is to verify that the perfboard-based power distribution module is
 - `journal/19-07-2026_Phase00_Power_Module_V1.md`
 - `images/diagrams/Phase00_System_Block_Diagram.png`
 - `images/diagrams/Phase00_Wiring_Diagram.png`
-- `images/hardware/19-07-2026-power_module_front.jpeg`
-- `images/hardware/19-07-2026-power_module_back.jpeg`
+- `images/hardware/phase-00/19-07-2026-power_module_front.jpeg`
+- `images/hardware/phase-00/19-07-2026-power_module_back.jpeg`
 
 ## Power Architecture Under Test
 

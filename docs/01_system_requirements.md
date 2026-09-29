@@ -90,7 +90,7 @@ The robot should remain compact enough for indoor navigation.
 
 ### 5.2 Weight
 
-Phase 1 target:
+Phase 01 target:
 
 The robot shall only carry:
 
@@ -130,7 +130,7 @@ This configuration provides:
 
 The maximum speed shall remain below normal human running speed.
 
-Phase 1 prioritizes stability over speed.
+Phase 01 prioritizes stability over speed.
 
 ---
 
@@ -212,7 +212,7 @@ Future support:
 
 ## 9. Sensor Requirements
 
-Phase 1 sensors:
+Phase 01 sensors:
 
 Mandatory:
 
@@ -234,10 +234,11 @@ The architecture shall allow additional sensors without major redesign.
 
 ## 10. Communication Requirements
 
-Phase 1:
+Phase 01:
 
 - USB
 - UART
+- Existing ESP32-C3 Wi-Fi bridge for development control and telemetry
 
 Future:
 
@@ -319,9 +320,9 @@ Test videos should accompany major milestones whenever possible.
 
 ---
 
-## 15. Phase 1 Minimum Requirements
+## 15. Phase 01 Minimum Requirements
 
-Phase 1 shall be considered complete when ARGOS can:
+Phase 01 shall be considered complete when ARGOS can:
 
 - Move forward
 - Move backward
@@ -336,14 +337,14 @@ Phase 1 shall be considered complete when ARGOS can:
 
 ## 16. Future Requirements
 
-The following capabilities are intentionally excluded from Phase 1:
+The following capabilities are intentionally excluded from Phase 01:
 
 - Custom PCB
 - Raspberry Pi
 - ROS
 - Camera
 - LiDAR
-- Wi-Fi
+- Product-level wireless networking
 - MQTT
 - Home Server
 - Autonomous navigation
@@ -376,11 +377,11 @@ These features shall be introduced only after the mobile platform has been fully
 
 | Medium | Professional documentation |
 
-| Low (Phase 1) | Wireless communication |
+| Low (Phase 01) | Product-level wireless communication |
 
-| Low (Phase 1) | Camera |
+| Low (Phase 01) | Camera |
 
-| Low (Phase 1) | AI integration |
+| Low (Phase 01) | AI integration |
 
 ---
 

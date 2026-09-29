@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Mechanical CAD files
+*.dwg binary
+*.f3d binary

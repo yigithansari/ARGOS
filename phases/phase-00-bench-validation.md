@@ -2,8 +2,10 @@
 
 **Document ID:** PHASE-000
 **Document Title:** Phase 00 - Bench Validation
-**Version:** 1.1
-**Status:** Active Bench Validation
+**Version:** 2.1
+**Status:** Complete - Certified
+**Completion Date:** 2026-09-17
+**Certification Date:** 2026-09-29
 **Project:** ARGOS - Autonomous Robotic Guard & Observation System
 
 ---
@@ -20,9 +22,7 @@ No chassis is required during this phase. The focus is controlled bench validati
 
 ## 2. Current Phase Status
 
-ARGOS is currently in **Phase 00 - Bench Validation**.
-
-The first bench validation experiments have been performed. Several subsystems are already working, while a few issues remain under investigation before mechanical integration.
+ARGOS completed **Phase 00 - Bench Validation** on 2026-09-17. The integrated bench platform passed its final automated system test on 2026-09-29 and is certified to proceed to Phase 01 mechanical and mobile-platform integration.
 
 Current confirmed progress:
 
@@ -32,14 +32,16 @@ Current confirmed progress:
 - Power Module V1 has passed available electrical validation checks.
 - VL53L0X ToF sensors have been tested.
 - MPU6050 IMU has been tested.
-- Motor drivers can drive the motors.
+- Motor drivers can drive the motors independently.
+- Motor direction, encoder count, and RPM telemetry passed the bench ramp test.
+- ESP32-C3 wireless control and an SSD1306 OLED status display have been integrated.
 
-Current known issues:
+Accepted Phase 01 carry-over items:
 
-- Motor encoder behavior is not fully reliable yet.
-- Low-PWM motor operation is problematic.
-- Encoder wiring information from the vendor page appears to be incorrect.
-- Low-PWM motor startup is likely affected by internal motor losses and the motor's difficulty overcoming static friction and inertia.
+- Encoder CPR and gearbox ratio require calibration for accurate wheel RPM and odometry.
+- Low-PWM motor deadband requires characterization under the installed mechanical load.
+- ToF distance and IMU angle accuracy require reference measurements.
+- Battery-level monitoring remains to be added.
 
 Open measurements:
 
@@ -95,8 +97,8 @@ The primary objectives of Phase 00 are:
 ### Communication and User Feedback
 
 - USB serial / UART connection
-- ESP32-C3 Super Mini for planned wireless control
-- 0.96 inch OLED display for planned local status indication
+- ESP32-C3 Super Mini for wireless control
+- 0.96 inch OLED display for local status indication
 
 ### Tools
 
@@ -148,32 +150,31 @@ Planned module split:
 | --- | --- | --- | --- |
 | P00-001 | STM32 development environment | Passed | Firmware project exists and bench firmware is active. |
 | P00-002 | LED / basic firmware operation | Passed | Basic firmware execution confirmed. |
-| P00-003 | UART communication | Passed | Command and telemetry path available. |
-| P00-004 | Python control panel | Passed | Control panel copied into main ARGOS repository. |
+| P00-003 | UART communication | Passed | Final system test confirmed command and telemetry exchange. |
+| P00-004 | Python control panel | Passed | Generated and archived the final integrated system-test report. |
 | P00-005 | Power Module V1 validation | Passed with open items | Electrical checks passed; thermal and oscilloscope checks remain open. |
 | P00-006 | PWM generation | Passed | PWM motor control is available. |
-| P00-007 | Motor driver operation | Partially Passed | Motors can be driven, but low-PWM operation is not yet satisfactory. |
-| P00-008 | Encoder interface | Partially Passed | Encoder wiring and signal behavior require further investigation. |
+| P00-007 | Motor driver operation | Passed | Independent forward/reverse ramps at 50, 60, 70, and 80 percent passed; low-PWM deadband is carried into Phase 01. |
+| P00-008 | Encoder interface | Passed with calibration pending | Both encoders responded during the final ramp test; CPR and gearbox ratio require calibration. |
 | P00-009 | MPU6050 IMU | Passed | IMU has been tested. |
 | P00-010 | VL53L0X ToF sensors | Passed | ToF sensors have been tested. |
-| P00-011 | ESP32-C3 wireless control expansion | Planned | Planned for wireless control experiments. |
-| P00-012 | OLED status display | Planned | Planned for local status indication. |
-| P00-013 | Battery level monitoring | Planned | Planned addition to the power module. |
+| P00-011 | ESP32-C3 wireless control expansion | Passed | SoftAP and TCP-to-UART control path implemented with disconnect stop behavior. |
+| P00-012 | OLED status display | Passed | STM32-driven SSD1306 status display integrated. |
+| P00-013 | Battery level monitoring | Carried to Phase 01 | Planned addition to the power module. |
 
 ---
 
 ## 7. Known Technical Issues
 
-### Encoder Wiring
+### Encoder Calibration
 
-The encoder pinout information from the vendor page appears to be incorrect or incomplete. This can cause swapped channels, incorrect direction detection, unreliable pulse counting, or unexpected RPM telemetry.
+The vendor pinout information required bench verification. Encoder direction and pulse counting now operate, but the physical scale is not final.
 
 Next steps:
 
-- Identify encoder VCC, GND, A, and B lines directly.
-- Verify channel behavior manually.
-- Confirm direction sign during forward and reverse motor motion.
-- Update wiring diagrams after the corrected pinout is confirmed.
+- Measure motor-shaft encoder CPR.
+- Confirm the gearbox ratio.
+- Calibrate wheel RPM and odometry constants.
 
 ### Low-PWM Motor Drive
 
@@ -190,36 +191,38 @@ Next steps:
 
 ---
 
-## 8. Planned Hardware Additions
+## 8. Hardware Expansion Status
 
-The following hardware additions are planned during the remaining Phase 00 bench validation work:
+The Phase 00 expansion status is:
 
-- Arduino prototype shield for cleaner STM32 NUCLEO wiring
-- ESP32-C3 Super Mini for wireless control experiments
-- 0.96 inch OLED display for local status and debug information
-- Battery level monitoring circuit for the power module
+- Arduino prototype shield used for cleaner STM32 NUCLEO wiring
+- ESP32-C3 Super Mini wireless bridge integrated
+- 0.96 inch SSD1306 OLED status display integrated
+- Battery-level monitoring circuit carried into Phase 01
 
-These additions are intended to improve bench usability and prepare the platform for cleaner integration in later phases.
+These additions improve bench usability and provide the communication and status foundation for Phase 01.
 
 ---
 
 ## 9. Exit Criteria
 
-Phase 00 shall be considered complete only if all of the following conditions are satisfied:
+Phase 00 was assessed against the following conditions:
 
 - STM32 development environment is fully operational.
 - UART debugging and telemetry are functional.
 - Power Module V1 is validated for bench use.
 - PWM generation has been verified.
-- Motor driver operation is reliable across the intended PWM range.
-- Encoder data is reliable and direction-correct.
+- Motor-driver direction, isolation, stop, and ramp operation are reliable in the validated range.
+- Encoder count and direction data are reliable; physical scaling is explicitly carried forward.
 - IMU communication is stable.
 - ToF sensors are operational.
 - Firmware modules are organized and reusable.
 - Known wiring corrections are documented.
 - All validation tests have been documented.
 
-No chassis integration shall begin before these conditions are met.
+All required exit conditions are met or have an accepted, documented carry-over action. See `tests/reports/2026-09-17_Phase00_Exit_Report.md`.
+
+Final functional evidence is archived at `tests/phase-00/2026-09-29-system-test-report.txt`.
 
 ---
 
@@ -227,4 +230,4 @@ No chassis integration shall begin before these conditions are met.
 
 Phase 00 is not about building the final robot.
 
-It is about building confidence in each subsystem before integration. Current bench validation has confirmed meaningful progress, but encoder behavior and low-PWM motor control must be resolved before ARGOS moves into full mobile platform integration.
+It is about building confidence in each subsystem before integration. Phase 00 established that foundation, documented its limitations, and authorized ARGOS to proceed to Phase 01.

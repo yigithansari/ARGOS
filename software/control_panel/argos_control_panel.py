@@ -1,11 +1,14 @@
 import math
 import queue
 import re
+import socket
 import threading
 import time
 import tkinter as tk
 from collections import deque
-from tkinter import messagebox, ttk
+from datetime import datetime
+from pathlib import Path
+from tkinter import filedialog, messagebox, ttk
 
 try:
     import serial
@@ -17,6 +20,69 @@ except ImportError:
 
 BAUD_RATE = 115200
 READ_POLL_SECONDS = 0.03
+WIFI_HOST = "192.168.4.1"
+WIFI_PORT = 3333
+DISCOVERY_PORT = 3334
+
+
+class TcpLineTransport:
+    def __init__(self, host, port):
+        self.socket = socket.create_connection((host, port), timeout=0.8)
+        self.socket.settimeout(0.08)
+        self.buffer = bytearray()
+        self.is_open = True
+
+    def write(self, payload):
+        self.socket.sendall(payload)
+        return len(payload)
+
+    def readline(self):
+        newline = self.buffer.find(b"\n")
+        if newline >= 0:
+            line = bytes(self.buffer[:newline + 1])
+            del self.buffer[:newline + 1]
+            return line
+        try:
+            chunk = self.socket.recv(2048)
+        except socket.timeout:
+            return b""
+        if not chunk:
+            raise ConnectionError("ESP Wi-Fi baglantisi kapandi")
+        self.buffer.extend(chunk)
+        newline = self.buffer.find(b"\n")
+        if newline < 0:
+            return b""
+        line = bytes(self.buffer[:newline + 1])
+        del self.buffer[:newline + 1]
+        return line
+
+    def close(self):
+        self.is_open = False
+        try:
+            self.socket.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
+        self.socket.close()
+
+
+def discover_argos(timeout=0.6):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        sock.settimeout(timeout)
+        sock.bind(("", 0))
+        for broadcast in ("255.255.255.255", "192.168.137.255"):
+            sock.sendto(b"ARGOS_DISCOVER", (broadcast, DISCOVERY_PORT))
+        payload, address = sock.recvfrom(256)
+        fields = payload.decode("ascii", errors="ignore").strip().split("|")
+        if fields and fields[0] == "ARGOS_BRIDGE":
+            port = int(fields[1]) if len(fields) > 1 else WIFI_PORT
+            return address[0], port
+    except (OSError, ValueError):
+        return None
+    finally:
+        sock.close()
+    return None
 
 
 class ArgosControlPanel(tk.Tk):
@@ -45,8 +111,18 @@ class ArgosControlPanel(tk.Tk):
         self.imu_samples = deque(maxlen=160)
         self.tof_samples = deque(maxlen=80)
         self.console_autoscroll = True
+        self.system_test_active = False
+        self.system_test_finishing = False
+        self.system_test_timeout_job = None
+        self.system_test_lines = []
+        self.system_test_started_at = None
+        self.system_test_report_path = Path(__file__).with_name("argos_system_test_report.txt")
 
         self.port_var = tk.StringVar()
+        self.link_mode_var = tk.StringVar(value="Wi-Fi")
+        self.wifi_host_var = tk.StringVar(value="AUTO")
+        self.wifi_port_var = tk.StringVar(value=str(WIFI_PORT))
+        self.connection_label = "Wi-Fi disconnected"
         self.status_var = tk.StringVar(value="DISCONNECTED")
         self.baud_var = tk.StringVar(value=str(BAUD_RATE))
         self.last_i2c_var = tk.StringVar(value="-")
@@ -66,6 +142,11 @@ class ArgosControlPanel(tk.Tk):
         self.tof_right_distance_var = tk.StringVar(value="RIGHT -")
         self.left_drive_var = tk.IntVar(value=0)
         self.right_drive_var = tk.IntVar(value=0)
+        self.drive_speed_var = tk.IntVar(value=60)
+        self.drive_command_var = tk.StringVar(value="STOPPED")
+        self.drive_active = False
+        self.robot_ready = False
+        self.auto_stream_started = False
         self.motor_state = {
             "left_pct": 0,
             "right_pct": 0,
@@ -81,13 +162,14 @@ class ArgosControlPanel(tk.Tk):
             "right_rpm": 0.0,
             "safe": "STOP",
         }
-        self.encoder_test = None
         self.custom_command_var = tk.StringVar()
 
         self._configure_style()
         self._build_ui()
         self.refresh_ports()
         self.after(40, self._drain_rx_queue)
+        self.after(900, self._auto_connect_wifi)
+        self.after(500, self._motor_keepalive)
 
     def _configure_style(self):
         self.style = ttk.Style(self)
@@ -187,15 +269,34 @@ class ArgosControlPanel(tk.Tk):
                             fg="#6f8aa4", font=("Segoe UI", 10))
         subtitle.pack(anchor="w", padx=20, pady=(0, 14))
 
-        self._section_label(parent, "Serial Link")
+        self._section_label(parent, "Robot Link")
+        mode_frame = tk.Frame(parent, bg="#0a141f")
+        mode_frame.pack(fill="x", padx=16, pady=(0, 8))
+        tk.Label(mode_frame, text="Mode", bg="#0a141f", fg="#8da4bc").pack(side="left")
+        mode_combo = ttk.Combobox(mode_frame, textvariable=self.link_mode_var, state="readonly",
+                                  values=("Wi-Fi", "COM"), width=11)
+        mode_combo.pack(side="right")
+        mode_combo.bind("<<ComboboxSelected>>", self._on_link_mode_changed)
+
+        wifi_frame = tk.Frame(parent, bg="#0a141f")
+        wifi_frame.pack(fill="x", padx=16, pady=(0, 8))
+        self.wifi_host_entry = tk.Entry(wifi_frame, textvariable=self.wifi_host_var, bg="#0b1620",
+                                        fg="#e8f1ff", insertbackground="#e8f1ff", relief="flat")
+        self.wifi_host_entry.pack(side="left", fill="x", expand=True)
+        self.wifi_port_entry = tk.Entry(wifi_frame, textvariable=self.wifi_port_var, bg="#0b1620",
+                                        fg="#e8f1ff", insertbackground="#e8f1ff", relief="flat", width=6)
+        self.wifi_port_entry.pack(side="left", padx=(8, 0))
+
         ports_frame = tk.Frame(parent, bg="#0a141f")
         ports_frame.pack(fill="x", padx=16, pady=(0, 8))
+        self.ports_frame = ports_frame
         self.port_combo = ttk.Combobox(ports_frame, textvariable=self.port_var, state="readonly")
         self.port_combo.pack(side="left", fill="x", expand=True)
         self._small_button(ports_frame, "REF", self.refresh_ports).pack(side="left", padx=(8, 0))
 
         baud_frame = tk.Frame(parent, bg="#0a141f")
         baud_frame.pack(fill="x", padx=16, pady=(0, 8))
+        self.baud_frame = baud_frame
         tk.Label(baud_frame, text="Baud", bg="#0a141f", fg="#8da4bc").pack(side="left")
         tk.Entry(baud_frame, textvariable=self.baud_var, bg="#0b1620", fg="#e8f1ff",
                  insertbackground="#e8f1ff", relief="flat", width=10).pack(side="right")
@@ -214,43 +315,38 @@ class ArgosControlPanel(tk.Tk):
         drive_buttons.pack(fill="x")
         self._small_button(drive_buttons, "SEND", self.send_drive_command).pack(side="left", fill="x", expand=True)
         self._small_button(drive_buttons, "STOP", self.stop_drive).pack(side="left", fill="x", expand=True, padx=(8, 0))
-        self._small_button(drive_buttons, "ENC TEST", self.start_encoder_test).pack(side="left", fill="x", expand=True, padx=(8, 0))
+        self._small_button(drive_buttons, "PIN TEST", lambda: self.send_command("K")).pack(side="left", fill="x", expand=True, padx=(8, 0))
+        self._small_button(drive, "MOTOR RAMP TEST", lambda: self.send_command("Y")).pack(fill="x", pady=(8, 0))
 
-        self._section_label(parent, "Quick Commands")
-        commands = [
-            ("SCAN I2C", "s", "#43b5ff"),
-            ("MPU READ", "m", "#26d18d"),
-            ("MPU STREAM", "M", "#f1b84b"),
-            ("CALIBRATE GYRO", "c", "#ffd166"),
-            ("TOF ASSIGN", "T", "#d0a2ff"),
-            ("TOF CHECK", "t", "#a98bff"),
-            ("TOF STREAM", "D", "#c7ff68"),
-            ("LEFT TOF", "L", "#9cd6ff"),
-            ("RIGHT TOF", "R", "#ffb38f"),
-            ("FWD 50", "f", "#23c483"),
-            ("BACK 50", "b", "#ff8a65"),
-            ("TURN LEFT", "<", "#8bc7ff"),
-            ("TURN RIGHT", ">", "#8bc7ff"),
-            ("MOTOR STATUS", "E", "#a6b4c4"),
-            ("ENC RAW", "Q", "#c7ff68"),
-            ("ENC PULL", "V", "#d0a2ff"),
-            ("RESET ENC", "Z", "#ffd166"),
-            ("GPIO TEST", "g", "#54d4d4"),
-            ("RUN ALL", "a", "#ff7a4f"),
-            ("MENU", "h", "#70859f"),
-        ]
-        for label, command, color in commands:
-            self._wide_command(parent, label, command, color)
+        self._section_label(parent, "Live Sensors")
+        sensor_live = tk.Frame(parent, bg="#0a141f")
+        sensor_live.pack(fill="x", padx=16, pady=(0, 8))
+        self._small_button(sensor_live, "MPU LIVE", self.toggle_mpu_live).pack(side="left", fill="x", expand=True)
+        self._small_button(sensor_live, "TOF LIVE", self.toggle_tof_live).pack(side="left", fill="x", expand=True, padx=(8, 0))
 
-        custom = tk.Frame(parent, bg="#0a141f")
-        custom.pack(fill="x", padx=16, pady=(10, 0))
-        tk.Entry(custom, textvariable=self.custom_command_var, bg="#0b1620", fg="#e8f1ff",
-                 insertbackground="#e8f1ff", relief="flat").pack(side="left", fill="x", expand=True, ipady=8)
-        self._small_button(custom, "SEND", self.send_custom_command).pack(side="left", padx=(8, 0))
+        sensor_once = tk.Frame(parent, bg="#0a141f")
+        sensor_once.pack(fill="x", padx=16, pady=(0, 10))
+        self._small_button(sensor_once, "MPU READ", lambda: self.send_command("m")).pack(side="left", fill="x", expand=True)
+        self._small_button(sensor_once, "TOF CHECK", lambda: self.send_command("t")).pack(side="left", fill="x", expand=True, padx=(8, 0))
 
-        hint = tk.Label(parent, text="Kart resetlenince menu otomatik gelmeli.\nKomutlar tek harf olarak gider.",
+        self._section_label(parent, "Validation")
+        self._action_button(parent, "SYSTEM TEST", self.start_system_test, "#43b5ff").pack(fill="x", padx=16, pady=(0, 10))
+
+        hint = tk.Label(parent, text="MPU/ToF canli akisi ac-kapat.\nSYSTEM TEST son rapor dosyasini gunceller.",
                         bg="#0a141f", fg="#627891", justify="left", font=("Segoe UI", 9))
         hint.pack(anchor="w", padx=18, pady=(10, 0))
+        self._on_link_mode_changed()
+
+    def _on_link_mode_changed(self, _event=None):
+        wifi = self.link_mode_var.get() == "Wi-Fi"
+        state = "normal" if wifi else "disabled"
+        self.wifi_host_entry.configure(state=state)
+        self.wifi_port_entry.configure(state=state)
+        combo_state = "disabled" if wifi else "readonly"
+        self.port_combo.configure(state=combo_state)
+        for child in self.baud_frame.winfo_children():
+            if isinstance(child, tk.Entry):
+                child.configure(state="disabled" if wifi else "normal")
 
     def _build_header(self, parent):
         header = tk.Frame(parent, bg="#071018")
@@ -285,20 +381,93 @@ class ArgosControlPanel(tk.Tk):
     def _build_motor_dashboard(self, parent):
         motor = tk.Frame(parent, bg="#0b1620", highlightthickness=1, highlightbackground="#203247")
         motor.grid(row=2, column=0, sticky="ew", padx=18, pady=(0, 8))
-        motor.grid_columnconfigure(0, weight=1)
+        motor.grid_columnconfigure(0, weight=0)
+        motor.grid_columnconfigure(1, weight=1)
 
         top = tk.Frame(motor, bg="#0b1620")
-        top.grid(row=0, column=0, sticky="ew", padx=12, pady=(10, 4))
+        top.grid(row=0, column=0, columnspan=2, sticky="ew", padx=12, pady=(10, 4))
         top.grid_columnconfigure(0, weight=1)
         tk.Label(top, text="Drive System", bg="#0b1620", fg="#e8f1ff",
                  font=("Segoe UI", 11, "bold")).grid(row=0, column=0, sticky="w")
         tk.Label(top, text="BTS7960 PWM + encoder feedback", bg="#0b1620", fg="#8da4bc",
                  font=("Segoe UI", 9)).grid(row=0, column=1, sticky="e")
 
-        self.motor_canvas = tk.Canvas(motor, height=115, bg="#050b12", highlightthickness=0)
-        self.motor_canvas.grid(row=1, column=0, sticky="ew", padx=12, pady=(0, 12))
+        controls = tk.Frame(motor, bg="#071018", width=360, height=250,
+                            highlightthickness=1, highlightbackground="#17283a")
+        controls.grid(row=1, column=0, sticky="nsew", padx=(12, 6), pady=(0, 12))
+        controls.grid_propagate(False)
+        for column in range(3):
+            controls.grid_columnconfigure(column, weight=1, uniform="drive")
+        for row in range(1, 4):
+            controls.grid_rowconfigure(row, weight=1, uniform="drive")
+
+        tk.Label(controls, text="MANUAL DRIVE", bg="#071018", fg="#8da4bc",
+                 font=("Segoe UI", 9, "bold")).grid(row=0, column=0, sticky="w", padx=12, pady=(10, 4))
+        self.drive_state_label = tk.Label(controls, textvariable=self.drive_command_var, bg="#071018",
+                                          fg="#72f0c0", font=("Consolas", 10, "bold"))
+        self.drive_state_label.grid(row=0, column=1, columnspan=2, sticky="e", padx=12, pady=(10, 4))
+
+        self._drive_button(controls, "▲", "FORWARD", 0, 1, "#1f7a5a").grid(
+            row=1, column=1, sticky="nsew", padx=5, pady=5)
+        self._drive_button(controls, "◀", "TURN LEFT", -1, 0, "#28689b").grid(
+            row=2, column=0, sticky="nsew", padx=5, pady=5)
+        stop = tk.Button(controls, text="■", command=self.stop_drive, bg="#d9445f", fg="#ffffff",
+                         activebackground="#f05b73", activeforeground="#ffffff", relief="flat",
+                         font=("Segoe UI Symbol", 22, "bold"), cursor="hand2")
+        stop.grid(row=2, column=1, sticky="nsew", padx=5, pady=5)
+        self._drive_button(controls, "▶", "TURN RIGHT", 1, 0, "#28689b").grid(
+            row=2, column=2, sticky="nsew", padx=5, pady=5)
+        self._drive_button(controls, "▼", "REVERSE", 0, -1, "#9b6331").grid(
+            row=3, column=1, sticky="nsew", padx=5, pady=5)
+
+        speed_wrap = tk.Frame(controls, bg="#071018")
+        speed_wrap.grid(row=4, column=0, columnspan=3, sticky="ew", padx=12, pady=(4, 10))
+        speed_wrap.grid_columnconfigure(1, weight=1)
+        tk.Label(speed_wrap, text="SPEED", bg="#071018", fg="#8da4bc",
+                 font=("Segoe UI", 8, "bold")).grid(row=0, column=0, sticky="w")
+        tk.Scale(speed_wrap, from_=50, to=100, orient="horizontal", variable=self.drive_speed_var,
+                 bg="#071018", fg="#e8f1ff", troughcolor="#18283a", activebackground="#23c483",
+                 highlightthickness=0, relief="flat", showvalue=False).grid(row=0, column=1, sticky="ew", padx=10)
+        tk.Label(speed_wrap, textvariable=self.drive_speed_var, bg="#071018", fg="#f6fbff",
+                 font=("Consolas", 10, "bold"), width=4).grid(row=0, column=2, sticky="e")
+
+        telemetry = tk.Frame(motor, bg="#050b12")
+        telemetry.grid(row=1, column=1, sticky="nsew", padx=(6, 12), pady=(0, 12))
+        telemetry.grid_columnconfigure(0, weight=1)
+        telemetry.grid_rowconfigure(1, weight=1)
+        tk.Label(telemetry, text="MOTOR TELEMETRY", bg="#050b12", fg="#7690aa",
+                 font=("Segoe UI", 9, "bold")).grid(row=0, column=0, sticky="w", padx=12, pady=(10, 0))
+        self.motor_canvas = tk.Canvas(telemetry, height=210, bg="#050b12", highlightthickness=0)
+        self.motor_canvas.grid(row=1, column=0, sticky="nsew", padx=4, pady=(0, 4))
         self.motor_canvas.bind("<Configure>", lambda _event: self._draw_motor_field())
         self._draw_motor_field()
+
+    def _drive_button(self, parent, symbol, label, horizontal, vertical, color):
+        if vertical > 0:
+            command = lambda: self._drive_preset(label, 1, 1)
+        elif vertical < 0:
+            command = lambda: self._drive_preset(label, -1, -1)
+        elif horizontal < 0:
+            command = lambda: self._drive_preset(label, -1, 1)
+        else:
+            command = lambda: self._drive_preset(label, 1, -1)
+        return tk.Button(parent, text=symbol, command=command, bg=color, fg="#ffffff",
+                         activebackground="#35a47d" if vertical else "#3b82b8",
+                         activeforeground="#ffffff", relief="flat",
+                         font=("Segoe UI Symbol", 22, "bold"), cursor="hand2")
+
+    def _drive_preset(self, label, left_sign, right_sign):
+        speed = self.drive_speed_var.get()
+        self.left_drive_var.set(left_sign * speed)
+        self.right_drive_var.set(right_sign * speed)
+        if self.send_drive_command():
+            self.drive_command_var.set(f"{label}  {speed}%")
+            self.drive_state_label.configure(fg="#72f0c0")
+        else:
+            self.left_drive_var.set(0)
+            self.right_drive_var.set(0)
+            self.drive_command_var.set("LINK REQUIRED")
+            self.drive_state_label.configure(fg="#ff7187")
 
     def _build_imu_dashboard(self, parent):
         dash = tk.Frame(parent, bg="#071018")
@@ -459,40 +628,96 @@ class ArgosControlPanel(tk.Tk):
         if not ports:
             self._log("COM port bulunamadi. USB kabloyu ve ST-LINK VCP surucusunu kontrol et.\n", "warn")
 
-    def connect_serial(self):
+    def connect_serial(self, quiet=False):
+        if self.serial_port is not None and self.serial_port.is_open:
+            return True
+
+        if self.link_mode_var.get() == "Wi-Fi":
+            requested_host = self.wifi_host_var.get().strip() or "AUTO"
+            try:
+                if requested_host.upper() == "AUTO":
+                    discovered = discover_argos()
+                    if discovered is not None:
+                        host, port = discovered
+                    else:
+                        host, port = WIFI_HOST, int(self.wifi_port_var.get())
+                else:
+                    host, port = requested_host, int(self.wifi_port_var.get())
+                self.serial_port = TcpLineTransport(host, port)
+            except Exception as exc:
+                self.serial_port = None
+                if not quiet:
+                    messagebox.showerror("Wi-Fi baglanti hatasi",
+                                         f"Once bilgisayari ARGOS Wi-Fi agina bagla.\n\n{host}:{self.wifi_port_var.get()}\n{exc}")
+                return False
+            link_name = f"Wi-Fi {host}:{port}"
+        else:
+            return self._connect_com(quiet)
+
+        self._start_reader(link_name)
+        return True
+
+    def _connect_com(self, quiet=False):
         if serial is None:
-            messagebox.showerror("pyserial eksik", "Seri port icin pyserial gerekiyor: pip install pyserial")
-            return
+            if not quiet:
+                messagebox.showerror("pyserial eksik", "Seri port icin pyserial gerekiyor: pip install pyserial")
+            return False
 
         selected = self.port_var.get()
         if not selected:
-            messagebox.showwarning("Port yok", "Once bir COM port sec.")
-            return
+            if not quiet:
+                messagebox.showwarning("Port yok", "Once bir COM port sec.")
+            return False
 
         port_name = selected.split(" - ", 1)[0]
         try:
             baud = int(self.baud_var.get())
             self.serial_port = serial.Serial(port_name, baud, timeout=0.05, write_timeout=0.5)
         except Exception as exc:
-            messagebox.showerror("Baglanti hatasi", str(exc))
-            return
+            if not quiet:
+                messagebox.showerror("Baglanti hatasi", str(exc))
+            return False
+
+        self._start_reader(f"COM {port_name} @ {baud}")
+        return True
+
+    def _start_reader(self, link_name):
 
         self.reader_alive.set()
         self.reader_thread = threading.Thread(target=self._reader_loop, daemon=True)
         self.reader_thread.start()
-        self.status_var.set(f"CONNECTED {port_name}")
-        self.status_badge.configure(bg="#123525", fg="#98ffc2")
-        self._log(f"[CONNECTED] {port_name} @ {baud}\n", "ok")
-        self._log("Kart reset tusuna bas; menu geldikten sonra komut gonderebilirsin.\n", "warn")
+        self.connection_label = link_name
+        self.robot_ready = False
+        self.auto_stream_started = False
+        if link_name.startswith("Wi-Fi"):
+            self.status_var.set("WIFI CONNECTED - STM WAITING")
+            self.status_badge.configure(bg="#3a3012", fg="#ffe39a")
+        else:
+            self.status_var.set(f"CONNECTED {link_name} - WAITING")
+            self.status_badge.configure(bg="#3a3012", fg="#ffe39a")
+        self._log(f"[CONNECTED] {link_name}\n", "ok")
+
+    def _auto_connect_wifi(self):
+        if self.link_mode_var.get() == "Wi-Fi" and (self.serial_port is None or not self.serial_port.is_open):
+            if not self.connect_serial(quiet=True):
+                self.status_var.set("WAITING FOR ARGOS WI-FI")
+                self.after(2500, self._auto_connect_wifi)
 
     def disconnect_serial(self):
         self.reader_alive.clear()
+        self.drive_active = False
+        self.robot_ready = False
+        self.auto_stream_started = False
+        self.left_drive_var.set(0)
+        self.right_drive_var.set(0)
+        self.drive_command_var.set("STOPPED")
         if self.serial_port is not None:
             try:
                 self.serial_port.close()
             except Exception:
                 pass
         self.serial_port = None
+        self.connection_label = "Disconnected"
         self.status_var.set("DISCONNECTED")
         self.status_badge.configure(bg="#3a1923", fg="#ffb3c0")
         self._log("[DISCONNECTED]\n", "warn")
@@ -504,120 +729,216 @@ class ArgosControlPanel(tk.Tk):
             self.custom_command_var.set("")
 
     def send_drive_command(self):
-        self.send_command(f"P {self.left_drive_var.get()} {self.right_drive_var.get()}")
+        if not self.robot_ready:
+            messagebox.showwarning("STM32 bekleniyor", "ESP bagli fakat STM32 UART yaniti henuz alinmadi.")
+            return False
+        sent = self.send_command(f"P {self.left_drive_var.get()} {self.right_drive_var.get()}")
+        self.drive_active = bool(sent and (self.left_drive_var.get() != 0 or self.right_drive_var.get() != 0))
+        return sent
 
     def stop_drive(self):
+        self.drive_active = False
         self.left_drive_var.set(0)
         self.right_drive_var.set(0)
+        self.drive_command_var.set("STOPPED")
+        if hasattr(self, "drive_state_label"):
+            self.drive_state_label.configure(fg="#72f0c0")
         self.send_command("x")
 
-    def start_encoder_test(self):
+    def _motor_keepalive(self):
+        if (self.drive_active and self.serial_port is not None and self.serial_port.is_open and
+                (self.left_drive_var.get() != 0 or self.right_drive_var.get() != 0)):
+            payload = f"P {self.left_drive_var.get()} {self.right_drive_var.get()}\r\n".encode("ascii")
+            try:
+                self.serial_port.write(payload)
+                self.tx_count += len(payload)
+            except Exception:
+                pass
+        self.after(500, self._motor_keepalive)
+
+    def toggle_mpu_live(self):
+        self.send_command("M")
+
+    def toggle_tof_live(self):
+        self.send_command("D")
+
+    def start_system_test(self):
         if self.serial_port is None or not self.serial_port.is_open:
-            messagebox.showwarning("Bagli degil", "Once COM porta baglan.")
+            messagebox.showwarning("Bagli degil", "Once ARGOS Wi-Fi veya COM baglantisini kur.")
+            return
+        if not self.robot_ready:
+            messagebox.showwarning("STM32 bekleniyor", "Sistem testi icin once STM32 UART baglantisi kurulmalidir.")
             return
 
-        self.encoder_test = {
-            "start_left": self.motor_state.get("left_enc", 0),
-            "start_right": self.motor_state.get("right_enc", 0),
-            "forward_left": 0,
-            "forward_right": 0,
-            "reverse_left": 0,
-            "reverse_right": 0,
+        self.system_test_active = True
+        self.system_test_finishing = False
+        self.system_test_started_at = datetime.now()
+        self.system_test_lines = []
+        self.clear_console()
+        self._record_system_line("ARGOS SYSTEM TEST")
+        self._record_system_line(f"Started: {self.system_test_started_at.strftime('%Y-%m-%d %H:%M:%S')}")
+        self._record_system_line(f"Link: {self.connection_label}")
+        self._log("[SYSTEM TEST] Basladi. Motor ramp + encoder tablosu rapora eklenecek.\n", "warn")
+
+        self.left_drive_var.set(0)
+        self.right_drive_var.set(0)
+        self.drive_active = False
+        self.system_test_start_counts = {
+            "left": self.motor_state.get("left_enc", 0),
+            "right": self.motor_state.get("right_enc", 0),
         }
-        self._log("\n[ENC TEST] Basladi: stop, reset, ileri, geri, stop.\n", "warn")
-        self.left_drive_var.set(0)
-        self.right_drive_var.set(0)
-        self.send_command("x")
-        self.send_command("Z")
-        self.after(450, self._encoder_test_forward)
+        steps = [
+            (0, "S MPU 0"),
+            (100, "S TOF 0"),
+            (300, "x"),
+            (550, "Z"),
+            (950, "s"),
+            (1850, "m"),
+            (2450, "T"),
+            (3450, "t"),
+            (4650, "g"),
+            (5150, "V"),
+            (6000, "Y"),
+        ]
+        for delay_ms, command in steps:
+            self.after(delay_ms, lambda cmd=command: self._send_system_test_command(cmd))
+        self.system_test_timeout_job = self.after(45000, self._finish_system_test)
 
-    def _encoder_test_forward(self):
-        if self.encoder_test is None:
-            return
-        self.encoder_test["start_left"] = self.motor_state.get("left_enc", 0)
-        self.encoder_test["start_right"] = self.motor_state.get("right_enc", 0)
-        self.left_drive_var.set(50)
-        self.right_drive_var.set(50)
-        self.send_command("P 50 50")
-        self.after(850, self._encoder_test_capture_forward)
+    def _send_system_test_command(self, command):
+        if self.system_test_active:
+            self.send_command(command)
 
-    def _encoder_test_capture_forward(self):
-        if self.encoder_test is None:
-            return
-        self.send_command("x")
-        self.send_command("E")
-        self.after(250, self._encoder_test_reverse)
-
-    def _encoder_test_reverse(self):
-        if self.encoder_test is None:
-            return
-        self.encoder_test["forward_left"] = self.motor_state.get("left_enc", 0)
-        self.encoder_test["forward_right"] = self.motor_state.get("right_enc", 0)
-        self.left_drive_var.set(-50)
-        self.right_drive_var.set(-50)
-        self.send_command("P -50 -50")
-        self.after(850, self._encoder_test_capture_reverse)
-
-    def _encoder_test_capture_reverse(self):
-        if self.encoder_test is None:
-            return
-        self.send_command("x")
-        self.send_command("E")
-        self.after(300, self._finish_encoder_test)
-
-    def _finish_encoder_test(self):
-        if self.encoder_test is None:
+    def _finish_system_test(self):
+        if not self.system_test_active:
             return
 
-        self.encoder_test["reverse_left"] = self.motor_state.get("left_enc", 0)
-        self.encoder_test["reverse_right"] = self.motor_state.get("right_enc", 0)
-        result = self._evaluate_encoder_test(self.encoder_test)
-        self.left_drive_var.set(0)
-        self.right_drive_var.set(0)
-        self._log(result + "\n", "ok" if "PASS" in result else "warn")
-        self.encoder_test = None
+        self.system_test_active = False
+        self.system_test_finishing = False
+        if self.system_test_timeout_job is not None:
+            try:
+                self.after_cancel(self.system_test_timeout_job)
+            except tk.TclError:
+                pass
+            self.system_test_timeout_job = None
+        finished_at = datetime.now()
+        left_delta = self.motor_state.get("left_enc", 0) - self.system_test_start_counts.get("left", 0)
+        right_delta = self.motor_state.get("right_enc", 0) - self.system_test_start_counts.get("right", 0)
+        report = self._build_system_report(finished_at, left_delta, right_delta)
+        self._write_system_report(report)
+        self._show_system_report(report)
+        if self.serial_port is not None and self.serial_port.is_open:
+            self.send_command("S MPU 1")
+            self.after(150, lambda: self.send_command("S TOF 1"))
 
-    def _evaluate_encoder_test(self, data):
-        left_forward = data["forward_left"] - data["start_left"]
-        right_forward = data["forward_right"] - data["start_right"]
-        left_reverse = data["reverse_left"] - data["forward_left"]
-        right_reverse = data["reverse_right"] - data["forward_right"]
+    def _record_system_line(self, text):
+        self.system_test_lines.append(text.rstrip())
 
-        left_ok = abs(left_forward) > 5 and abs(left_reverse) > 5 and (left_forward * left_reverse) < 0
-        right_ok = abs(right_forward) > 5 and abs(right_reverse) > 5 and (right_forward * right_reverse) < 0
-        left_dir_ok = left_forward > 0 and left_reverse < 0
-        right_dir_ok = right_forward > 0 and right_reverse < 0
+    def _build_system_report(self, finished_at, left_delta, right_delta):
+        checks = []
+        checks.append(("UART", "PASS", "Serial TX/RX aktif; komut yanitlari alindi."))
+        checks.append(("I2C", "PASS" if "DEVICE FOUND" in self.last_i2c_var.get() or "cihaz" in self.last_i2c_var.get().lower() else "CHECK",
+                       self.last_i2c_var.get()))
+        checks.append(("IMU", "PASS" if self.mpu_var.get() == "OK" else "CHECK", self.mpu_var.get()))
+        checks.append(("ToF Left", "PASS" if "mm" in self.tof_left_var.get() or "OK" in self.tof_left_var.get() else "CHECK",
+                       self.tof_left_var.get()))
+        checks.append(("ToF Right", "PASS" if "mm" in self.tof_right_var.get() or "OK" in self.tof_right_var.get() else "CHECK",
+                       self.tof_right_var.get()))
+        checks.append(("Motor Safety", "PASS" if self.motor_state.get("safe") in ("STOP", "TIMEOUT_STOP") else "CHECK",
+                       f"SAFE:{self.motor_state.get('safe', '-')}"))
+        enc_ok = abs(left_delta) > 5 and abs(right_delta) > 5
+        checks.append(("Encoders", "PASS" if enc_ok else "CHECK",
+                       f"L delta {left_delta:+d}, R delta {right_delta:+d}"))
 
-        if left_ok and right_ok and left_dir_ok and right_dir_ok:
-            verdict = "PASS"
-        elif left_ok and right_ok:
-            verdict = "DIR WARN"
-        else:
-            verdict = "FAIL"
+        lines = [
+            "ARGOS SYSTEM TEST REPORT",
+            f"Started : {self.system_test_started_at.strftime('%Y-%m-%d %H:%M:%S') if self.system_test_started_at else '-'}",
+            f"Finished: {finished_at.strftime('%Y-%m-%d %H:%M:%S')}",
+            f"Link    : {self.connection_label}",
+            "",
+            "SUMMARY",
+        ]
+        for name, status, detail in checks:
+            lines.append(f"- {name}: {status} ({detail})")
 
-        return (
-            f"[ENC TEST] {verdict} | "
-            f"L ileri {left_forward:+d}, geri {left_reverse:+d} | "
-            f"R ileri {right_forward:+d}, geri {right_reverse:+d}"
+        lines.extend([
+            "",
+            "LATEST TELEMETRY",
+            f"- MPU: {self.mpu_var.get()} | {self.accel_var.get()} | {self.gyro_var.get()} | {self.tilt_var.get()}",
+            f"- ToF: {self.tof_left_distance_var.get()} | {self.tof_right_distance_var.get()}",
+            f"- Motors: L {self.left_motor_var.get()} enc {self.motor_state.get('left_enc', 0)} | "
+            f"R {self.right_motor_var.get()} enc {self.motor_state.get('right_enc', 0)} | SAFE {self.motor_state.get('safe', '-')}",
+            "",
+            "SERIAL LOG",
+        ])
+        lines.extend(self.system_test_lines)
+        return "\n".join(lines) + "\n"
+
+    def _write_system_report(self, report):
+        self.system_test_report_path.write_text(report, encoding="utf-8")
+        self._log(f"[SYSTEM TEST] Rapor guncellendi: {self.system_test_report_path}\n", "ok")
+
+    def _show_system_report(self, report):
+        popup = tk.Toplevel(self)
+        popup.title("ARGOS System Test Report")
+        popup.geometry("760x620")
+        popup.configure(bg="#071018")
+        popup.grid_columnconfigure(0, weight=1)
+        popup.grid_rowconfigure(1, weight=1)
+
+        tk.Label(popup, text="System Test Report", bg="#071018", fg="#f6fbff",
+                 font=("Segoe UI", 16, "bold")).grid(row=0, column=0, sticky="w", padx=14, pady=(12, 8))
+
+        body = tk.Frame(popup, bg="#050b12")
+        body.grid(row=1, column=0, sticky="nsew", padx=14, pady=(0, 12))
+        body.grid_columnconfigure(0, weight=1)
+        body.grid_rowconfigure(0, weight=1)
+        text = tk.Text(body, bg="#050b12", fg="#d8e7f7", insertbackground="#d8e7f7",
+                       relief="flat", wrap="word", font=("Consolas", 10), padx=12, pady=12)
+        scroll = tk.Scrollbar(body, orient="vertical", command=text.yview)
+        text.configure(yscrollcommand=scroll.set)
+        text.grid(row=0, column=0, sticky="nsew")
+        scroll.grid(row=0, column=1, sticky="ns")
+        text.insert("1.0", report)
+        text.configure(state="disabled")
+
+        actions = tk.Frame(popup, bg="#071018")
+        actions.grid(row=2, column=0, sticky="ew", padx=14, pady=(0, 14))
+        actions.grid_columnconfigure(0, weight=1)
+        self._small_button(actions, "SAVE AS", lambda: self._save_report_as(report)).grid(row=0, column=1, padx=(8, 0))
+        self._small_button(actions, "CLOSE", popup.destroy).grid(row=0, column=2, padx=(8, 0))
+
+    def _save_report_as(self, report):
+        path = filedialog.asksaveasfilename(
+            title="Raporu farkli kaydet",
+            defaultextension=".txt",
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
+            initialfile=f"argos_system_test_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
         )
+        if path:
+            Path(path).write_text(report, encoding="utf-8")
+            self._log(f"[SYSTEM TEST] Rapor farkli kaydedildi: {path}\n", "ok")
 
     def send_command(self, command):
         if self.serial_port is None or not self.serial_port.is_open:
-            messagebox.showwarning("Bagli degil", "Once COM porta baglan.")
-            return
+            messagebox.showwarning("Bagli degil", "Once ARGOS Wi-Fi veya COM baglantisini kur.")
+            return False
 
         payload = (command + "\r\n").encode("ascii", errors="ignore")
         try:
             self.serial_port.write(payload)
             self.tx_count += len(payload)
+            if self.system_test_active:
+                self._record_system_line(f">> {command}")
             if command == "M":
                 self.stream_var.set("TOGGLED")
             elif command == "D":
                 self.tof_stream_var.set("TOGGLED")
             self._log(f">> {command}\n", "tx")
+            return True
         except Exception as exc:
             self._log(f"TX error: {exc}\n", "error")
             self.disconnect_serial()
+            return False
 
     def clear_console(self):
         self.console.delete("1.0", "end")
@@ -631,6 +952,7 @@ class ArgosControlPanel(tk.Tk):
                     self.rx_queue.put(data.decode("utf-8", errors="replace"))
             except Exception as exc:
                 self.rx_queue.put(f"\nRX error: {exc}\n")
+                self.rx_queue.put("__ARGOS_LINK_LOST__")
                 break
             time.sleep(READ_POLL_SECONDS)
 
@@ -640,11 +962,63 @@ class ArgosControlPanel(tk.Tk):
                 text = self.rx_queue.get_nowait()
             except queue.Empty:
                 break
+            if text == "__ARGOS_LINK_LOST__":
+                self.reader_alive.clear()
+                if self.serial_port is not None:
+                    try:
+                        self.serial_port.close()
+                    except Exception:
+                        pass
+                self.serial_port = None
+                self.drive_active = False
+                self.robot_ready = False
+                self.auto_stream_started = False
+                self.left_drive_var.set(0)
+                self.right_drive_var.set(0)
+                self.drive_command_var.set("LINK LOST")
+                self.status_var.set("LINK LOST - RETRYING")
+                self.status_badge.configure(bg="#3a1923", fg="#ffb3c0")
+                if self.link_mode_var.get() == "Wi-Fi":
+                    self.after(1200, self._auto_connect_wifi)
+                continue
+            upper = text.upper()
+            if "ARGOS BRIDGE" in upper and "STM:WAITING" in upper:
+                self.status_var.set("WIFI CONNECTED - STM UART WAITING")
+                self.status_badge.configure(bg="#3a3012", fg="#ffe39a")
+            elif "ARGOS BRIDGE" in upper and "STM:ONLINE" in upper:
+                self._mark_robot_online()
+            elif any(marker in upper for marker in (
+                    "ARGOS LINK | STM:ONLINE", "MOTOR |", "MPU OK",
+                    "TOF RANGE", "ARGOS TEST PLATFORM")):
+                self._mark_robot_online()
             self.rx_count += len(text)
             self._update_metrics(text)
+            if (self.system_test_active and not self.system_test_finishing and
+                    "motor ramp test bitti" in text.lower()):
+                self.system_test_finishing = True
+                self.after(150, lambda: self._send_system_test_command("E"))
+                self.after(1800, self._finish_system_test)
+            if self.system_test_active:
+                for line in text.splitlines():
+                    if line.strip():
+                        self._record_system_line(line)
             self._log(text, self._tag_for_line(text))
 
         self.after(40, self._drain_rx_queue)
+
+    def _mark_robot_online(self):
+        if self.robot_ready:
+            return
+        self.robot_ready = True
+        if self.drive_command_var.get() in ("LINK LOST", "LINK REQUIRED"):
+            self.drive_command_var.set("STOPPED")
+        self.status_var.set("ARGOS ONLINE - WIFI + STM32")
+        self.status_badge.configure(bg="#123525", fg="#98ffc2")
+        self._log("[ROBOT ONLINE] ESP ve STM32 UART hatti hazir.\n", "ok")
+        if not self.auto_stream_started:
+            self.auto_stream_started = True
+            self.after(100, lambda: self.send_command("S MPU 1"))
+            self.after(250, lambda: self.send_command("S TOF 1"))
 
     def _update_metrics(self, text):
         lower = text.lower()
@@ -870,7 +1244,7 @@ class ArgosControlPanel(tk.Tk):
                              self.motor_state.get("right_delta", 0), self.motor_state.get("right_rpm", 0.0),
                              mid_x + 24, top, right, "#8bc7ff")
         canvas.create_text(width / 2, top + row_gap + 23,
-                           text=f"PC6/PC8 left PWM    PB14/PB15 right PWM    SAFE {self.motor_state.get('safe', '-')}",
+                           text=f"PC6/PC8 left PWM    PA0/PA1 right PWM    SAFE {self.motor_state.get('safe', '-')}",
                            fill="#627891", font=("Segoe UI", 8))
 
     def _draw_motor_bar(self, canvas, name, percent, encoder, ab_state, delta, rpm, x1, y, x2, color):

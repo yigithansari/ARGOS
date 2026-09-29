@@ -1,0 +1,5 @@
+#pragma once
+
+constexpr char ARGOS_WIFI_SSID[] = "YOUR_HOTSPOT_NAME";
+constexpr char ARGOS_WIFI_PASSWORD[] = "YOUR_HOTSPOT_PASSWORD";
+constexpr char ARGOS_FALLBACK_AP_PASSWORD[] = "CHOOSE_A_FALLBACK_AP_PASSWORD";

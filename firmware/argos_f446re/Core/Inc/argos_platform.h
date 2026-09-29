@@ -16,9 +16,9 @@
 #define LEFT_MOTOR_RPWM_Pin  GPIO_PIN_6
 #define LEFT_MOTOR_LPWM_Pin  GPIO_PIN_8
 #define LEFT_MOTOR_Port      GPIOC
-#define RIGHT_MOTOR_RPWM_Pin GPIO_PIN_14
-#define RIGHT_MOTOR_LPWM_Pin GPIO_PIN_15
-#define RIGHT_MOTOR_Port     GPIOB
+#define RIGHT_MOTOR_RPWM_Pin GPIO_PIN_0
+#define RIGHT_MOTOR_LPWM_Pin GPIO_PIN_1
+#define RIGHT_MOTOR_Port     GPIOA
 #define RIGHT_ENC_A_Pin      GPIO_PIN_2
 #define RIGHT_ENC_B_Pin      GPIO_PIN_3
 #define RIGHT_ENC_Port       GPIOC

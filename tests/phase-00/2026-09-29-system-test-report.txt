@@ -1,0 +1,96 @@
+ARGOS SYSTEM TEST REPORT
+Started : 2026-09-29 21:13:21
+Finished: 2026-09-29 21:13:49
+Link    : Wi-Fi 192.168.137.21:3333
+
+SUMMARY
+- UART: PASS (Serial TX/RX aktif; komut yanitlari alindi.)
+- I2C: PASS (toplam 3 cihaz bulundu)
+- IMU: PASS (OK)
+- ToF Left: PASS (214 mm)
+- ToF Right: PASS (179 mm)
+- Motor Safety: PASS (SAFE:STOP)
+- Encoders: PASS (L delta -3835, R delta -5928)
+
+LATEST TELEMETRY
+- MPU: OK | ACC +0.24 / +0.11 / +1.06 g | GYR -3.1 / +5.7 / +0.2 deg/s | roll +5.8 / pitch -12.5
+- ToF: LEFT 214 mm | RIGHT 179 mm
+- Motors: L 0% / -8.4 rpm enc -3835 | R 0% / -13.0 rpm enc -5928 | SAFE STOP
+
+SERIAL LOG
+ARGOS SYSTEM TEST
+Started: 2026-09-29 21:13:21
+Link: Wi-Fi 192.168.137.21:3333
+>> S MPU 0
+>> S TOF 0
+>> x
+MPU OK | WHO:0x72 | ACC mg X:  241 Y:  105 Z: 1041 | GYR cdps X:  -290 Y:   550 Z:    16 | TEMP cC: 4485 | INT:0
+MPU OK | WHO:0x72 | ACC mg X:  234 Y:  105 Z: 1045 | GYR cdps X:  -283 Y:   533 Z:    -5 | TEMP cC: 4481 | INT:0
+TOF RANGE | LEFT:OK 212 mm | RIGHT:OK 178 mm | YAW L:-15 R:15 | UP:5 | BASE:70
+MPU OK | WHO:0x72 | ACC mg X:  239 Y:  104 Z: 1042 | GYR cdps X:  -312 Y:   541 Z:    47 | TEMP cC: 4500 | INT:0
+>> Z
+> S MPU 0
+MPU6050 surekli akis: KAPALI
+TOF RANGE | LEFT:OK 209 mm | RIGHT:OK 181 mm | YAW L:-15 R:15 | UP:5 | BASE:70
+> S TOF 0
+>> s
+ToF surekli akis: KAPALI
+> x
+MOTOR | LEFT:0 RPWM:0 LPWM:0 ENC:0 DENC:0 RPMx100:0 AB:3 | RIGHT:0 RPWM:0 LPWM:0 ENC:0 DENC:0 RPMx100:0 AB:2 | SAFE:STOP
+> Z
+Encoder sayaclari sifirlandi.
+MOTOR | LEFT:0 RPWM:0 LPWM:0 ENC:0 DENC:0 RPMx100:0 AB:3 | RIGHT:0 RPWM:0 LPWM:0 ENC:0 DENC:0 RPMx100:0 AB:2 | SAFE:STOP
+>> m
+> s
+I2C taraniyor...
+  bulundu: 0x30
+  bulundu: 0x31
+  bulundu: 0x68
+  toplam 3 cihaz bulundu
+>> T
+> m
+MPU OK | WHO:0x72 | ACC mg X:  237 Y:  107 Z: 1060 | GYR cdps X:  -310 Y:   566 Z:    20 | TEMP cC: 4490 | INT:0
+> T
+ToF adres atama basladi...
+ToF assign | LEFT 0x30:OK | RIGHT 0x31:OK
+>> t
+> t
+ToF testi:
+>> g
+>> V
+>> Y
+TOF LEFT | ADDR 0x30 | STATUS:OK | MODEL:0xEE MODULE:0xAA REV:0x10 | RANGE:OK 214 mm | INT:1
+TOF RIGHT | ADDR 0x31 | STATUS:OK | MODEL:0xEE MODULE:0xAA REV:0x10 | RANGE:OK 179 mm | INT:1
+> g
+GPIO | B1:SET | LD2:ON | MPU_INT PB10:LOW
+TOF GPIO | LEFT_XSHUT PA8:HIGH LEFT_INT PC7:HIGH | RIGHT_XSHUT PA9:HIGH RIGHT_INT PA10:HIGH
+> V
+ENC PULL teshisi: motorlari durdur, tekerleri cevirmeden oku.
+ENC PULL | NOPULL | LA:1 LB:1 | RA:1 RB:0
+ENC PULL | PULLDOWN | LA:1 LB:1 | RA:1 RB:0
+ENC PULL | PULLUP | LA:1 LB:1 | RA:1 RB:0
+ENC PULL bitti. Encoder girisleri PULLUP moda geri alindi.
+> Y
+MOTOR RAMP TEST basladi. Her satir: komut, PWM, encoder delta ve RPMx100.
+MOTOR RAMP | CASE       CMD  L_PWM R_PWM  L_DENC R_DENC  L_RPMx100 R_RPMx100  L_AB R_AB
+Encoder sayaclari sifirlandi.
+MOTOR RAMP | LEFT_FWD    +50    500     0  -29789     +0    -137758        +0     0    2
+MOTOR RAMP | LEFT_FWD    +60    600     0  -51647     +0    -238841        +0     1    2
+MOTOR RAMP | LEFT_FWD    +70    700     0  -54438     +0    -251748        +0     0    2
+MOTOR RAMP | LEFT_FWD    +80    800     0  -54843     +0    -253620        +0     1    2
+MOTOR RAMP | LEFT_REV    -50    500     0  +29569     +0    +136741        +0     2    2
+MOTOR RAMP | LEFT_REV    -60    600     0  +50079     +0    +231589        +0     2    2
+MOTOR RAMP | LEFT_REV    -70    700     0  +53700     +0    +248335        +0     0    2
+MOTOR RAMP | LEFT_REV    -80    800     0  +53831     +0    +248940        +0     1    2
+MOTOR RAMP | RIGHT_FWD   +50      0   500      +0 +25103         +0   +116088     1    0
+MOTOR RAMP | RIGHT_FWD   +60      0   600      +0 +46648         +0   +215723     1    3
+MOTOR RAMP | RIGHT_FWD   +70      0   700      +0 +51610         +0   +238669     1    0
+MOTOR RAMP | RIGHT_FWD   +80      0   800      +0 +51904         +0   +240029     1    3
+MOTOR RAMP | RIGHT_REV   -50      0   500      +0 -22599         +0   -104508     1    0
+MOTOR RAMP | RIGHT_REV   -60      0   600      +0 -51138         +0   -236487     1    1
+MOTOR RAMP | RIGHT_REV   -70      0   700      +0 -53563         +0   -247701     1    0
+MOTOR RAMP | RIGHT_REV   -80      0   800      +0 -53653         +0   -248117     1    0
+MOTOR RAMP TEST bitti.
+>> E
+> E
+MOTOR | LEFT:0 RPWM:0 LPWM:0 ENC:-3835 DENC:-3835 RPMx100:-841 AB:1 | RIGHT:0 RPWM:0 LPWM:0 ENC:-5928 DENC:-5928 RPMx100:-1300 AB:2 | SAFE:STOP
