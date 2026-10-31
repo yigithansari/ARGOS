@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "saved_at": "2026-10-29T23:35:23+03:00",
+  "measurement_turns": 10,
+  "wheel_circumference_mm": 260.0,
+  "track_width_mm": 198.0,
+  "left_counts_per_wheel_rev": 48097.2,
+  "right_counts_per_wheel_rev": 48036.6,
+  "left_forward_sign": -1,
+  "right_forward_sign": 1
+}

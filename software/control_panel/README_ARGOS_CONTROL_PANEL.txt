@@ -2,16 +2,27 @@ ARGOS Robot Control Platform
 ============================
 
 Wi-Fi ile calistirma:
-1. wifi_secrets.example.h dosyasini wifi_secrets.h olarak kopyala.
-2. Ag bilgilerini ve fallback AP parolasini yerel secrets dosyasinda ayarla.
-3. ESP32-C3'e esp32_c3_argos_bridge sketch'ini yukle.
-4. Bilgisayari ESP ile ayni aga veya yapilandirdigin ARGOS fallback agina bagla.
-5. run_argos_control_panel.bat dosyasina cift tikla.
-6. Panel ARGOS koprusunu otomatik olarak bulur ve baglanir.
+Normal kullanim: wifi_secrets.h ile ayarlanan hotspot'u ac; ESP STA adresi
+DHCP ile degisebilir. Panel AUTO kesfi UDP 3334 kullanir. Asagidaki ARGOS
+SSID ve 192.168.4.1 adimlari fallback AP icindir.
+1. ESP32-C3'e ESP32/esp32_c3_argos_bridge sketch'ini yukle.
+2. Bilgisayari hotspot agina veya yerel secrets dosyanda parolasini belirledigin ARGOS fallback agina bagla.
+3. run_argos_control_panel.bat dosyasina cift tikla.
+4. Panel 192.168.4.1:3333 adresine otomatik baglanir.
 
 USB/COM ile servis:
 1. Panelde Link Mode alanini COM yap.
 2. STLink Virtual COM Port'u sec ve CONNECT'e bas.
+Not: SB13/SB14 OFF olan mevcut ESP-UART baglantisinda ST-LINK VCP
+STM32 USART2'ye bagli degildir; portun gorunmesi UART iletisimini kanitlamaz.
+
+2026-10-31 yayin kopyasi:
+- STM32 WIRELESS UPDATE icin yalniz ARGOS_OTA.bin secilir.
+- Dosya secicide firmware/argos_f446re/Debug/ klasorune git; binary dosyalar
+  bu kaynak agacina eklenmez, yerel derlemeden elde edilir.
+- Multipart aktarim ve OTA vektor denetimi aktiftir.
+- 25/35/45 RPM tek kosu taramasi yapildi; tekrarlanabilir PI kabul ve zemin
+  ayari tamamlanmadi. Son durum icin docs/08_phase_02_motion_control.md.
 
 Komutlar:
 - SCAN I2C    : s
@@ -24,6 +35,7 @@ Komutlar:
 - LEFT TOF    : L
 - RIGHT TOF   : R
 - DRIVE       : P left right, ornek P 25 -25
+- WHEEL RPM   : V left_rpm right_rpm, ornek V 35 35 (kapali cevrim, max 55)
 - STOP        : x
 - FWD 25      : f
 - BACK 25     : b
@@ -50,8 +62,7 @@ Baglantilar:
 - Right encoder A PC2, B PC3
 - OLED VCC 3V3, GND GND, SCL D12/PA6, SDA D11/PA7
 - ESP RX Nucleo D1/PA2, ESP TX Nucleo D0/PA3, UART 115200 8N1
-- ESP fallback Wi-Fi SSID ARGOS; parola yerel wifi_secrets.h dosyasinda ayarlanir.
-- Varsayilan fallback adresi 192.168.4.1, TCP portu 3333'tur.
+- ESP fallback Wi-Fi SSID ARGOS; parola yerel wifi_secrets.h dosyasinda ayarlanir, TCP 192.168.4.1:3333
 - D0/D1 ESP kullanimi icin Nucleo SB13/SB14 OFF, SB62/SB63 ON olmalidir.
 
 Not:
@@ -61,3 +72,23 @@ oldugunu kontrol et. Seri port listelenmiyorsa Windows Aygit Yoneticisi > Baglan
 
 pyserial eksikse:
 pip install pyserial
+
+Phase 02 hiz kontrolu:
+- Panelde Drive Mode alanindan PWM veya RPM secilir.
+- Ilk RPM testi tekerler havadayken 25 RPM ile yapilmalidir.
+- RPM modunda hedef, olculen teker RPM'i, PI integral katkisi ve uygulanan PWM
+  motor telemetri alaninda gorunur.
+- STOP komutu cikisi hemen sifirlar; motor ve teker mekanigi bir miktar serbest
+  yuvarlanabilir.
+
+STM32 kablosuz guncelleme:
+- Ilk kurulumda ESP sketch'i USB ile, Debug/ARGOS_BOOTSTRAP.bin ise ST-LINK ile
+  STM32 adres 0x08000000'a bir kez yuklenir.
+- Sonraki STM32 uygulama guncellemelerinde panelde STM32 WIRELESS UPDATE secilir
+  ve Debug/ARGOS_OTA.bin dosyasi gonderilir.
+- Panel dosyayi ESP'nin 3335 numarali guncelleme servisine yollar; ESP dosyayi
+  tamamen onbellege alip CRC32 dogrulamadan STM32 flash'ini silmez.
+- Guncelleme boyunca motorlar STOP durumunda tutulur. Islem kesilirse bootloader
+  kurtarma modunda kalir ve ayni dosya tekrar gonderilebilir.
+- ARGOS_OTA.bin 0x08008000 icin baglanmistir; ilk kurulumda 0x08000000'a tek
+  basina yazilmaz.

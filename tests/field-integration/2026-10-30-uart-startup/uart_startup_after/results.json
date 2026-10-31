@@ -1,0 +1,32 @@
+[
+  {
+    "cycle": 1,
+    "crc": "4881C69F",
+    "update": "UPDATE PASS: PASS size=41452 crc=4881c69f",
+    "unknown_commands": 0,
+    "echo_we": 0,
+    "motor_lines": 12,
+    "malformed_motor_lines": 0,
+    "restarted": true
+  },
+  {
+    "cycle": 2,
+    "crc": "4881C69F",
+    "update": "UPDATE PASS: PASS size=41452 crc=4881c69f",
+    "unknown_commands": 0,
+    "echo_we": 0,
+    "motor_lines": 12,
+    "malformed_motor_lines": 0,
+    "restarted": true
+  },
+  {
+    "cycle": 3,
+    "crc": "4881C69F",
+    "update": "UPDATE PASS: PASS size=41452 crc=4881c69f",
+    "unknown_commands": 0,
+    "echo_we": 0,
+    "motor_lines": 12,
+    "malformed_motor_lines": 0,
+    "restarted": true
+  }
+]

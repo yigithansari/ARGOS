@@ -1,8 +1,9 @@
 # Phase 01 - Mobile Platform
 
 **Document ID:** PHASE-001
-**Status:** Active
+**Status:** Complete
 **Start Date:** 2026-09-24
+**Completion Date:** 2026-10-31
 **Project:** ARGOS - Autonomous Robotic Guard & Observation System
 
 ## 1. Purpose
@@ -13,12 +14,14 @@ The phase focuses on mechanical assembly, subsystem placement, wiring, different
 
 ## 2. Current Status
 
-Phase 01 is active.
-
-The first mechanical milestone is complete:
+Phase 01 is complete. The first mobile ARGOS platform is assembled and operational.
 
 - Chassis V1 has been designed.
 - The Fusion 360 source model and DWG export are archived under `hardware/mechanical/chassis/v1/`.
+- Wheel V5 manufacturing files are archived under `hardware/mechanical/wheels/v5/`.
+- Motors, electronics, power module, sensors, ESP32-C3, and OLED are installed on the chassis.
+- The robot can move and stop safely under computer control through the hotspot connection.
+- Field communication recovery and command-timeout behavior have been validated.
 - The Phase 00 bench platform remains the validated electrical and firmware baseline.
 
 ## 3. Current Deliverables
@@ -27,19 +30,16 @@ The first mechanical milestone is complete:
 | --- | --- | --- | --- |
 | P01-001 | Chassis V1 design | Complete | `hardware/mechanical/chassis/v1/ARGOS_Chassis_V1.f3d` |
 | P01-002 | Chassis drawing/export | Complete | `hardware/mechanical/chassis/v1/ARGOS_Chassis_V1.dwg` |
-| P01-003 | Mechanical fit and clearance review | Planned | Validate component placement before final assembly. |
-| P01-004 | Mobile-platform assembly | Planned | Install motors, electronics, sensors, and power system. |
-| P01-005 | Wiring integration | Planned | Create controlled and serviceable platform wiring. |
-| P01-006 | Initial motion test | Planned | Verify forward, reverse, turning, and safe stop on the assembled chassis. |
+| P01-003 | Mechanical fit and clearance review | Complete | Components installed on the physical chassis. |
+| P01-004 | Mobile-platform assembly | Complete | Mobile platform photographs archived under `images/hardware/phase-01/`. |
+| P01-005 | Wiring integration | Complete for prototype | STM32, ESP32-C3, motor drivers, sensors, OLED, and power system integrated. |
+| P01-006 | Initial motion and safe-stop test | Complete | Basic drive, command timeout, and link recovery demonstrated. |
 
-## 4. Engineering Work
+## 4. Phase 02 Carry-Over
 
-- Validate chassis dimensions, mounting points, wheel alignment, and clearances.
-- Define final placement for the STM32, ESP32-C3, OLED, motor drivers, sensors, and Power Module V1.
-- Assemble the differential-drive platform.
-- Characterize left and right motor deadband under mechanical load.
-- Calibrate encoder CPR, gearbox ratio, wheel RPM, and odometry constants.
-- Validate ToF geometry and IMU orientation after installation.
+- Tune independent left/right PI wheel-speed controllers.
+- Complete repeated forward/reverse and floor tests.
+- Implement differential-drive odometry and distance/angle commands.
 - Add and validate battery-voltage monitoring.
 - Complete thermal and oscilloscope-based power checks when equipment is available.
 
@@ -47,7 +47,7 @@ The first mechanical milestone is complete:
 
 Phase 00 is closed and shall not be reopened for Phase 01 calibration or mechanical-integration work. Changes affecting the certified bench baseline shall instead receive targeted regression testing and be documented in Phase 01.
 
-## 6. Next Milestone
+## 6. Exit Decision
 
-Perform the Chassis V1 fit and clearance review, then begin physical assembly of the first mobile platform.
+Phase 01 exit is approved. Motion-control tuning and odometry continue under `phase-02-motion-control.md` without reopening the mechanical-integration phase.
 

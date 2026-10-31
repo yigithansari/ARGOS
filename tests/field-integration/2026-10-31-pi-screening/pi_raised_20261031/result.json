@@ -1,0 +1,11 @@
+{
+  "target_rpm": 25,
+  "mean_rpm": [
+    26.15833333333333,
+    24.275000000000002
+  ],
+  "mean_within_5_percent": true,
+  "stop_confirmed": true,
+  "samples": 28,
+  "scope": "single forward raised-wheel run"
+}

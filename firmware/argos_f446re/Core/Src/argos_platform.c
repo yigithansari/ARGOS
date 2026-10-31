@@ -50,6 +50,13 @@ static int16_t ClampPercent(int16_t percent);
 static void Motor_ConfigPwmPins(void);
 static void Motor_WriteLeft(int16_t percent);
 static void Motor_WriteRight(int16_t percent);
+static void Motor_ApplyOutputs(int16_t left_percent, int16_t right_percent);
+static void Motor_ResetSyncState(void);
+static void Motor_ResetSpeedController(void);
+static void Motor_SetSpeedTargets(int32_t left_rpm_x100, int32_t right_rpm_x100);
+static void Motor_SpeedTask(uint32_t now);
+static int16_t Motor_FeedForwardPercent(uint8_t side, int32_t target_rpm_x100);
+static int32_t Motor_WheelRpmX100(uint8_t side, int32_t delta, uint32_t elapsed_ms);
 static void Motor_Init(void);
 static void Motor_SetSpeeds(int16_t left_percent, int16_t right_percent);
 static void Motor_Stop(void);
@@ -97,8 +104,27 @@ static uint8_t tof_stream_enabled = 0U;
 #define MOTOR_STATUS_PERIOD_MS 250U
 #define MOTOR_COMMAND_TIMEOUT_MS 1200U
 #define MOTOR_DIRECTION_CHANGE_STOP_MS 60U
+#define MOTOR_SYNC_PERIOD_MS 100U
+#define MOTOR_SYNC_START_DELAY_MS 350U
+#define MOTOR_SYNC_MIN_PERCENT 55
+#define MOTOR_SYNC_MAX_TRIM_PERCENT 8
+#define MOTOR_SYNC_MIN_COUNTS 20L
 #define ENCODER_RAW_MONITOR_MS 8000U
 #define ENCODER_COUNTS_PER_REV 1440L
+#define LEFT_WHEEL_CPR_X10  480972LL
+#define RIGHT_WHEEL_CPR_X10 480366LL
+#define MOTOR_CONTROL_PWM 0U
+#define MOTOR_CONTROL_PI  1U
+#define SPEED_LOOP_PERIOD_MS 100U
+#define SPEED_TARGET_MAX_RPM_X100 5500L
+#define SPEED_TARGET_MIN_RPM_X100 1500L
+#define SPEED_RAMP_STEP_RPM_X100 300L
+#define SPEED_OUTPUT_MAX_PERCENT 75
+#define SPEED_INTEGRAL_LIMIT_X100 1200L
+#define SPEED_KP_NUM 18L
+#define SPEED_KP_DEN 100L
+#define SPEED_KI_NUM 12L
+#define SPEED_KI_DEN 1000L
 #define UART_RX_BUFFER_SIZE 256U
 #define UART_RX_BUFFER_MASK (UART_RX_BUFFER_SIZE - 1U)
 
@@ -117,6 +143,29 @@ static uint8_t oled_tof_left_ok = 0U;
 static uint8_t oled_tof_right_ok = 0U;
 static int16_t left_motor_percent = 0;
 static int16_t right_motor_percent = 0;
+static int16_t left_motor_applied_percent = 0;
+static int16_t right_motor_applied_percent = 0;
+static uint8_t motor_sync_enabled = 1U;
+static uint8_t motor_sync_active = 0U;
+static int32_t motor_sync_error_x100 = 0;
+static int16_t motor_sync_trim_percent = 0;
+static int32_t motor_sync_left_encoder = 0;
+static int32_t motor_sync_right_encoder = 0;
+static uint32_t motor_sync_last_ms = 0U;
+static uint32_t motor_command_changed_ms = 0U;
+static uint8_t motor_control_mode = MOTOR_CONTROL_PWM;
+static int32_t left_speed_target_rpm_x100 = 0;
+static int32_t right_speed_target_rpm_x100 = 0;
+static int32_t left_speed_ramped_rpm_x100 = 0;
+static int32_t right_speed_ramped_rpm_x100 = 0;
+static int32_t left_speed_measured_rpm_x100 = 0;
+static int32_t right_speed_measured_rpm_x100 = 0;
+static int32_t left_speed_integral_x100 = 0;
+static int32_t right_speed_integral_x100 = 0;
+static int32_t speed_left_encoder = 0;
+static int32_t speed_right_encoder = 0;
+static uint32_t speed_last_ms = 0U;
+static uint8_t speed_loop_initialized = 0U;
 static volatile int32_t left_encoder_count = 0;
 static volatile int32_t right_encoder_count = 0;
 static volatile uint8_t left_encoder_state = 0U;
@@ -132,14 +181,18 @@ static volatile uint8_t uart_rx_buffer[UART_RX_BUFFER_SIZE];
 static volatile uint16_t uart_rx_head = 0U;
 static volatile uint16_t uart_rx_tail = 0U;
 static volatile uint32_t uart_rx_overflow_count = 0U;
+static uint32_t uart_command_count = 0U;
 
 static void TestPlatform_Init(void)
 {
   I2C1_BusInit();
   Motor_Init();
   Motor_Stop();
-  Argos_Oled_Init();
+  /* USART is already enabled. Discard stale data/overrun before arming RX,
+     then buffer commands during the slow OLED and sensor initialization. */
+  __HAL_UART_CLEAR_OREFLAG(&huart2);
   (void)HAL_UART_Receive_IT(&huart2, &uart_rx_byte, 1U);
+  Argos_Oled_Init();
   ToF_AssignAddresses();
   TestPlatform_PrintLine("\r\nARGOS test platform hazir.");
   TestPlatform_PrintLine("MPU6050: SCL PB8/CN10-3, SDA PB9/CN10-5, INT PB10/CN10-25, AD0 GND => 0x68");
@@ -159,6 +212,7 @@ static void TestPlatform_Task(void)
   static uint32_t last_motor_status_ms = 0U;
 
   Motor_Task();
+  Argos_Oled_SetUartOverflow(uart_rx_overflow_count);
   Argos_Oled_Task();
 
   while (UartRx_Pop(&command) != 0U)
@@ -219,6 +273,8 @@ static void TestPlatform_PrintMenu(void)
   TestPlatform_PrintLine("  V : encoder pull-up/pull-down teshisi");
   TestPlatform_PrintLine("  Z : encoder sayaclarini sifirla");
   TestPlatform_PrintLine("  P L R : motor hizi yuzde, ornek P 50 -50");
+  TestPlatform_PrintLine("  V L R : kapali cevrim teker RPM, ornek V 35 35 (max 55)");
+  TestPlatform_PrintLine("  S SYNC 0/1 : duz surus encoder esitleme kapat/ac");
   TestPlatform_PrintLine("  x : motor stop");
   TestPlatform_PrintLine("  f/b : iki motor ileri/geri %50");
   TestPlatform_PrintLine("  </> : sola/saga donus %50");
@@ -246,7 +302,19 @@ static void TestPlatform_HandleLine(char *line)
   char network_mode[4];
   char network_address[16];
 
+  uart_command_count++;
+  Argos_Oled_RecordCommand(line, uart_command_count);
   TestPlatform_Printf("\r\n> %s\r\n", line);
+
+  if (sscanf(line, "S SYNC %d", &enabled) == 1)
+  {
+    motor_sync_enabled = (enabled != 0) ? 1U : 0U;
+    Motor_ResetSyncState();
+    Motor_ApplyOutputs(left_motor_percent, right_motor_percent);
+    TestPlatform_Printf("Motor duz surus encoder esitleme: %s\r\n",
+                        (motor_sync_enabled != 0U) ? "ACIK" : "KAPALI");
+    return;
+  }
 
   if (sscanf(line, "S MPU %d", &enabled) == 1)
   {
@@ -298,6 +366,27 @@ static void TestPlatform_HandleLine(char *line)
       TestPlatform_PrintLine("Motor komutu hatali. Ornek: P 50 -50");
     }
     return;
+  }
+
+  if ((line[0] == 'V') || (line[0] == 'v'))
+  {
+    if (sscanf(line + 1, "%d %d", &left, &right) == 2)
+    {
+      Motor_SetSpeedTargets((int32_t)left * 100L, (int32_t)right * 100L);
+      Run_MotorStatus();
+      return;
+    }
+  }
+
+  if (strcmp(line, "U ARGOS_OTA") == 0)
+  {
+    Motor_Stop();
+    mpu_stream_enabled = 0U;
+    tof_stream_enabled = 0U;
+    motor_status_stream_enabled = 0U;
+    TestPlatform_PrintLine("ARGOS UPDATE | BOOTLOADER REQUEST | MOTORS STOPPED");
+    HAL_Delay(100U);
+    NVIC_SystemReset();
   }
 
   TestPlatform_HandleCommand((uint8_t)line[0]);
@@ -428,7 +517,7 @@ static void TestPlatform_HandleCommand(uint8_t command)
 
 static void TestPlatform_Printf(const char *format, ...)
 {
-  char buffer[320];
+  static char buffer[512];
   va_list args;
   int length;
 
@@ -1262,6 +1351,289 @@ static void Motor_WriteRight(int16_t percent)
   }
 }
 
+static void Motor_ApplyOutputs(int16_t left_percent, int16_t right_percent)
+{
+  left_motor_applied_percent = ClampPercent(left_percent);
+  right_motor_applied_percent = ClampPercent(right_percent);
+  Motor_WriteLeft(left_motor_applied_percent);
+  Motor_WriteRight(right_motor_applied_percent);
+}
+
+static void Motor_ResetSyncState(void)
+{
+  motor_sync_active = 0U;
+  motor_sync_error_x100 = 0;
+  motor_sync_trim_percent = 0;
+  motor_sync_left_encoder = left_encoder_count;
+  motor_sync_right_encoder = right_encoder_count;
+  motor_sync_last_ms = HAL_GetTick();
+}
+
+static void Motor_ResetSpeedController(void)
+{
+  left_speed_target_rpm_x100 = 0;
+  right_speed_target_rpm_x100 = 0;
+  left_speed_ramped_rpm_x100 = 0;
+  right_speed_ramped_rpm_x100 = 0;
+  left_speed_measured_rpm_x100 = 0;
+  right_speed_measured_rpm_x100 = 0;
+  left_speed_integral_x100 = 0;
+  right_speed_integral_x100 = 0;
+  speed_left_encoder = left_encoder_count;
+  speed_right_encoder = right_encoder_count;
+  speed_last_ms = HAL_GetTick();
+  speed_loop_initialized = 0U;
+}
+
+static int32_t Motor_ClampSpeedTarget(int32_t target_rpm_x100)
+{
+  if (target_rpm_x100 > SPEED_TARGET_MAX_RPM_X100)
+  {
+    target_rpm_x100 = SPEED_TARGET_MAX_RPM_X100;
+  }
+  else if (target_rpm_x100 < -SPEED_TARGET_MAX_RPM_X100)
+  {
+    target_rpm_x100 = -SPEED_TARGET_MAX_RPM_X100;
+  }
+
+  if ((target_rpm_x100 > 0) && (target_rpm_x100 < SPEED_TARGET_MIN_RPM_X100))
+  {
+    target_rpm_x100 = SPEED_TARGET_MIN_RPM_X100;
+  }
+  else if ((target_rpm_x100 < 0) && (target_rpm_x100 > -SPEED_TARGET_MIN_RPM_X100))
+  {
+    target_rpm_x100 = -SPEED_TARGET_MIN_RPM_X100;
+  }
+  return target_rpm_x100;
+}
+
+static void Motor_SetSpeedTargets(int32_t left_rpm_x100, int32_t right_rpm_x100)
+{
+  if (motor_control_mode != MOTOR_CONTROL_PI)
+  {
+    Motor_ResetSpeedController();
+    Motor_ResetSyncState();
+    Motor_ApplyOutputs(0, 0);
+  }
+
+  motor_control_mode = MOTOR_CONTROL_PI;
+  left_speed_target_rpm_x100 = Motor_ClampSpeedTarget(left_rpm_x100);
+  right_speed_target_rpm_x100 = Motor_ClampSpeedTarget(right_rpm_x100);
+  last_motor_command_ms = HAL_GetTick();
+  motor_command_changed_ms = last_motor_command_ms;
+  motor_timeout_latched = 0U;
+
+  if ((left_speed_target_rpm_x100 == 0) && (right_speed_target_rpm_x100 == 0))
+  {
+    Motor_ResetSpeedController();
+    Motor_ApplyOutputs(0, 0);
+    left_motor_percent = 0;
+    right_motor_percent = 0;
+  }
+
+  Argos_Oled_SetMotors(left_motor_applied_percent, right_motor_applied_percent,
+                       ((left_speed_target_rpm_x100 == 0) &&
+                        (right_speed_target_rpm_x100 == 0)) ? "STOP" : "PI");
+}
+
+static int16_t Motor_FeedForwardPercent(uint8_t side, int32_t target_rpm_x100)
+{
+  static const int32_t rpm_points[] = {2000L, 3000L, 4000L, 5000L, 6000L};
+  static const int16_t left_forward[] = {50, 54, 55, 56, 58};
+  static const int16_t left_reverse[] = {50, 53, 56, 58, 60};
+  static const int16_t right_forward[] = {50, 52, 56, 57, 58};
+  static const int16_t right_reverse[] = {51, 52, 54, 55, 56};
+  const int16_t *table;
+  int32_t magnitude = (target_rpm_x100 < 0) ? -target_rpm_x100 : target_rpm_x100;
+
+  if (side == 0U)
+  {
+    table = (target_rpm_x100 < 0) ? left_reverse : left_forward;
+  }
+  else
+  {
+    table = (target_rpm_x100 < 0) ? right_reverse : right_forward;
+  }
+
+  if (magnitude <= rpm_points[0])
+  {
+    return table[0];
+  }
+  for (uint8_t i = 1U; i < 5U; i++)
+  {
+    if (magnitude <= rpm_points[i])
+    {
+      int32_t span = rpm_points[i] - rpm_points[i - 1U];
+      int32_t offset = magnitude - rpm_points[i - 1U];
+      int32_t pwm_span = (int32_t)table[i] - (int32_t)table[i - 1U];
+      return (int16_t)((int32_t)table[i - 1U] + ((pwm_span * offset) / span));
+    }
+  }
+  return table[4];
+}
+
+static int32_t Motor_WheelRpmX100(uint8_t side, int32_t delta, uint32_t elapsed_ms)
+{
+  int64_t normalized_delta;
+  int64_t cpr_x10;
+
+  if (elapsed_ms == 0U)
+  {
+    elapsed_ms = 1U;
+  }
+  if (side == 0U)
+  {
+    normalized_delta = -(int64_t)delta;
+    cpr_x10 = LEFT_WHEEL_CPR_X10;
+  }
+  else
+  {
+    normalized_delta = (int64_t)delta;
+    cpr_x10 = RIGHT_WHEEL_CPR_X10;
+  }
+  return (int32_t)((normalized_delta * 60000000LL) /
+                   (cpr_x10 * (int64_t)elapsed_ms));
+}
+
+static int32_t Motor_RampSpeedTarget(int32_t current, int32_t requested)
+{
+  int32_t effective = requested;
+
+  if (((current > 0) && (requested < 0)) ||
+      ((current < 0) && (requested > 0)))
+  {
+    effective = 0;
+  }
+
+  if (current < effective)
+  {
+    current += SPEED_RAMP_STEP_RPM_X100;
+    if (current > effective)
+    {
+      current = effective;
+    }
+  }
+  else if (current > effective)
+  {
+    current -= SPEED_RAMP_STEP_RPM_X100;
+    if (current < effective)
+    {
+      current = effective;
+    }
+  }
+  return current;
+}
+
+static int16_t Motor_ComputePiOutput(uint8_t side, int32_t target_rpm_x100,
+                                    int32_t measured_rpm_x100, int32_t *integral_x100)
+{
+  int32_t direction;
+  int32_t target_magnitude;
+  int32_t measured_along_target;
+  int32_t error_rpm_x100;
+  int32_t feedforward_x100;
+  int32_t proportional_x100;
+  int32_t candidate_integral;
+  int32_t candidate_output;
+  int32_t output_x100;
+
+  if (target_rpm_x100 == 0)
+  {
+    *integral_x100 = 0;
+    return 0;
+  }
+
+  direction = (target_rpm_x100 < 0) ? -1 : 1;
+  target_magnitude = (target_rpm_x100 < 0) ? -target_rpm_x100 : target_rpm_x100;
+  measured_along_target = measured_rpm_x100 * direction;
+  error_rpm_x100 = target_magnitude - measured_along_target;
+  feedforward_x100 = (int32_t)Motor_FeedForwardPercent(side, target_rpm_x100) * 100L;
+  proportional_x100 = (error_rpm_x100 * SPEED_KP_NUM) / SPEED_KP_DEN;
+  candidate_integral = *integral_x100 +
+                       ((error_rpm_x100 * SPEED_KI_NUM) / SPEED_KI_DEN);
+
+  if (candidate_integral > SPEED_INTEGRAL_LIMIT_X100)
+  {
+    candidate_integral = SPEED_INTEGRAL_LIMIT_X100;
+  }
+  else if (candidate_integral < -SPEED_INTEGRAL_LIMIT_X100)
+  {
+    candidate_integral = -SPEED_INTEGRAL_LIMIT_X100;
+  }
+
+  candidate_output = feedforward_x100 + proportional_x100 + candidate_integral;
+  if (!(((candidate_output > ((int32_t)SPEED_OUTPUT_MAX_PERCENT * 100L)) &&
+         (error_rpm_x100 > 0)) ||
+        ((candidate_output < 0) && (error_rpm_x100 < 0))))
+  {
+    *integral_x100 = candidate_integral;
+  }
+
+  output_x100 = feedforward_x100 + proportional_x100 + *integral_x100;
+  if (output_x100 > ((int32_t)SPEED_OUTPUT_MAX_PERCENT * 100L))
+  {
+    output_x100 = (int32_t)SPEED_OUTPUT_MAX_PERCENT * 100L;
+  }
+  else if (output_x100 < 0)
+  {
+    output_x100 = 0;
+  }
+  return (int16_t)(direction * ((output_x100 + 50L) / 100L));
+}
+
+static void Motor_SpeedTask(uint32_t now)
+{
+  uint32_t elapsed_ms = now - speed_last_ms;
+  int32_t left_now;
+  int32_t right_now;
+  int32_t raw_left_rpm_x100;
+  int32_t raw_right_rpm_x100;
+  int16_t left_output;
+  int16_t right_output;
+
+  if (speed_loop_initialized == 0U)
+  {
+    speed_left_encoder = left_encoder_count;
+    speed_right_encoder = right_encoder_count;
+    speed_last_ms = now;
+    speed_loop_initialized = 1U;
+    return;
+  }
+  if (elapsed_ms < SPEED_LOOP_PERIOD_MS)
+  {
+    return;
+  }
+
+  left_now = left_encoder_count;
+  right_now = right_encoder_count;
+  raw_left_rpm_x100 = Motor_WheelRpmX100(0U, left_now - speed_left_encoder, elapsed_ms);
+  raw_right_rpm_x100 = Motor_WheelRpmX100(1U, right_now - speed_right_encoder, elapsed_ms);
+  speed_left_encoder = left_now;
+  speed_right_encoder = right_now;
+  speed_last_ms = now;
+
+  left_speed_measured_rpm_x100 =
+      ((left_speed_measured_rpm_x100 * 2L) + raw_left_rpm_x100) / 3L;
+  right_speed_measured_rpm_x100 =
+      ((right_speed_measured_rpm_x100 * 2L) + raw_right_rpm_x100) / 3L;
+  left_speed_ramped_rpm_x100 =
+      Motor_RampSpeedTarget(left_speed_ramped_rpm_x100, left_speed_target_rpm_x100);
+  right_speed_ramped_rpm_x100 =
+      Motor_RampSpeedTarget(right_speed_ramped_rpm_x100, right_speed_target_rpm_x100);
+
+  left_output = Motor_ComputePiOutput(0U, left_speed_ramped_rpm_x100,
+                                     left_speed_measured_rpm_x100,
+                                     &left_speed_integral_x100);
+  right_output = Motor_ComputePiOutput(1U, right_speed_ramped_rpm_x100,
+                                      right_speed_measured_rpm_x100,
+                                      &right_speed_integral_x100);
+  left_motor_percent = left_output;
+  right_motor_percent = right_output;
+  Motor_ApplyOutputs(left_output, right_output);
+  Argos_Oled_SetMotors(left_output, right_output,
+                       ((left_output == 0) && (right_output == 0)) ? "STOP" : "PI");
+}
+
 static void Motor_ConfigPwmPins(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -1322,10 +1694,19 @@ static void Motor_SetSpeeds(int16_t left_percent, int16_t right_percent)
 {
   int16_t new_left = ClampPercent(left_percent);
   int16_t new_right = ClampPercent(right_percent);
+  uint8_t command_changed = ((new_left != left_motor_percent) ||
+                             (new_right != right_motor_percent)) ? 1U : 0U;
   uint8_t left_reversing = ((left_motor_percent > 0) && (new_left < 0)) ||
                            ((left_motor_percent < 0) && (new_left > 0));
   uint8_t right_reversing = ((right_motor_percent > 0) && (new_right < 0)) ||
                             ((right_motor_percent < 0) && (new_right > 0));
+
+  if (motor_control_mode != MOTOR_CONTROL_PWM)
+  {
+    motor_control_mode = MOTOR_CONTROL_PWM;
+    Motor_ResetSpeedController();
+    Motor_ResetSyncState();
+  }
 
   if ((left_reversing != 0U) || (right_reversing != 0U))
   {
@@ -1338,8 +1719,18 @@ static void Motor_SetSpeeds(int16_t left_percent, int16_t right_percent)
   right_motor_percent = new_right;
   last_motor_command_ms = HAL_GetTick();
   motor_timeout_latched = 0U;
-  Motor_WriteLeft(left_motor_percent);
-  Motor_WriteRight(right_motor_percent);
+
+  if (command_changed != 0U)
+  {
+    motor_command_changed_ms = last_motor_command_ms;
+    Motor_ResetSyncState();
+    Motor_ApplyOutputs(left_motor_percent, right_motor_percent);
+  }
+  else if ((left_motor_percent == 0) && (right_motor_percent == 0))
+  {
+    Motor_ApplyOutputs(0, 0);
+  }
+
   Argos_Oled_SetMotors(left_motor_percent, right_motor_percent,
                        ((left_motor_percent == 0) && (right_motor_percent == 0)) ? "STOP" : "RUN");
 }
@@ -1351,15 +1742,101 @@ static void Motor_Stop(void)
 
 static void Motor_Task(void)
 {
-  if (((left_motor_percent != 0) || (right_motor_percent != 0)) &&
-      ((HAL_GetTick() - last_motor_command_ms) >= MOTOR_COMMAND_TIMEOUT_MS))
+  uint32_t now = HAL_GetTick();
+  uint8_t command_active = ((left_motor_percent != 0) || (right_motor_percent != 0)) ? 1U : 0U;
+
+  if ((motor_control_mode == MOTOR_CONTROL_PI) &&
+      ((left_speed_target_rpm_x100 != 0) || (right_speed_target_rpm_x100 != 0)))
   {
+    command_active = 1U;
+  }
+
+  if ((command_active != 0U) &&
+      ((now - last_motor_command_ms) >= MOTOR_COMMAND_TIMEOUT_MS))
+  {
+    motor_control_mode = MOTOR_CONTROL_PWM;
+    Motor_ResetSpeedController();
     left_motor_percent = 0;
     right_motor_percent = 0;
-    Motor_WriteLeft(0);
-    Motor_WriteRight(0);
+    Motor_ResetSyncState();
+    Motor_ApplyOutputs(0, 0);
     motor_timeout_latched = 1U;
     Argos_Oled_SetMotors(0, 0, "TIMEOUT");
+    return;
+  }
+
+  if (motor_control_mode == MOTOR_CONTROL_PI)
+  {
+    Motor_SpeedTask(now);
+    return;
+  }
+
+  if ((motor_sync_enabled != 0U) &&
+      (left_motor_percent == right_motor_percent) &&
+      ((left_motor_percent >= MOTOR_SYNC_MIN_PERCENT) ||
+       (left_motor_percent <= -MOTOR_SYNC_MIN_PERCENT)))
+  {
+    if ((now - motor_command_changed_ms) < MOTOR_SYNC_START_DELAY_MS)
+    {
+      return;
+    }
+
+    if ((now - motor_sync_last_ms) >= MOTOR_SYNC_PERIOD_MS)
+    {
+      int32_t left_now = left_encoder_count;
+      int32_t right_now = right_encoder_count;
+      int32_t left_delta = left_now - motor_sync_left_encoder;
+      int32_t right_delta = right_now - motor_sync_right_encoder;
+      int32_t left_rate;
+      int32_t right_rate;
+      int32_t rate_sum;
+      int32_t raw_error_x100;
+      int32_t rounded_trim;
+      int16_t base_magnitude;
+      int16_t left_magnitude;
+      int16_t right_magnitude;
+      int16_t direction;
+
+      motor_sync_left_encoder = left_now;
+      motor_sync_right_encoder = right_now;
+      motor_sync_last_ms = now;
+      left_rate = (left_delta < 0) ? -left_delta : left_delta;
+      right_rate = (right_delta < 0) ? -right_delta : right_delta;
+      rate_sum = left_rate + right_rate;
+
+      if (rate_sum >= MOTOR_SYNC_MIN_COUNTS)
+      {
+        raw_error_x100 = (int32_t)(((int64_t)(left_rate - right_rate) * 20000LL) /
+                                   (int64_t)rate_sum);
+        motor_sync_error_x100 = ((motor_sync_error_x100 * 3L) + raw_error_x100) / 4L;
+        rounded_trim = (motor_sync_error_x100 >= 0) ?
+                       ((motor_sync_error_x100 + 100L) / 200L) :
+                       ((motor_sync_error_x100 - 100L) / 200L);
+        if (rounded_trim > MOTOR_SYNC_MAX_TRIM_PERCENT)
+        {
+          rounded_trim = MOTOR_SYNC_MAX_TRIM_PERCENT;
+        }
+        else if (rounded_trim < -MOTOR_SYNC_MAX_TRIM_PERCENT)
+        {
+          rounded_trim = -MOTOR_SYNC_MAX_TRIM_PERCENT;
+        }
+
+        motor_sync_trim_percent = (int16_t)rounded_trim;
+        base_magnitude = (left_motor_percent < 0) ?
+                         (int16_t)-left_motor_percent : left_motor_percent;
+        left_magnitude = ClampPercent((int16_t)(base_magnitude - motor_sync_trim_percent));
+        right_magnitude = ClampPercent((int16_t)(base_magnitude + motor_sync_trim_percent));
+        direction = (left_motor_percent < 0) ? -1 : 1;
+        Motor_ApplyOutputs((int16_t)(direction * left_magnitude),
+                           (int16_t)(direction * right_magnitude));
+        motor_sync_active = 1U;
+      }
+    }
+  }
+  else if ((motor_sync_active != 0U) || (motor_sync_trim_percent != 0))
+  {
+    Motor_ResetSyncState();
+    Motor_ApplyOutputs(left_motor_percent, right_motor_percent);
   }
 }
 
@@ -1375,6 +1852,15 @@ static void Motor_ResetEncoders(void)
   last_left_encoder_report = 0;
   last_right_encoder_report = 0;
   last_motor_report_ms = HAL_GetTick();
+  speed_left_encoder = 0;
+  speed_right_encoder = 0;
+  speed_last_ms = HAL_GetTick();
+  left_speed_measured_rpm_x100 = 0;
+  right_speed_measured_rpm_x100 = 0;
+  left_speed_integral_x100 = 0;
+  right_speed_integral_x100 = 0;
+  speed_loop_initialized = 0U;
+  Motor_ResetSyncState();
   TestPlatform_PrintLine("Encoder sayaclari sifirlandi.");
 }
 
@@ -1390,6 +1876,7 @@ static void Run_MotorStatus(void)
   int32_t right_delta;
   int32_t left_rpm_x100 = 0;
   int32_t right_rpm_x100 = 0;
+  uint8_t motor_commanded;
 
   if (elapsed_ms == 0U)
   {
@@ -1414,8 +1901,12 @@ static void Run_MotorStatus(void)
   last_left_encoder_report = left_count;
   last_right_encoder_report = right_count;
   last_motor_report_ms = now;
+  motor_commanded = ((left_motor_percent != 0) || (right_motor_percent != 0) ||
+                     ((motor_control_mode == MOTOR_CONTROL_PI) &&
+                      ((left_speed_target_rpm_x100 != 0) ||
+                       (right_speed_target_rpm_x100 != 0)))) ? 1U : 0U;
 
-  TestPlatform_Printf("MOTOR | LEFT:%d RPWM:%lu LPWM:%lu ENC:%ld DENC:%ld RPMx100:%ld AB:%u | RIGHT:%d RPWM:%lu LPWM:%lu ENC:%ld DENC:%ld RPMx100:%ld AB:%u | SAFE:%s\r\n",
+  TestPlatform_Printf("MOTOR | LEFT:%d RPWM:%lu LPWM:%lu ENC:%ld DENC:%ld RPMx100:%ld AB:%u | RIGHT:%d RPWM:%lu LPWM:%lu ENC:%ld DENC:%ld RPMx100:%ld AB:%u | SAFE:%s | SYNC:%s ERRx100:%+ld TRIM:%+d APPLIED:%+d/%+d | CTRL:%s TARGET_RPMx100:%+ld/%+ld RAMP_RPMx100:%+ld/%+ld MEAS_RPMx100:%+ld/%+ld I_x100:%+ld/%+ld\r\n",
                       left_motor_percent,
                       TIM3->CCR1,
                       TIM3->CCR3,
@@ -1430,7 +1921,21 @@ static void Run_MotorStatus(void)
                       right_delta,
                       right_rpm_x100,
                       right_state,
-                      (motor_timeout_latched != 0U) ? "TIMEOUT_STOP" : (((left_motor_percent == 0) && (right_motor_percent == 0)) ? "STOP" : "RUN"));
+                      (motor_timeout_latched != 0U) ? "TIMEOUT_STOP" : ((motor_commanded == 0U) ? "STOP" : "RUN"),
+                      (motor_sync_enabled == 0U) ? "OFF" : ((motor_sync_active != 0U) ? "ACTIVE" : "IDLE"),
+                      motor_sync_error_x100,
+                      motor_sync_trim_percent,
+                      left_motor_applied_percent,
+                      right_motor_applied_percent,
+                      (motor_control_mode == MOTOR_CONTROL_PI) ? "PI" : "PWM",
+                      left_speed_target_rpm_x100,
+                      right_speed_target_rpm_x100,
+                      left_speed_ramped_rpm_x100,
+                      right_speed_ramped_rpm_x100,
+                      left_speed_measured_rpm_x100,
+                      right_speed_measured_rpm_x100,
+                      left_speed_integral_x100,
+                      right_speed_integral_x100);
 }
 
 static void Run_MotorPinTest(void)
@@ -1475,6 +1980,9 @@ static void Run_MotorPinTest(void)
   TIM2->CCR2 = 0U;
   left_motor_percent = 0;
   right_motor_percent = 0;
+  left_motor_applied_percent = 0;
+  right_motor_applied_percent = 0;
+  Motor_ResetSyncState();
   motor_timeout_latched = 0U;
   TestPlatform_PrintLine("MOTOR PIN TEST bitti. Gozlem: hangi satirda hangi motor oynadi?");
 }
@@ -1482,6 +1990,14 @@ static void Run_MotorPinTest(void)
 static void Run_MotorRampTest(void)
 {
   static const int16_t speeds[] = {50, 60, 70, 80};
+  static const struct
+  {
+    const char *label;
+    int8_t dir;
+  } balance_cases[] = {
+    {"FWD", 1},
+    {"REV", -1}
+  };
   static const struct
   {
     const char *label;
@@ -1554,6 +2070,72 @@ static void Run_MotorRampTest(void)
                           right_rpm_x100,
                           left_encoder_state,
                           right_encoder_state);
+
+      Motor_Stop();
+      HAL_Delay(250U);
+    }
+  }
+
+  TestPlatform_PrintLine("MOTOR BALANCE TEST basladi. Iki motor birlikte; ham encoder hizi ve yuzde farki.");
+  TestPlatform_PrintLine("MOTOR BALANCE | DIR CMD  L_DENC R_DENC  L_CPS R_CPS  ERRx100");
+
+  for (uint8_t c = 0U; c < (uint8_t)(sizeof(balance_cases) / sizeof(balance_cases[0])); c++)
+  {
+    for (uint8_t i = 0U; i < (uint8_t)(sizeof(speeds) / sizeof(speeds[0])); i++)
+    {
+      int16_t command = (int16_t)(speeds[i] * balance_cases[c].dir);
+      uint32_t start_ms;
+      uint32_t elapsed_ms;
+      int32_t left_start;
+      int32_t right_start;
+      int32_t left_delta;
+      int32_t right_delta;
+      int32_t left_cps;
+      int32_t right_cps;
+      int32_t error_x100 = 0;
+      int64_t rate_sum;
+
+      __disable_irq();
+      left_start = left_encoder_count;
+      right_start = right_encoder_count;
+      __enable_irq();
+
+      start_ms = HAL_GetTick();
+      Motor_SetSpeeds(command, command);
+      while ((HAL_GetTick() - start_ms) < 900U)
+      {
+        Motor_Task();
+        HAL_Delay(10U);
+      }
+      elapsed_ms = HAL_GetTick() - start_ms;
+      if (elapsed_ms == 0U)
+      {
+        elapsed_ms = 1U;
+      }
+
+      __disable_irq();
+      left_delta = left_encoder_count - left_start;
+      right_delta = right_encoder_count - right_start;
+      __enable_irq();
+
+      left_cps = (int32_t)(((int64_t)((left_delta < 0) ? -left_delta : left_delta) * 1000LL) /
+                           (int64_t)elapsed_ms);
+      right_cps = (int32_t)(((int64_t)((right_delta < 0) ? -right_delta : right_delta) * 1000LL) /
+                            (int64_t)elapsed_ms);
+      rate_sum = (int64_t)left_cps + (int64_t)right_cps;
+      if (rate_sum > 0LL)
+      {
+        error_x100 = (int32_t)(((int64_t)(left_cps - right_cps) * 20000LL) / rate_sum);
+      }
+
+      TestPlatform_Printf("MOTOR BALANCE | %-3s %+4d  L_DENC:%+7ld R_DENC:%+7ld  L_CPS:%6ld R_CPS:%6ld  ERRx100:%+6ld\r\n",
+                          balance_cases[c].label,
+                          command,
+                          left_delta,
+                          right_delta,
+                          left_cps,
+                          right_cps,
+                          error_x100);
 
       Motor_Stop();
       HAL_Delay(250U);

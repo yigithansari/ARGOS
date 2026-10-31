@@ -56,6 +56,7 @@ static void MX_USART2_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 /* ARGOS application modules live in Core/Src/argos_platform.c. */
+extern uint32_t g_pfnVectors;
 /* USER CODE END 0 */
 
 /**
@@ -66,6 +67,12 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+
+  /* Support both the legacy 0x08000000 image and the OTA application image
+     linked at 0x08008000. The vector symbol follows the active linker image. */
+  SCB->VTOR = (uint32_t)&g_pfnVectors;
+  __DSB();
+  __ISB();
 
   /* USER CODE END 1 */
 
@@ -204,9 +211,6 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(GPIOA, TOF_LEFT_XSHUT_Pin | TOF_RIGHT_XSHUT_Pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(LEFT_MOTOR_Port, LEFT_MOTOR_RPWM_Pin | LEFT_MOTOR_LPWM_Pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(RIGHT_MOTOR_Port, RIGHT_MOTOR_RPWM_Pin | RIGHT_MOTOR_LPWM_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -222,6 +226,11 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
+  /* Keep sensors shut down and motor inputs low before changing pin modes. */
+  HAL_GPIO_WritePin(GPIOA, TOF_LEFT_XSHUT_Pin | TOF_RIGHT_XSHUT_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LEFT_MOTOR_Port, LEFT_MOTOR_RPWM_Pin | LEFT_MOTOR_LPWM_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(RIGHT_MOTOR_Port, RIGHT_MOTOR_RPWM_Pin | RIGHT_MOTOR_LPWM_Pin, GPIO_PIN_RESET);
+
   GPIO_InitStruct.Pin = MPU_INT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;

@@ -1,0 +1,51 @@
+ARGOS PHASE 02 LOW-BAND RPM CHARACTERIZATION
+Started : 2026-10-30 01:20:38
+Finished: 2026-10-30 01:22:17
+Status  : COMPLETED
+Link    : Wi-Fi 192.168.137.89:3333
+Safety  : SAFE:STOP
+
+CALIBRATION
+- Wheel circumference: 260.0 mm
+- Track width: 198.0 mm
+- Left: 48097.2 count/rev
+- Right: 48036.6 count/rev
+- Settle/measurement: 1400/1600 ms
+
+RESULTS
+- SIDE   DIR  PWM   WHEEL_RPM   ACTIVE_DELTA   ELAPSED
+- LEFT   FWD   50%     +20.40         -29894  1.828s
+- LEFT   FWD   52%     +23.50         -34157  1.813s
+- LEFT   FWD   54%     +27.00         -43962  2.031s
+- LEFT   FWD   56%     +50.47         -78414  1.938s
+- LEFT   FWD   58%     +64.54        -100216  1.937s
+- LEFT   FWD   60%     +60.65         -93450  1.922s
+- LEFT   REV   50%     -18.92         +25828  1.703s
+- LEFT   REV   52%     -27.59         +40433  1.828s
+- LEFT   REV   54%     -31.13         +53807  2.156s
+- LEFT   REV   56%     -39.54         +54486  1.719s
+- LEFT   REV   58%     -53.37         +77567  1.813s
+- LEFT   REV   60%     -60.22         +87523  1.813s
+- RIGHT  FWD   50%     +21.39         +32642  1.906s
+- RIGHT  FWD   52%     +33.85         +52518  1.938s
+- RIGHT  FWD   54%     +34.34         +50257  1.828s
+- RIGHT  FWD   56%     +40.99         +66680  2.032s
+- RIGHT  FWD   58%     +65.31         +95628  1.829s
+- RIGHT  FWD   60%     +61.78        +106643  2.156s
+- RIGHT  REV   50%     -12.67         -17440  1.719s
+- RIGHT  REV   52%     -32.34         -44097  1.703s
+- RIGHT  REV   54%     -34.68         -53363  1.922s
+- RIGHT  REV   56%     -59.86         -86835  1.812s
+- RIGHT  REV   58%     -66.71        -102654  1.922s
+- RIGHT  REV   60%     -67.82         -99262  1.828s
+
+TRANSITION SLOPES (RPM per +2% PWM)
+- LEFT FWD: 50-52:+3.10 | 52-54:+3.50 | 54-56:+23.47 | 56-58:+14.07 | 58-60:-3.89
+- LEFT REV: 50-52:+8.67 | 52-54:+3.54 | 54-56:+8.41 | 56-58:+13.83 | 58-60:+6.85
+- RIGHT FWD: 50-52:+12.46 | 52-54:+0.49 | 54-56:+6.65 | 56-58:+24.32 | 58-60:-3.52
+- RIGHT REV: 50-52:+19.67 | 52-54:+2.34 | 54-56:+25.18 | 56-58:+6.85 | 58-60:+1.11
+
+NOTES
+- Positive RPM means robot-forward wheel direction; reverse samples are negative.
+- Test is no-load with wheels raised.
+- Panel keepalive is required; link loss leaves STM32's 1200 ms timeout as the final stop layer.

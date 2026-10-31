@@ -1,10 +1,14 @@
+import json
+import http.client
 import math
+import os
 import queue
 import re
 import socket
 import threading
 import time
 import tkinter as tk
+import zlib
 from collections import deque
 from datetime import datetime
 from pathlib import Path
@@ -23,6 +27,30 @@ READ_POLL_SECONDS = 0.03
 WIFI_HOST = "192.168.4.1"
 WIFI_PORT = 3333
 DISCOVERY_PORT = 3334
+WIFI_UPDATE_PORT = 3335
+WINDOWS_HOTSPOT_IP = "192.168.137.1"
+DEFAULT_WHEEL_CIRCUMFERENCE_MM = 260.0
+DEFAULT_TRACK_WIDTH_MM = 198.0
+ENCODER_CALIBRATION_TURNS = 10
+FIRMWARE_ENCODER_COUNTS_PER_REV = 1440.0
+LOWBAND_PWM_LEVELS = (50, 52, 54, 56, 58, 60)
+LOWBAND_SETTLE_MS = 1400
+LOWBAND_MEASURE_MS = 1600
+LOWBAND_STOP_MS = 500
+
+
+def validate_ota_image(image):
+    if not 8 <= len(image) <= 480 * 1024:
+        raise ValueError("Select an OTA application image between 8 bytes and 480 KiB.")
+    stack = int.from_bytes(image[:4], "little")
+    reset = int.from_bytes(image[4:8], "little")
+    if not 0x20000000 <= stack <= 0x20020000:
+        raise ValueError("The image has an invalid STM32 initial stack pointer.")
+    if not (reset & 1) or not 0x08008000 <= (reset & ~1) < 0x08008000 + len(image):
+        raise ValueError(
+            "Select ARGOS_OTA.bin linked at 0x08008000. "
+            "Bootstrap and normal application images cannot be uploaded here."
+        )
 
 
 class TcpLineTransport:
@@ -71,7 +99,7 @@ def discover_argos(timeout=0.6):
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         sock.settimeout(timeout)
         sock.bind(("", 0))
-        for broadcast in ("255.255.255.255", "192.168.137.255"):
+        for broadcast in ("255.255.255.255", "192.168.137.255", "192.168.4.255"):
             sock.sendto(b"ARGOS_DISCOVER", (broadcast, DISCOVERY_PORT))
         payload, address = sock.recvfrom(256)
         fields = payload.decode("ascii", errors="ignore").strip().split("|")
@@ -117,6 +145,32 @@ class ArgosControlPanel(tk.Tk):
         self.system_test_lines = []
         self.system_test_started_at = None
         self.system_test_report_path = Path(__file__).with_name("argos_system_test_report.txt")
+        self.firmware_update_active = False
+        self.lowband_report_path = Path(__file__).with_name("argos_lowband_rpm_report.txt")
+        self.connection_logbook_path = Path(__file__).with_name("argos_connection_logbook.jsonl")
+        self.motion_calibration_path = Path(__file__).with_name("argos_motion_calibration.json")
+        self.motion_calibration = self._load_motion_calibration()
+        self.encoder_calibration_zero = None
+        self.encoder_calibration_measurements = {}
+        self.phase02_window = None
+        self.phase02_vars = {}
+        self.lowband_test_active = False
+        self.lowband_test_steps = []
+        self.lowband_test_rows = []
+        self.lowband_test_index = 0
+        self.lowband_test_started_at = None
+        self.lowband_current_step = None
+        self.lowband_start_snapshot = None
+        self.system_test_button = None
+        self.motor_sample_seq = 0
+        self.esp_last_event_id = self._load_last_esp_event_id()
+        self.last_bridge_rx_time = time.monotonic()
+        self.last_bridge_ping_time = 0.0
+        self.pressed_drive_keys = set()
+        self.keyboard_drive_active = False
+        self.last_keyboard_drive = (0, 0)
+        self.intentional_disconnect = False
+        self.link_loss_handled = False
 
         self.port_var = tk.StringVar()
         self.link_mode_var = tk.StringVar(value="Wi-Fi")
@@ -129,11 +183,13 @@ class ArgosControlPanel(tk.Tk):
         self.mpu_var = tk.StringVar(value="WAITING")
         self.tof_left_var = tk.StringVar(value="WAITING")
         self.tof_right_var = tk.StringVar(value="WAITING")
-        self.left_motor_var = tk.StringVar(value="0% / 0.0 rpm")
-        self.right_motor_var = tk.StringVar(value="0% / 0.0 rpm")
+        self.left_motor_var = tk.StringVar(value="0% / 0.0 rpm est.")
+        self.right_motor_var = tk.StringVar(value="0% / 0.0 rpm est.")
         self.int_var = tk.StringVar(value="-")
         self.stream_var = tk.StringVar(value="OFF")
         self.tof_stream_var = tk.StringVar(value="OFF")
+        self.wifi_rssi_var = tk.StringVar(value="-")
+        self.bridge_health_var = tk.StringVar(value="WAITING")
         self.accel_var = tk.StringVar(value="0.00 g / 0.00 g / 0.00 g")
         self.gyro_var = tk.StringVar(value="0.00 / 0.00 / 0.00 deg/s")
         self.temp_var = tk.StringVar(value="-")
@@ -143,8 +199,13 @@ class ArgosControlPanel(tk.Tk):
         self.left_drive_var = tk.IntVar(value=0)
         self.right_drive_var = tk.IntVar(value=0)
         self.drive_speed_var = tk.IntVar(value=60)
+        self.drive_mode_var = tk.StringVar(value="PWM")
+        self.drive_speed_unit_var = tk.StringVar(value="%")
         self.drive_command_var = tk.StringVar(value="STOPPED")
         self.drive_active = False
+        self.active_drive_mode = "PWM"
+        self.drive_sliders = []
+        self.main_speed_scale = None
         self.robot_ready = False
         self.auto_stream_started = False
         self.motor_state = {
@@ -160,16 +221,188 @@ class ArgosControlPanel(tk.Tk):
             "right_delta": 0,
             "left_rpm": 0.0,
             "right_rpm": 0.0,
+            "left_distance_mm": 0.0,
+            "right_distance_mm": 0.0,
             "safe": "STOP",
+            "sync": "IDLE",
+            "sync_error": 0.0,
+            "sync_trim": 0,
+            "left_applied": 0,
+            "right_applied": 0,
+            "control": "PWM",
+            "left_target_rpm": 0.0,
+            "right_target_rpm": 0.0,
+            "left_ramped_rpm": 0.0,
+            "right_ramped_rpm": 0.0,
+            "left_pi_i": 0.0,
+            "right_pi_i": 0.0,
         }
-        self.custom_command_var = tk.StringVar()
 
         self._configure_style()
         self._build_ui()
+        self.bind_all("<KeyPress>", self._on_drive_key_press, add="+")
+        self.bind_all("<KeyRelease>", self._on_drive_key_release, add="+")
         self.refresh_ports()
         self.after(40, self._drain_rx_queue)
+        self.after(250, self._ensure_windows_mobile_hotspot)
         self.after(900, self._auto_connect_wifi)
         self.after(500, self._motor_keepalive)
+        self.after(100, self._drive_focus_watchdog)
+        self.after(2000, self._link_watchdog)
+
+    def _windows_mobile_hotspot_active(self):
+        if os.name != "nt":
+            return False
+        probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            probe.bind((WINDOWS_HOTSPOT_IP, 0))
+            return True
+        except OSError:
+            return False
+        finally:
+            probe.close()
+
+    def _ensure_windows_mobile_hotspot(self):
+        if os.name != "nt" or self.link_mode_var.get() != "Wi-Fi":
+            return
+        if self._windows_mobile_hotspot_active():
+            self._log("[HOTSPOT] Windows mobile hotspot is active.\n", "ok")
+            return
+        self.status_var.set("WINDOWS HOTSPOT REQUIRED")
+        self.status_badge.configure(bg="#3a3012", fg="#ffe39a")
+        self._append_connection_event(
+            "PANEL", "HOTSPOT_AUTO_START_UNAVAILABLE",
+            "Windows hotspot is off; WinRT auto-start requires packaged wiFiControl capability",
+        )
+        self._log(
+            "[HOTSPOT] Windows hotspot is off. Automatic start was tested but Windows denied "
+            "wiFiControl access to this unpackaged desktop app; waiting without opening Settings.\n",
+            "warn",
+        )
+
+    def _load_motion_calibration(self):
+        calibration = {
+            "version": 1,
+            "wheel_circumference_mm": DEFAULT_WHEEL_CIRCUMFERENCE_MM,
+            "track_width_mm": DEFAULT_TRACK_WIDTH_MM,
+            "left_counts_per_wheel_rev": None,
+            "right_counts_per_wheel_rev": None,
+            "left_forward_sign": None,
+            "right_forward_sign": None,
+        }
+        try:
+            stored = json.loads(self.motion_calibration_path.read_text(encoding="utf-8"))
+            if isinstance(stored, dict):
+                calibration.update(stored)
+        except (OSError, ValueError, TypeError):
+            pass
+        return calibration
+
+    def _motion_calibration_ready(self):
+        return all(
+            self.motion_calibration.get(key) not in (None, 0, 0.0)
+            for key in (
+                "wheel_circumference_mm",
+                "track_width_mm",
+                "left_counts_per_wheel_rev",
+                "right_counts_per_wheel_rev",
+                "left_forward_sign",
+                "right_forward_sign",
+            )
+        )
+
+    def _calibrated_wheel_rpm(self, side, firmware_rpm_x100):
+        if not self._motion_calibration_ready():
+            return None
+        counts_per_rev = float(self.motion_calibration[f"{side}_counts_per_wheel_rev"])
+        forward_sign = int(self.motion_calibration[f"{side}_forward_sign"])
+        return ((float(firmware_rpm_x100) / 100.0) * FIRMWARE_ENCODER_COUNTS_PER_REV /
+                counts_per_rev * forward_sign)
+
+    def _load_last_esp_event_id(self):
+        highest = 0
+        try:
+            with self.connection_logbook_path.open("r", encoding="utf-8") as handle:
+                for row in handle:
+                    try:
+                        record = json.loads(row)
+                    except (ValueError, TypeError):
+                        continue
+                    if record.get("source") == "ESP":
+                        highest = max(highest, int(record.get("event_id", 0)))
+        except OSError:
+            pass
+        return highest
+
+    def _append_connection_event(self, source, code, detail="", **fields):
+        record = {
+            "received_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+            "source": source,
+            "code": code,
+            "detail": detail,
+            "link": self.connection_label,
+        }
+        record.update(fields)
+        try:
+            with self.connection_logbook_path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(record, ensure_ascii=True) + "\n")
+            return True
+        except OSError:
+            return False
+
+    def _handle_esp_log_line(self, text):
+        payload = text.split("ESP LOG |", 1)[-1].strip()
+        fields = payload.split("|", 5)
+        if len(fields) != 6:
+            return None
+        try:
+            event_id = int(fields[0])
+            boot_id = int(fields[1])
+            uptime_ms = int(fields[2])
+        except ValueError:
+            return None
+
+        if event_id > self.esp_last_event_id:
+            stored = self._append_connection_event(
+                "ESP", fields[4], fields[5], event_id=event_id,
+                boot_id=boot_id, uptime_ms=uptime_ms, level=fields[3],
+            )
+            if not stored:
+                return None
+            self.esp_last_event_id = event_id
+        return event_id
+
+    def _send_bridge_control(self, command):
+        if (self.serial_port is None or not self.serial_port.is_open or
+                self.link_mode_var.get() != "Wi-Fi"):
+            return False
+        payload = (command + "\r\n").encode("ascii", errors="ignore")
+        try:
+            self.serial_port.write(payload)
+            self.tx_count += len(payload)
+            return True
+        except Exception:
+            return False
+
+    def _link_watchdog(self):
+        now = time.monotonic()
+        if (self.link_mode_var.get() == "Wi-Fi" and self.serial_port is not None and
+                self.serial_port.is_open):
+            if (now - self.last_bridge_ping_time) >= 3.0:
+                self._send_bridge_control("@ESP PING")
+                self.last_bridge_ping_time = now
+            if self.reader_alive.is_set() and (now - self.last_bridge_rx_time) >= 12.0:
+                self._append_connection_event(
+                    "PANEL", "HEARTBEAT_TIMEOUT",
+                    f"No bridge data for {now - self.last_bridge_rx_time:.1f}s",
+                )
+                self.reader_alive.clear()
+                try:
+                    self.serial_port.close()
+                except Exception:
+                    pass
+                self.rx_queue.put("__ARGOS_LINK_LOST__")
+        self.after(2000, self._link_watchdog)
 
     def _configure_style(self):
         self.style = ttk.Style(self)
@@ -265,7 +498,7 @@ class ArgosControlPanel(tk.Tk):
                          font=("Segoe UI", 24, "bold"))
         title.pack(anchor="w", padx=18, pady=(16, 0))
 
-        subtitle = tk.Label(parent, text="Robot test ve kontrol paneli", bg="#0a141f",
+        subtitle = tk.Label(parent, text="Field mobility control", bg="#0a141f",
                             fg="#6f8aa4", font=("Segoe UI", 10))
         subtitle.pack(anchor="w", padx=20, pady=(0, 14))
 
@@ -309,14 +542,20 @@ class ArgosControlPanel(tk.Tk):
         self._section_label(parent, "Drive")
         drive = tk.Frame(parent, bg="#0a141f")
         drive.pack(fill="x", padx=16, pady=(0, 10))
+        mode_row = tk.Frame(drive, bg="#0a141f")
+        mode_row.pack(fill="x", pady=(0, 7))
+        tk.Label(mode_row, text="Control", bg="#0a141f", fg="#8da4bc",
+                 font=("Segoe UI", 9, "bold")).pack(side="left")
+        mode_combo = ttk.Combobox(mode_row, textvariable=self.drive_mode_var,
+                                  values=("PWM", "RPM"), state="readonly", width=7)
+        mode_combo.pack(side="right")
+        mode_combo.bind("<<ComboboxSelected>>", self._on_drive_mode_changed)
         self._drive_slider(drive, "Left", self.left_drive_var).pack(fill="x", pady=(0, 6))
         self._drive_slider(drive, "Right", self.right_drive_var).pack(fill="x", pady=(0, 6))
         drive_buttons = tk.Frame(drive, bg="#0a141f")
         drive_buttons.pack(fill="x")
         self._small_button(drive_buttons, "SEND", self.send_drive_command).pack(side="left", fill="x", expand=True)
         self._small_button(drive_buttons, "STOP", self.stop_drive).pack(side="left", fill="x", expand=True, padx=(8, 0))
-        self._small_button(drive_buttons, "PIN TEST", lambda: self.send_command("K")).pack(side="left", fill="x", expand=True, padx=(8, 0))
-        self._small_button(drive, "MOTOR RAMP TEST", lambda: self.send_command("Y")).pack(fill="x", pady=(8, 0))
 
         self._section_label(parent, "Live Sensors")
         sensor_live = tk.Frame(parent, bg="#0a141f")
@@ -328,13 +567,23 @@ class ArgosControlPanel(tk.Tk):
         sensor_once.pack(fill="x", padx=16, pady=(0, 10))
         self._small_button(sensor_once, "MPU READ", lambda: self.send_command("m")).pack(side="left", fill="x", expand=True)
         self._small_button(sensor_once, "TOF CHECK", lambda: self.send_command("t")).pack(side="left", fill="x", expand=True, padx=(8, 0))
+        self._small_button(parent, "CALIBRATE IMU", self.calibrate_imu).pack(
+            fill="x", padx=16, pady=(0, 10))
 
-        self._section_label(parent, "Validation")
-        self._action_button(parent, "SYSTEM TEST", self.start_system_test, "#43b5ff").pack(fill="x", padx=16, pady=(0, 10))
-
-        hint = tk.Label(parent, text="MPU/ToF canli akisi ac-kapat.\nSYSTEM TEST son rapor dosyasini gunceller.",
-                        bg="#0a141f", fg="#627891", justify="left", font=("Segoe UI", 9))
-        hint.pack(anchor="w", padx=18, pady=(10, 0))
+        self._section_label(parent, "Diagnostics")
+        self.system_test_button = self._action_button(
+            parent, "SYSTEM TEST", self.open_system_test_menu, "#43b5ff")
+        self.system_test_button.pack(fill="x", padx=16, pady=(0, 8))
+        self._action_button(parent, "PHASE 02 CALIBRATION", self.open_phase02_calibration, "#a978ff").pack(
+            fill="x", padx=16, pady=(0, 8))
+        self._action_button(parent, "STM32 WIRELESS UPDATE", self.start_wireless_stm32_update, "#ff9f43").pack(
+            fill="x", padx=16, pady=(0, 8))
+        diagnostics = tk.Frame(parent, bg="#0a141f")
+        diagnostics.pack(fill="x", padx=16, pady=(0, 10))
+        self._small_button(diagnostics, "PIN TEST", lambda: self.send_command("K")).pack(side="left", fill="x", expand=True)
+        self._small_button(diagnostics, "RAMP TEST", lambda: self.send_command("Y")).pack(side="left", fill="x", expand=True, padx=(8, 0))
+        self._small_button(parent, "LINK LOGBOOK", self._show_connection_logbook).pack(
+            fill="x", padx=16, pady=(0, 14))
         self._on_link_mode_changed()
 
     def _on_link_mode_changed(self, _event=None):
@@ -353,9 +602,9 @@ class ArgosControlPanel(tk.Tk):
         header.grid(row=0, column=0, sticky="ew", padx=18, pady=(14, 8))
         header.grid_columnconfigure(0, weight=1)
 
-        tk.Label(header, text="Mission Console", bg="#071018", fg="#f6fbff",
+        tk.Label(header, text="Field Control", bg="#071018", fg="#f6fbff",
                  font=("Segoe UI", 24, "bold")).grid(row=0, column=0, sticky="w")
-        tk.Label(header, text="STM32F446RE sensor, ToF ve motor test altyapisi",
+        tk.Label(header, text="ARGOS mobile platform command, telemetry and safety link",
                  bg="#071018", fg="#6f8aa4", font=("Segoe UI", 10)).grid(row=1, column=0, sticky="w")
 
         self.status_badge = tk.Label(header, textvariable=self.status_var, bg="#3a1923",
@@ -368,13 +617,13 @@ class ArgosControlPanel(tk.Tk):
         for index in range(9):
             metrics.grid_columnconfigure(index, weight=1)
 
-        self._metric_card(metrics, 0, "I2C Devices", self.last_i2c_var)
-        self._metric_card(metrics, 1, "MPU6050", self.mpu_var)
+        self._metric_card(metrics, 0, "Bridge", self.bridge_health_var)
+        self._metric_card(metrics, 1, "Wi-Fi", self.wifi_rssi_var)
         self._metric_card(metrics, 2, "ToF Left", self.tof_left_var)
         self._metric_card(metrics, 3, "ToF Right", self.tof_right_var)
         self._metric_card(metrics, 4, "Left Motor", self.left_motor_var)
         self._metric_card(metrics, 5, "Right Motor", self.right_motor_var)
-        self._metric_card(metrics, 6, "MPU INT", self.int_var)
+        self._metric_card(metrics, 6, "MPU6050", self.mpu_var)
         self._metric_card(metrics, 7, "MPU Stream", self.stream_var)
         self._metric_card(metrics, 8, "ToF Stream", self.tof_stream_var)
 
@@ -387,7 +636,7 @@ class ArgosControlPanel(tk.Tk):
         top = tk.Frame(motor, bg="#0b1620")
         top.grid(row=0, column=0, columnspan=2, sticky="ew", padx=12, pady=(10, 4))
         top.grid_columnconfigure(0, weight=1)
-        tk.Label(top, text="Drive System", bg="#0b1620", fg="#e8f1ff",
+        tk.Label(top, text="Mobility Control", bg="#0b1620", fg="#e8f1ff",
                  font=("Segoe UI", 11, "bold")).grid(row=0, column=0, sticky="w")
         tk.Label(top, text="BTS7960 PWM + encoder feedback", bg="#0b1620", fg="#8da4bc",
                  font=("Segoe UI", 9)).grid(row=0, column=1, sticky="e")
@@ -401,7 +650,7 @@ class ArgosControlPanel(tk.Tk):
         for row in range(1, 4):
             controls.grid_rowconfigure(row, weight=1, uniform="drive")
 
-        tk.Label(controls, text="MANUAL DRIVE", bg="#071018", fg="#8da4bc",
+        tk.Label(controls, text="LIVE DRIVE", bg="#071018", fg="#8da4bc",
                  font=("Segoe UI", 9, "bold")).grid(row=0, column=0, sticky="w", padx=12, pady=(10, 4))
         self.drive_state_label = tk.Label(controls, textvariable=self.drive_command_var, bg="#071018",
                                           fg="#72f0c0", font=("Consolas", 10, "bold"))
@@ -423,13 +672,25 @@ class ArgosControlPanel(tk.Tk):
         speed_wrap = tk.Frame(controls, bg="#071018")
         speed_wrap.grid(row=4, column=0, columnspan=3, sticky="ew", padx=12, pady=(4, 10))
         speed_wrap.grid_columnconfigure(1, weight=1)
-        tk.Label(speed_wrap, text="SPEED", bg="#071018", fg="#8da4bc",
+        tk.Label(speed_wrap, text="MODE", bg="#071018", fg="#8da4bc",
                  font=("Segoe UI", 8, "bold")).grid(row=0, column=0, sticky="w")
-        tk.Scale(speed_wrap, from_=50, to=100, orient="horizontal", variable=self.drive_speed_var,
-                 bg="#071018", fg="#e8f1ff", troughcolor="#18283a", activebackground="#23c483",
-                 highlightthickness=0, relief="flat", showvalue=False).grid(row=0, column=1, sticky="ew", padx=10)
-        tk.Label(speed_wrap, textvariable=self.drive_speed_var, bg="#071018", fg="#f6fbff",
-                 font=("Consolas", 10, "bold"), width=4).grid(row=0, column=2, sticky="e")
+        main_mode_combo = ttk.Combobox(speed_wrap, textvariable=self.drive_mode_var,
+                                       values=("PWM", "RPM"), state="readonly", width=7)
+        main_mode_combo.grid(row=0, column=1, sticky="w", padx=10, pady=(0, 3))
+        main_mode_combo.bind("<<ComboboxSelected>>", self._on_drive_mode_changed)
+        tk.Label(speed_wrap, text="SPEED", bg="#071018", fg="#8da4bc",
+                 font=("Segoe UI", 8, "bold")).grid(row=1, column=0, sticky="w")
+        self.main_speed_scale = tk.Scale(
+            speed_wrap, from_=50, to=100, orient="horizontal", variable=self.drive_speed_var,
+            bg="#071018", fg="#e8f1ff", troughcolor="#18283a", activebackground="#23c483",
+            highlightthickness=0, relief="flat", showvalue=False)
+        self.main_speed_scale.grid(row=1, column=1, sticky="ew", padx=10)
+        speed_value = tk.Frame(speed_wrap, bg="#071018")
+        speed_value.grid(row=1, column=2, sticky="e")
+        tk.Label(speed_value, textvariable=self.drive_speed_var, bg="#071018", fg="#f6fbff",
+                 font=("Consolas", 10, "bold"), width=3).pack(side="left")
+        tk.Label(speed_value, textvariable=self.drive_speed_unit_var, bg="#071018", fg="#8da4bc",
+                 font=("Consolas", 9, "bold"), width=3).pack(side="left")
 
         telemetry = tk.Frame(motor, bg="#050b12")
         telemetry.grid(row=1, column=1, sticky="nsew", padx=(6, 12), pady=(0, 12))
@@ -457,17 +718,112 @@ class ArgosControlPanel(tk.Tk):
                          font=("Segoe UI Symbol", 22, "bold"), cursor="hand2")
 
     def _drive_preset(self, label, left_sign, right_sign):
+        if self.lowband_test_active:
+            return
         speed = self.drive_speed_var.get()
         self.left_drive_var.set(left_sign * speed)
         self.right_drive_var.set(right_sign * speed)
         if self.send_drive_command():
-            self.drive_command_var.set(f"{label}  {speed}%")
+            unit = "RPM" if self.drive_mode_var.get() == "RPM" else "%"
+            self.drive_command_var.set(f"{label}  {speed} {unit}")
             self.drive_state_label.configure(fg="#72f0c0")
         else:
             self.left_drive_var.set(0)
             self.right_drive_var.set(0)
             self.drive_command_var.set("LINK REQUIRED")
             self.drive_state_label.configure(fg="#ff7187")
+
+    def _keyboard_input_allowed(self):
+        focused = self.focus_get()
+        return not isinstance(focused, (tk.Entry, tk.Text, tk.Scale, ttk.Combobox))
+
+    def _on_drive_key_press(self, event):
+        if not self._keyboard_input_allowed():
+            return None
+        key = event.keysym
+        if self.lowband_test_active:
+            if key == "space":
+                self._abort_lowband_rpm_test("Emergency stop from keyboard.")
+            return "break" if key in ("space", "Up", "Down", "Left", "Right") else None
+        if key == "space":
+            self.pressed_drive_keys.clear()
+            self.keyboard_drive_active = False
+            self.stop_drive()
+            return "break"
+        if key not in ("Up", "Down", "Left", "Right"):
+            return None
+        if key not in self.pressed_drive_keys:
+            self.pressed_drive_keys.add(key)
+            self._apply_keyboard_drive()
+        return "break"
+
+    def _on_drive_key_release(self, event):
+        key = event.keysym
+        if key not in ("Up", "Down", "Left", "Right"):
+            return None
+        self.pressed_drive_keys.discard(key)
+        self._apply_keyboard_drive()
+        return "break"
+
+    def _apply_keyboard_drive(self):
+        throttle = int("Up" in self.pressed_drive_keys) - int("Down" in self.pressed_drive_keys)
+        steer = int("Right" in self.pressed_drive_keys) - int("Left" in self.pressed_drive_keys)
+        speed = self.drive_speed_var.get()
+        inner = max(0, round(speed * 0.38))
+
+        if throttle > 0:
+            left = inner if steer < 0 else speed
+            right = inner if steer > 0 else speed
+            label = "FORWARD"
+        elif throttle < 0:
+            left = -inner if steer < 0 else -speed
+            right = -inner if steer > 0 else -speed
+            label = "REVERSE"
+        elif steer < 0:
+            left, right, label = -speed, speed, "PIVOT LEFT"
+        elif steer > 0:
+            left, right, label = speed, -speed, "PIVOT RIGHT"
+        else:
+            left, right, label = 0, 0, "STOPPED"
+
+        target = (left, right)
+        if target == self.last_keyboard_drive:
+            return
+        self.last_keyboard_drive = target
+        self.left_drive_var.set(left)
+        self.right_drive_var.set(right)
+
+        if target == (0, 0):
+            if self.keyboard_drive_active:
+                self.drive_active = False
+                self.keyboard_drive_active = False
+                self.drive_command_var.set("STOPPED")
+                if self.serial_port is not None and self.serial_port.is_open:
+                    self.send_command("x")
+            return
+
+        if not self.robot_ready:
+            self.drive_command_var.set("LINK REQUIRED")
+            self.drive_state_label.configure(fg="#ff7187")
+            return
+
+        if self.send_drive_command():
+            self.keyboard_drive_active = True
+            self.drive_command_var.set(f"{label}  L{left:+d} R{right:+d}")
+            self.drive_state_label.configure(fg="#72f0c0")
+
+    def _drive_focus_watchdog(self):
+        try:
+            panel_has_focus = self.focus_displayof() is not None
+        except tk.TclError:
+            return
+
+        if self.keyboard_drive_active and not panel_has_focus:
+            self.pressed_drive_keys.clear()
+            self.last_keyboard_drive = (0, 0)
+            self.stop_drive()
+            self.drive_command_var.set("FOCUS STOP")
+        self.after(100, self._drive_focus_watchdog)
 
     def _build_imu_dashboard(self, parent):
         dash = tk.Frame(parent, bg="#071018")
@@ -590,14 +946,6 @@ class ArgosControlPanel(tk.Tk):
                          activebackground="#22384f", activeforeground="#ffffff", relief="flat",
                          font=("Segoe UI", 8, "bold"), padx=8, pady=6, cursor="hand2")
 
-    def _wide_command(self, parent, label, command, color):
-        button = tk.Button(parent, text=label, command=lambda: self.send_command(command),
-                           bg="#0f1c29", fg="#e8f1ff", activebackground="#17283a",
-                           activeforeground="#ffffff", relief="flat", anchor="w",
-                           font=("Segoe UI", 9, "bold"), padx=12, pady=7, cursor="hand2")
-        button.pack(fill="x", padx=16, pady=2)
-        button.configure(highlightthickness=2, highlightbackground=color)
-
     def _drive_slider(self, parent, label, variable):
         wrap = tk.Frame(parent, bg="#0a141f")
         row = tk.Frame(wrap, bg="#0a141f")
@@ -606,11 +954,30 @@ class ArgosControlPanel(tk.Tk):
                  font=("Segoe UI", 9, "bold")).pack(side="left")
         tk.Label(row, textvariable=variable, bg="#0a141f", fg="#e8f1ff",
                  font=("Consolas", 9, "bold"), width=4).pack(side="right")
-        tk.Scale(wrap, from_=-100, to=100, orient="horizontal", variable=variable,
-                 bg="#0a141f", fg="#8da4bc", troughcolor="#18283a",
-                 activebackground="#23c483", highlightthickness=0, relief="flat",
-                 length=235, showvalue=False).pack(fill="x")
+        scale = tk.Scale(wrap, from_=-100, to=100, orient="horizontal", variable=variable,
+                         bg="#0a141f", fg="#8da4bc", troughcolor="#18283a",
+                         activebackground="#23c483", highlightthickness=0, relief="flat",
+                         length=235, showvalue=False)
+        scale.pack(fill="x")
+        self.drive_sliders.append(scale)
         return wrap
+
+    def _on_drive_mode_changed(self, _event=None):
+        self.stop_drive()
+        rpm_mode = self.drive_mode_var.get() == "RPM"
+        limit = 55 if rpm_mode else 100
+        minimum = 15 if rpm_mode else 50
+        default_speed = 35 if rpm_mode else 60
+        for scale in self.drive_sliders:
+            scale.configure(from_=-limit, to=limit)
+        if self.main_speed_scale is not None:
+            self.main_speed_scale.configure(from_=minimum, to=limit)
+        self.drive_speed_var.set(default_speed)
+        self.drive_speed_unit_var.set("RPM" if rpm_mode else "%")
+        self.left_drive_var.set(0)
+        self.right_drive_var.set(0)
+        self.active_drive_mode = self.drive_mode_var.get()
+        self.drive_command_var.set(f"{self.active_drive_mode} MODE")
 
     def refresh_ports(self):
         if list_ports is None:
@@ -634,6 +1001,8 @@ class ArgosControlPanel(tk.Tk):
 
         if self.link_mode_var.get() == "Wi-Fi":
             requested_host = self.wifi_host_var.get().strip() or "AUTO"
+            host = requested_host
+            port = self.wifi_port_var.get()
             try:
                 if requested_host.upper() == "AUTO":
                     discovered = discover_argos()
@@ -682,11 +1051,14 @@ class ArgosControlPanel(tk.Tk):
         return True
 
     def _start_reader(self, link_name):
-
+        self.connection_label = link_name
+        self.intentional_disconnect = False
+        self.link_loss_handled = False
+        self.last_bridge_rx_time = time.monotonic()
+        self.last_bridge_ping_time = 0.0
         self.reader_alive.set()
         self.reader_thread = threading.Thread(target=self._reader_loop, daemon=True)
         self.reader_thread.start()
-        self.connection_label = link_name
         self.robot_ready = False
         self.auto_stream_started = False
         if link_name.startswith("Wi-Fi"):
@@ -695,7 +1067,10 @@ class ArgosControlPanel(tk.Tk):
         else:
             self.status_var.set(f"CONNECTED {link_name} - WAITING")
             self.status_badge.configure(bg="#3a3012", fg="#ffe39a")
+        self._append_connection_event("PANEL", "LINK_CONNECTED", link_name)
         self._log(f"[CONNECTED] {link_name}\n", "ok")
+        if link_name.startswith("Wi-Fi"):
+            self.after(250, lambda: self._send_bridge_control("@ESP LOGS"))
 
     def _auto_connect_wifi(self):
         if self.link_mode_var.get() == "Wi-Fi" and (self.serial_port is None or not self.serial_port.is_open):
@@ -704,8 +1079,15 @@ class ArgosControlPanel(tk.Tk):
                 self.after(2500, self._auto_connect_wifi)
 
     def disconnect_serial(self):
+        disconnected_link = self.connection_label
+        self.intentional_disconnect = True
+        if self.lowband_test_active:
+            self._abort_lowband_rpm_test("Connection closed by operator.")
         self.reader_alive.clear()
         self.drive_active = False
+        self.keyboard_drive_active = False
+        self.pressed_drive_keys.clear()
+        self.last_keyboard_drive = (0, 0)
         self.robot_ready = False
         self.auto_stream_started = False
         self.left_drive_var.set(0)
@@ -720,24 +1102,44 @@ class ArgosControlPanel(tk.Tk):
         self.connection_label = "Disconnected"
         self.status_var.set("DISCONNECTED")
         self.status_badge.configure(bg="#3a1923", fg="#ffb3c0")
+        self.bridge_health_var.set("OFFLINE")
+        self.wifi_rssi_var.set("-")
+        self._append_connection_event(
+            "PANEL", "LINK_DISCONNECTED", "User/application disconnect",
+            link=disconnected_link,
+        )
         self._log("[DISCONNECTED]\n", "warn")
 
-    def send_custom_command(self):
-        command = self.custom_command_var.get().strip()
-        if command:
-            self.send_command(command)
-            self.custom_command_var.set("")
-
-    def send_drive_command(self):
+    def send_drive_command(self, allow_test=False, force_pwm=False):
+        if self.lowband_test_active and not allow_test:
+            self._log("[LOW-BAND] Manual drive command ignored while the test is active.\n", "warn")
+            return False
         if not self.robot_ready:
             messagebox.showwarning("STM32 bekleniyor", "ESP bagli fakat STM32 UART yaniti henuz alinmadi.")
             return False
-        sent = self.send_command(f"P {self.left_drive_var.get()} {self.right_drive_var.get()}")
+        mode = "PWM" if force_pwm else self.drive_mode_var.get()
+        left = self.left_drive_var.get()
+        right = self.right_drive_var.get()
+        if mode == "RPM":
+            left = max(-55, min(55, left))
+            right = max(-55, min(55, right))
+            command = f"V {left} {right}"
+        else:
+            command = f"P {left} {right}"
+        sent = self.send_command(command)
+        if sent:
+            self.active_drive_mode = mode
         self.drive_active = bool(sent and (self.left_drive_var.get() != 0 or self.right_drive_var.get() != 0))
         return sent
 
-    def stop_drive(self):
+    def stop_drive(self, abort_test=True):
+        if self.lowband_test_active and abort_test:
+            self._abort_lowband_rpm_test("Emergency/manual stop requested.")
+            return
         self.drive_active = False
+        self.keyboard_drive_active = False
+        self.pressed_drive_keys.clear()
+        self.last_keyboard_drive = (0, 0)
         self.left_drive_var.set(0)
         self.right_drive_var.set(0)
         self.drive_command_var.set("STOPPED")
@@ -745,10 +1147,136 @@ class ArgosControlPanel(tk.Tk):
             self.drive_state_label.configure(fg="#72f0c0")
         self.send_command("x")
 
+    def start_wireless_stm32_update(self):
+        if self.firmware_update_active:
+            messagebox.showinfo("Update active", "An STM32 update is already running.")
+            return
+        if self.link_mode_var.get() != "Wi-Fi" or self.serial_port is None or not self.serial_port.is_open:
+            messagebox.showwarning(
+                "Wi-Fi required",
+                "Connect the panel to the ARGOS ESP bridge before starting a wireless STM32 update.",
+            )
+            return
+        default_image = Path(__file__).resolve().parent.parent / "Debug" / "ARGOS_OTA.bin"
+        selected = filedialog.askopenfilename(
+            title="Select ARGOS OTA application image",
+            initialdir=str(default_image.parent),
+            initialfile=default_image.name,
+            filetypes=(("ARGOS OTA binary", "*.bin"), ("All files", "*.*")),
+        )
+        if not selected:
+            return
+        image_path = Path(selected)
+        try:
+            image = image_path.read_bytes()
+        except OSError as exc:
+            messagebox.showerror("Image read failed", str(exc))
+            return
+        try:
+            validate_ota_image(image)
+        except ValueError as exc:
+            messagebox.showerror("Invalid image", str(exc))
+            return
+
+        image_crc = zlib.crc32(image) & 0xFFFFFFFF
+        if not messagebox.askyesno(
+            "Wireless STM32 update",
+            "The robot will STOP and remain unavailable during programming.\n\n"
+            f"File: {image_path.name}\nSize: {len(image)} bytes\nCRC32: {image_crc:08X}\n\n"
+            "Continue?",
+        ):
+            return
+
+        try:
+            host = self.serial_port.socket.getpeername()[0]
+        except (AttributeError, OSError):
+            host = self.wifi_host_var.get().strip()
+        if not host or host.upper() == "AUTO":
+            messagebox.showerror("Bridge address missing", "The ESP bridge IP address could not be determined.")
+            return
+
+        self.stop_drive()
+        self.firmware_update_active = True
+        self.status_var.set("STM32 WIRELESS UPDATE")
+        self.status_badge.configure(bg="#4a3010", fg="#ffd79a")
+        self._log(
+            f"[STM32 UPDATE] Uploading {image_path.name}, {len(image)} bytes, CRC {image_crc:08X}.\n",
+            "warn",
+        )
+        worker = threading.Thread(
+            target=self._wireless_update_worker,
+            args=(host, image, image_crc, int(time.time())),
+            daemon=True,
+        )
+        worker.start()
+
+    def _wireless_update_worker(self, host, image, image_crc, build_id):
+        connection = None
+        try:
+            boundary = f"ARGOS-{time.time_ns()}"
+            while boundary.encode("ascii") in image:
+                boundary += "X"
+            body = (
+                f"--{boundary}\r\n"
+                'Content-Disposition: form-data; name="firmware"; filename="ARGOS_OTA.bin"\r\n'
+                "Content-Type: application/octet-stream\r\n\r\n"
+            ).encode("ascii") + image + f"\r\n--{boundary}--\r\n".encode("ascii")
+            connection = http.client.HTTPConnection(host, WIFI_UPDATE_PORT, timeout=150)
+            connection.request(
+                "POST",
+                "/stm32",
+                body=body,
+                headers={
+                    "Content-Type": f"multipart/form-data; boundary={boundary}",
+                    "X-ARGOS-Size": str(len(image)),
+                    "X-ARGOS-CRC32": str(image_crc),
+                    "X-ARGOS-Build": str(build_id),
+                    "X-ARGOS-Confirm": "STOPPED",
+                },
+            )
+            response = connection.getresponse()
+            detail = response.read(4096).decode("utf-8", errors="replace").strip()
+            ok = response.status == 200 and detail.startswith("UPDATE PASS")
+            result = detail or f"HTTP {response.status} {response.reason}"
+        except Exception as exc:
+            ok = False
+            result = str(exc)
+        finally:
+            if connection is not None:
+                connection.close()
+        self.after(0, lambda: self._finish_wireless_update(ok, result))
+
+    def _finish_wireless_update(self, ok, result):
+        self.firmware_update_active = False
+        self._append_connection_event(
+            "PANEL",
+            "STM32_UPDATE_PASS" if ok else "STM32_UPDATE_FAIL",
+            result,
+        )
+        if ok:
+            self._log(f"[STM32 UPDATE PASS] {result}\n", "ok")
+            self.status_var.set("UPDATE PASS - STM32 RESTARTING")
+            self.status_badge.configure(bg="#123c2c", fg="#8effc5")
+            messagebox.showinfo(
+                "STM32 update complete",
+                "The image was cached by ESP, written by the STM32 bootloader and CRC verified.\n\n"
+                + result,
+            )
+        else:
+            self._log(f"[STM32 UPDATE FAIL] {result}\n", "error")
+            self.status_var.set("STM32 UPDATE FAILED")
+            self.status_badge.configure(bg="#3a1923", fg="#ffb3c0")
+            messagebox.showerror(
+                "STM32 update failed",
+                result
+                + "\n\nIf the bridge says the bootloader is missing, install ARGOS_BOOTSTRAP.bin once through ST-LINK.",
+            )
+
     def _motor_keepalive(self):
         if (self.drive_active and self.serial_port is not None and self.serial_port.is_open and
                 (self.left_drive_var.get() != 0 or self.right_drive_var.get() != 0)):
-            payload = f"P {self.left_drive_var.get()} {self.right_drive_var.get()}\r\n".encode("ascii")
+            prefix = "V" if self.active_drive_mode == "RPM" else "P"
+            payload = f"{prefix} {self.left_drive_var.get()} {self.right_drive_var.get()}\r\n".encode("ascii")
             try:
                 self.serial_port.write(payload)
                 self.tx_count += len(payload)
@@ -762,12 +1290,567 @@ class ArgosControlPanel(tk.Tk):
     def toggle_tof_live(self):
         self.send_command("D")
 
+    def calibrate_imu(self):
+        if not self.robot_ready:
+            messagebox.showwarning("STM32 bekleniyor", "Kalibrasyon icin once STM32 baglantisi kurulmalidir.")
+            return
+        if not messagebox.askokcancel(
+                "IMU kalibrasyonu",
+                "Robotu tamamen hareketsiz ve duz bir zeminde tut. Yaklasik 3 saniye surer."):
+            return
+        self.stop_drive()
+        self.send_command("S MPU 0")
+        self.after(200, lambda: self.send_command("c"))
+        self.after(4200, lambda: self.send_command("S MPU 1"))
+
+    def open_phase02_calibration(self):
+        if self.phase02_window is not None and self.phase02_window.winfo_exists():
+            self.phase02_window.lift()
+            self.phase02_window.focus_force()
+            return
+
+        self.stop_drive()
+        self.encoder_calibration_zero = None
+        self.encoder_calibration_measurements = {}
+
+        popup = tk.Toplevel(self)
+        self.phase02_window = popup
+        popup.title("ARGOS Phase 02 Motion Calibration")
+        popup.geometry("760x690")
+        popup.minsize(680, 620)
+        popup.configure(bg="#071018")
+        popup.grid_columnconfigure(0, weight=1)
+        popup.grid_rowconfigure(2, weight=1)
+        popup.protocol("WM_DELETE_WINDOW", self._close_phase02_calibration)
+
+        tk.Label(popup, text="Phase 02 - Encoder / Geometry Calibration",
+                 bg="#071018", fg="#f6fbff", font=("Segoe UI", 17, "bold")).grid(
+                     row=0, column=0, sticky="w", padx=18, pady=(16, 4))
+        tk.Label(
+            popup,
+            text=("Motors stay stopped. Lift the wheels, mark one point on each wheel and rotate "
+                  f"each wheel exactly {ENCODER_CALIBRATION_TURNS} turns in its FORWARD driving direction."),
+            bg="#071018", fg="#8da4bc", justify="left", wraplength=700,
+            font=("Segoe UI", 10),
+        ).grid(row=1, column=0, sticky="ew", padx=18, pady=(0, 12))
+
+        body = tk.Frame(popup, bg="#0a141f", highlightbackground="#203247", highlightthickness=1)
+        body.grid(row=2, column=0, sticky="nsew", padx=18, pady=(0, 12))
+        body.grid_columnconfigure(1, weight=1)
+
+        self.phase02_vars = {
+            "circumference": tk.StringVar(
+                value=f"{float(self.motion_calibration.get('wheel_circumference_mm', DEFAULT_WHEEL_CIRCUMFERENCE_MM)):.1f}"),
+            "track": tk.StringVar(
+                value=f"{float(self.motion_calibration.get('track_width_mm', DEFAULT_TRACK_WIDTH_MM)):.1f}"),
+            "zero": tk.StringVar(value="Not captured"),
+            "left": tk.StringVar(value=self._phase02_saved_side_text("left")),
+            "right": tk.StringVar(value=self._phase02_saved_side_text("right")),
+            "result": tk.StringVar(value="Waiting for encoder zero."),
+        }
+
+        tk.Label(body, text="Measured geometry", bg="#0a141f", fg="#72f0c0",
+                 font=("Segoe UI", 11, "bold")).grid(row=0, column=0, columnspan=3, sticky="w", padx=14, pady=(14, 8))
+        self._phase02_entry_row(body, 1, "Wheel circumference", self.phase02_vars["circumference"], "mm")
+        self._phase02_entry_row(body, 2, "Track width", self.phase02_vars["track"], "mm")
+
+        tk.Label(body, text="Manual encoder measurement", bg="#0a141f", fg="#72f0c0",
+                 font=("Segoe UI", 11, "bold")).grid(row=3, column=0, columnspan=3, sticky="w", padx=14, pady=(18, 8))
+
+        zero_button = self._small_button(body, "1  ZERO ENCODERS", self._phase02_zero_encoders)
+        zero_button.grid(row=4, column=0, sticky="ew", padx=14, pady=5)
+        tk.Label(body, textvariable=self.phase02_vars["zero"], bg="#0a141f", fg="#d8e7f7",
+                 anchor="w", font=("Consolas", 10)).grid(row=4, column=1, columnspan=2, sticky="ew", padx=10)
+
+        left_button = self._small_button(
+            body, f"2  CAPTURE LEFT ({ENCODER_CALIBRATION_TURNS} TURNS)",
+            lambda: self._phase02_request_capture("left"))
+        left_button.grid(row=5, column=0, sticky="ew", padx=14, pady=5)
+        tk.Label(body, textvariable=self.phase02_vars["left"], bg="#0a141f", fg="#d8e7f7",
+                 anchor="w", font=("Consolas", 10)).grid(row=5, column=1, columnspan=2, sticky="ew", padx=10)
+
+        right_button = self._small_button(
+            body, f"3  CAPTURE RIGHT ({ENCODER_CALIBRATION_TURNS} TURNS)",
+            lambda: self._phase02_request_capture("right"))
+        right_button.grid(row=6, column=0, sticky="ew", padx=14, pady=5)
+        tk.Label(body, textvariable=self.phase02_vars["right"], bg="#0a141f", fg="#d8e7f7",
+                 anchor="w", font=("Consolas", 10)).grid(row=6, column=1, columnspan=2, sticky="ew", padx=10)
+
+        result_box = tk.Label(body, textvariable=self.phase02_vars["result"], bg="#050b12",
+                              fg="#8bc7ff", justify="left", anchor="nw", wraplength=680,
+                              font=("Consolas", 10), padx=12, pady=12)
+        result_box.grid(row=7, column=0, columnspan=3, sticky="nsew", padx=14, pady=(14, 12))
+        body.grid_rowconfigure(7, weight=1)
+
+        actions = tk.Frame(popup, bg="#071018")
+        actions.grid(row=3, column=0, sticky="ew", padx=18, pady=(0, 16))
+        actions.grid_columnconfigure(0, weight=1)
+        self._action_button(actions, "SAVE CALIBRATION", self._save_phase02_calibration, "#23c483").grid(
+            row=0, column=1, padx=(8, 0))
+        self._small_button(actions, "CLOSE", self._close_phase02_calibration).grid(
+            row=0, column=2, padx=(8, 0))
+
+    def _phase02_entry_row(self, parent, row, label, variable, suffix):
+        tk.Label(parent, text=label, bg="#0a141f", fg="#8da4bc",
+                 font=("Segoe UI", 10)).grid(row=row, column=0, sticky="w", padx=14, pady=5)
+        tk.Entry(parent, textvariable=variable, bg="#071018", fg="#f6fbff",
+                 insertbackground="#f6fbff", relief="flat", width=12,
+                 font=("Consolas", 10)).grid(row=row, column=1, sticky="w", padx=10, pady=5)
+        tk.Label(parent, text=suffix, bg="#0a141f", fg="#627891",
+                 font=("Segoe UI", 9)).grid(row=row, column=2, sticky="w", padx=(0, 14))
+
+    def _phase02_saved_side_text(self, side):
+        counts = self.motion_calibration.get(f"{side}_counts_per_wheel_rev")
+        sign = self.motion_calibration.get(f"{side}_forward_sign")
+        if counts is None:
+            return "Not measured"
+        direction = "+" if int(sign or 1) > 0 else "-"
+        return f"saved {float(counts):.1f} count/rev  forward sign {direction}"
+
+    def _phase02_connection_ready(self):
+        if self.serial_port is None or not self.serial_port.is_open or not self.robot_ready:
+            messagebox.showwarning("STM32 waiting", "Connect ARGOS and wait for STM32 telemetry first.")
+            return False
+        return True
+
+    def _phase02_zero_encoders(self):
+        if not self._phase02_connection_ready():
+            return
+        self.stop_drive()
+        self.send_command("Z")
+        self.after(250, lambda: self.send_command("E"))
+        self.after(550, self._phase02_store_zero)
+
+    def _phase02_store_zero(self):
+        if not self.phase02_vars:
+            return
+        self.encoder_calibration_zero = {
+            "left": int(self.motor_state.get("left_enc", 0)),
+            "right": int(self.motor_state.get("right_enc", 0)),
+        }
+        self.encoder_calibration_measurements = {}
+        self.phase02_vars["zero"].set(
+            f"L {self.encoder_calibration_zero['left']:+d} / R {self.encoder_calibration_zero['right']:+d}")
+        self.phase02_vars["left"].set("Rotate LEFT wheel forward exactly 10 turns, then capture.")
+        self.phase02_vars["right"].set("Rotate RIGHT wheel forward exactly 10 turns, then capture.")
+        self.phase02_vars["result"].set(
+            "Zero captured. Motors remain stopped. Rotate only the requested wheel by hand; "
+            "the wheel mark must finish at its starting position.")
+
+    def _phase02_request_capture(self, side):
+        if not self._phase02_connection_ready():
+            return
+        if self.encoder_calibration_zero is None:
+            messagebox.showwarning("Zero required", "Press ZERO ENCODERS before measuring wheel turns.")
+            return
+        self.send_command("E")
+        self.after(350, lambda target=side: self._phase02_capture_side(target))
+
+    def _phase02_capture_side(self, side):
+        if not self.phase02_vars or self.encoder_calibration_zero is None:
+            return
+        current = int(self.motor_state.get(f"{side}_enc", 0))
+        delta = current - int(self.encoder_calibration_zero[side])
+        if abs(delta) < ENCODER_CALIBRATION_TURNS:
+            messagebox.showwarning(
+                "Encoder movement too small",
+                f"{side.title()} encoder changed only {delta:+d} count. Check the wheel rotation or encoder link.",
+            )
+            return
+        counts_per_rev = abs(delta) / float(ENCODER_CALIBRATION_TURNS)
+        forward_sign = 1 if delta > 0 else -1
+        self.encoder_calibration_measurements[side] = {
+            "total_counts": delta,
+            "counts_per_wheel_rev": counts_per_rev,
+            "forward_sign": forward_sign,
+        }
+        sign_text = "+" if forward_sign > 0 else "-"
+        self.phase02_vars[side].set(
+            f"delta {delta:+d} / {counts_per_rev:.1f} count/rev / forward sign {sign_text}")
+        self._phase02_update_result()
+
+    def _phase02_update_result(self):
+        left = self.encoder_calibration_measurements.get("left")
+        right = self.encoder_calibration_measurements.get("right")
+        if not left or not right:
+            captured = "LEFT" if left else "RIGHT" if right else "none"
+            self.phase02_vars["result"].set(
+                f"Captured: {captured}. Measure the other wheel before saving.")
+            return
+        try:
+            circumference = float(self.phase02_vars["circumference"].get().replace(",", "."))
+            track = float(self.phase02_vars["track"].get().replace(",", "."))
+        except ValueError:
+            self.phase02_vars["result"].set("Geometry values must be numeric.")
+            return
+        left_mm_per_count = circumference / left["counts_per_wheel_rev"]
+        right_mm_per_count = circumference / right["counts_per_wheel_rev"]
+        quarter_turn_travel = math.pi * track / 4.0
+        self.phase02_vars["result"].set(
+            "Measurement ready:\n"
+            f"LEFT  {left['counts_per_wheel_rev']:.1f} count/rev, {left_mm_per_count:.5f} mm/count\n"
+            f"RIGHT {right['counts_per_wheel_rev']:.1f} count/rev, {right_mm_per_count:.5f} mm/count\n"
+            f"1000 mm estimate: L {1000.0 / left_mm_per_count:.0f}, R {1000.0 / right_mm_per_count:.0f} counts\n"
+            f"90 deg in-place wheel travel: {quarter_turn_travel:.1f} mm each side"
+        )
+
+    def _save_phase02_calibration(self):
+        left = self.encoder_calibration_measurements.get("left")
+        right = self.encoder_calibration_measurements.get("right")
+        if not left or not right:
+            messagebox.showwarning("Measurement incomplete", "Capture both LEFT and RIGHT wheel measurements first.")
+            return
+        try:
+            circumference = float(self.phase02_vars["circumference"].get().replace(",", "."))
+            track = float(self.phase02_vars["track"].get().replace(",", "."))
+        except ValueError:
+            messagebox.showerror("Invalid geometry", "Wheel circumference and track width must be numeric.")
+            return
+        if circumference <= 0.0 or track <= 0.0:
+            messagebox.showerror("Invalid geometry", "Geometry values must be greater than zero.")
+            return
+
+        calibration = {
+            "version": 1,
+            "saved_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+            "measurement_turns": ENCODER_CALIBRATION_TURNS,
+            "wheel_circumference_mm": circumference,
+            "track_width_mm": track,
+            "left_counts_per_wheel_rev": left["counts_per_wheel_rev"],
+            "right_counts_per_wheel_rev": right["counts_per_wheel_rev"],
+            "left_forward_sign": left["forward_sign"],
+            "right_forward_sign": right["forward_sign"],
+        }
+        try:
+            self.motion_calibration_path.write_text(
+                json.dumps(calibration, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        except OSError as exc:
+            messagebox.showerror("Save failed", str(exc))
+            return
+        self.motion_calibration = calibration
+        self._log(f"[PHASE 02] Motion calibration saved: {self.motion_calibration_path}\n", "ok")
+        self._phase02_update_result()
+        messagebox.showinfo(
+            "Calibration saved",
+            "Geometry and encoder scale saved. Live motor telemetry now uses calibrated wheel RPM and distance.",
+        )
+
+    def _close_phase02_calibration(self):
+        if self.phase02_window is not None:
+            try:
+                self.phase02_window.destroy()
+            except tk.TclError:
+                pass
+        self.phase02_window = None
+        self.phase02_vars = {}
+
+    def open_system_test_menu(self):
+        if self.lowband_test_active:
+            self._abort_lowband_rpm_test("Operator cancelled the test from SYSTEM TEST.")
+            return
+        popup = tk.Toplevel(self)
+        popup.title("ARGOS System Test")
+        popup.geometry("560x330")
+        popup.resizable(False, False)
+        popup.configure(bg="#071018")
+        popup.transient(self)
+        popup.grab_set()
+        popup.grid_columnconfigure(0, weight=1)
+
+        tk.Label(popup, text="Choose Test", bg="#071018", fg="#f6fbff",
+                 font=("Segoe UI", 17, "bold")).grid(
+                     row=0, column=0, sticky="w", padx=18, pady=(16, 4))
+        tk.Label(
+            popup,
+            text="Both motor tests require every driven wheel to be raised and the chassis secured.",
+            bg="#071018", fg="#8da4bc", justify="left", wraplength=520,
+            font=("Segoe UI", 10),
+        ).grid(row=1, column=0, sticky="ew", padx=18, pady=(0, 14))
+
+        general = tk.Frame(popup, bg="#0a141f", highlightbackground="#203247", highlightthickness=1)
+        general.grid(row=2, column=0, sticky="ew", padx=18, pady=(0, 10))
+        general.grid_columnconfigure(0, weight=1)
+        tk.Label(general, text="General health + ramp test", bg="#0a141f", fg="#e8f1ff",
+                 font=("Segoe UI", 11, "bold")).grid(row=0, column=0, sticky="w", padx=12, pady=(10, 2))
+        tk.Label(general, text="UART, I2C, IMU, ToF, motor safety, encoders and 50/60/70/80% ramp.",
+                 bg="#0a141f", fg="#8da4bc", font=("Segoe UI", 9)).grid(
+                     row=1, column=0, sticky="w", padx=12, pady=(0, 10))
+        self._small_button(
+            general, "RUN GENERAL",
+            lambda: (popup.destroy(), self.start_system_test()),
+        ).grid(row=0, column=1, rowspan=2, padx=12, pady=10)
+
+        lowband = tk.Frame(popup, bg="#0a141f", highlightbackground="#203247", highlightthickness=1)
+        lowband.grid(row=3, column=0, sticky="ew", padx=18, pady=(0, 10))
+        lowband.grid_columnconfigure(0, weight=1)
+        tk.Label(lowband, text="Phase 02 low-band RPM", bg="#0a141f", fg="#e8f1ff",
+                 font=("Segoe UI", 11, "bold")).grid(row=0, column=0, sticky="w", padx=12, pady=(10, 2))
+        tk.Label(lowband, text="Focused 50/52/54/56/58/60% characterization with calibrated wheel RPM.",
+                 bg="#0a141f", fg="#8da4bc", font=("Segoe UI", 9)).grid(
+                     row=1, column=0, sticky="w", padx=12, pady=(0, 10))
+        self._small_button(
+            lowband, "RUN PHASE 02",
+            lambda: (popup.destroy(), self.start_lowband_rpm_test()),
+        ).grid(row=0, column=1, rowspan=2, padx=12, pady=10)
+
+        self._small_button(popup, "CLOSE", popup.destroy).grid(
+            row=4, column=0, sticky="e", padx=18, pady=(0, 14))
+
+    def start_lowband_rpm_test(self):
+        if self.lowband_test_active:
+            self._abort_lowband_rpm_test("Operator cancelled the test.")
+            return
+        if self.serial_port is None or not self.serial_port.is_open or not self.robot_ready:
+            messagebox.showwarning("ARGOS offline", "Connect Wi-Fi/STM32 before starting the motor test.")
+            return
+        if not self._motion_calibration_ready():
+            messagebox.showwarning(
+                "Calibration missing",
+                "Complete and save the Phase 02 ten-turn encoder calibration first.",
+            )
+            return
+        if not messagebox.askokcancel(
+                "Low-band motor test",
+                "This test runs each motor separately at 50, 52, 54, 56, 58 and 60 percent "
+                "in both directions. Lift every driven wheel fully off the ground, secure the "
+                "chassis and keep cables/hands clear. The test takes about two minutes."):
+            return
+
+        self.stop_drive()
+        self.lowband_test_active = True
+        self.lowband_test_started_at = datetime.now()
+        self.lowband_test_rows = []
+        self.lowband_test_index = 0
+        self.lowband_current_step = None
+        self.lowband_start_snapshot = None
+        self.lowband_test_steps = []
+        for side in ("left", "right"):
+            for direction_name, direction_sign in (("FWD", 1), ("REV", -1)):
+                for pwm in LOWBAND_PWM_LEVELS:
+                    self.lowband_test_steps.append({
+                        "side": side,
+                        "direction": direction_name,
+                        "direction_sign": direction_sign,
+                        "pwm": pwm,
+                    })
+
+        if self.system_test_button is not None:
+            self.system_test_button.configure(text="CANCEL LOW-BAND TEST", bg="#ff5c7a")
+        self.clear_console()
+        self._log(
+            "[LOW-BAND] Test started. Motors run one at a time; STM32 timeout remains active.\n",
+            "warn",
+        )
+        self.send_command("S MPU 0")
+        self.send_command("S TOF 0")
+        self.after(350, self._run_next_lowband_step)
+
+    def _run_next_lowband_step(self):
+        if not self.lowband_test_active:
+            return
+        if self.lowband_test_index >= len(self.lowband_test_steps):
+            self.stop_drive(abort_test=False)
+            self.after(700, self._complete_lowband_rpm_test)
+            return
+
+        step = self.lowband_test_steps[self.lowband_test_index]
+        self.lowband_current_step = step
+        command = step["pwm"] * step["direction_sign"]
+        left_command = command if step["side"] == "left" else 0
+        right_command = command if step["side"] == "right" else 0
+        self.left_drive_var.set(left_command)
+        self.right_drive_var.set(right_command)
+        self.drive_command_var.set(
+            f"LOW-BAND {step['side'].upper()} {step['direction']} {step['pwm']}%")
+        if not self.send_drive_command(allow_test=True, force_pwm=True):
+            self._abort_lowband_rpm_test("Motor command could not be sent.")
+            return
+        self._log(
+            f"[LOW-BAND] {self.lowband_test_index + 1:02d}/{len(self.lowband_test_steps)} "
+            f"{step['side'].upper()} {step['direction']} {step['pwm']}% settling...\n",
+            "tx",
+        )
+        self.after(LOWBAND_SETTLE_MS, self._lowband_capture_start)
+
+    def _request_lowband_motor_snapshot(self, callback, baseline=None, attempt=0):
+        if not self.lowband_test_active:
+            return
+        if baseline is None:
+            baseline = self.motor_sample_seq
+            if not self.send_command("E"):
+                self._abort_lowband_rpm_test("Motor telemetry request failed.")
+                return
+        if self.motor_sample_seq > baseline:
+            callback({
+                "left": int(self.motor_state.get("left_enc", 0)),
+                "right": int(self.motor_state.get("right_enc", 0)),
+                "time": time.monotonic(),
+            })
+            return
+        if attempt >= 20:
+            self._abort_lowband_rpm_test("Timed out while waiting for motor telemetry.")
+            return
+        if attempt in (7, 14):
+            self.send_command("E")
+        self.after(
+            100,
+            lambda cb=callback, base=baseline, next_attempt=attempt + 1:
+                self._request_lowband_motor_snapshot(cb, base, next_attempt),
+        )
+
+    def _lowband_capture_start(self):
+        if not self.lowband_test_active:
+            return
+        self._request_lowband_motor_snapshot(self._lowband_store_start)
+
+    def _lowband_store_start(self, snapshot):
+        if not self.lowband_test_active:
+            return
+        self.lowband_start_snapshot = snapshot
+        self.after(LOWBAND_MEASURE_MS, self._lowband_capture_end)
+
+    def _lowband_capture_end(self):
+        if not self.lowband_test_active:
+            return
+        self._request_lowband_motor_snapshot(self._lowband_store_end)
+
+    def _lowband_store_end(self, snapshot):
+        if not self.lowband_test_active or self.lowband_start_snapshot is None:
+            return
+        step = self.lowband_current_step
+        start = self.lowband_start_snapshot
+        elapsed_s = max(snapshot["time"] - start["time"], 0.001)
+        left_delta = snapshot["left"] - start["left"]
+        right_delta = snapshot["right"] - start["right"]
+        active_delta = left_delta if step["side"] == "left" else right_delta
+        counts_per_rev = float(self.motion_calibration[f"{step['side']}_counts_per_wheel_rev"])
+        forward_sign = int(self.motion_calibration[f"{step['side']}_forward_sign"])
+        wheel_rpm = (active_delta * forward_sign * 60.0) / (counts_per_rev * elapsed_s)
+        row = {
+            "side": step["side"].upper(),
+            "direction": step["direction"],
+            "pwm": step["pwm"],
+            "elapsed_s": elapsed_s,
+            "left_delta": left_delta,
+            "right_delta": right_delta,
+            "active_delta": active_delta,
+            "wheel_rpm": wheel_rpm,
+        }
+        self.lowband_test_rows.append(row)
+        self._log(
+            f"[LOW-BAND] {row['side']} {row['direction']} {row['pwm']}% -> "
+            f"{row['wheel_rpm']:+.2f} wheel RPM ({row['active_delta']:+d} counts)\n",
+            "ok",
+        )
+        self.drive_active = False
+        self.left_drive_var.set(0)
+        self.right_drive_var.set(0)
+        self.send_command("x")
+        self.lowband_test_index += 1
+        self.lowband_start_snapshot = None
+        self.after(LOWBAND_STOP_MS, self._run_next_lowband_step)
+
+    def _complete_lowband_rpm_test(self):
+        if not self.lowband_test_active:
+            return
+        self.lowband_test_active = False
+        self.drive_active = False
+        self.left_drive_var.set(0)
+        self.right_drive_var.set(0)
+        self.drive_command_var.set("STOPPED")
+        report = self._build_lowband_report("COMPLETED")
+        try:
+            self.lowband_report_path.write_text(report, encoding="utf-8")
+            self._log(f"[LOW-BAND] Report updated: {self.lowband_report_path}\n", "ok")
+        except OSError as exc:
+            self._log(f"[LOW-BAND] Report write failed: {exc}\n", "error")
+        self._reset_lowband_button()
+        self.send_command("S MPU 1")
+        self.after(150, lambda: self.send_command("S TOF 1"))
+        self._show_system_report(report, title="ARGOS Low-Band RPM Report")
+
+    def _abort_lowband_rpm_test(self, reason):
+        if not self.lowband_test_active:
+            return
+        self.lowband_test_active = False
+        self.drive_active = False
+        self.left_drive_var.set(0)
+        self.right_drive_var.set(0)
+        self.drive_command_var.set("TEST ABORTED")
+        if self.serial_port is not None and self.serial_port.is_open:
+            self.send_command("x")
+        report = self._build_lowband_report(f"ABORTED - {reason}")
+        try:
+            self.lowband_report_path.write_text(report, encoding="utf-8")
+        except OSError:
+            pass
+        self._reset_lowband_button()
+        self._log(f"[LOW-BAND] Aborted: {reason}\n", "error")
+
+    def _reset_lowband_button(self):
+        if self.system_test_button is not None:
+            self.system_test_button.configure(text="SYSTEM TEST", bg="#43b5ff")
+
+    def _build_lowband_report(self, status):
+        finished_at = datetime.now()
+        lines = [
+            "ARGOS PHASE 02 LOW-BAND RPM CHARACTERIZATION",
+            f"Started : {self.lowband_test_started_at.strftime('%Y-%m-%d %H:%M:%S') if self.lowband_test_started_at else '-'}",
+            f"Finished: {finished_at.strftime('%Y-%m-%d %H:%M:%S')}",
+            f"Status  : {status}",
+            f"Link    : {self.connection_label}",
+            f"Safety  : SAFE:{self.motor_state.get('safe', '-')}",
+            "",
+            "CALIBRATION",
+            f"- Wheel circumference: {float(self.motion_calibration['wheel_circumference_mm']):.1f} mm",
+            f"- Track width: {float(self.motion_calibration['track_width_mm']):.1f} mm",
+            f"- Left: {float(self.motion_calibration['left_counts_per_wheel_rev']):.1f} count/rev",
+            f"- Right: {float(self.motion_calibration['right_counts_per_wheel_rev']):.1f} count/rev",
+            f"- Settle/measurement: {LOWBAND_SETTLE_MS}/{LOWBAND_MEASURE_MS} ms",
+            "",
+            "RESULTS",
+            "- SIDE   DIR  PWM   WHEEL_RPM   ACTIVE_DELTA   ELAPSED",
+        ]
+        for row in self.lowband_test_rows:
+            lines.append(
+                f"- {row['side']:<6} {row['direction']:<3}  {row['pwm']:>3}%  "
+                f"{row['wheel_rpm']:>+9.2f}  {row['active_delta']:>+13d}  {row['elapsed_s']:.3f}s"
+            )
+        lines.extend(["", "TRANSITION SLOPES (RPM per +2% PWM)"])
+        for side in ("LEFT", "RIGHT"):
+            for direction in ("FWD", "REV"):
+                rows = [row for row in self.lowband_test_rows
+                        if row["side"] == side and row["direction"] == direction]
+                rows.sort(key=lambda row: row["pwm"])
+                if len(rows) < 2:
+                    continue
+                slopes = []
+                for previous, current in zip(rows, rows[1:]):
+                    delta_rpm = abs(current["wheel_rpm"]) - abs(previous["wheel_rpm"])
+                    slopes.append(f"{previous['pwm']}-{current['pwm']}:{delta_rpm:+.2f}")
+                lines.append(f"- {side} {direction}: " + " | ".join(slopes))
+        lines.extend([
+            "",
+            "NOTES",
+            "- Positive RPM means robot-forward wheel direction; reverse samples are negative.",
+            "- Test is no-load with wheels raised.",
+            "- Panel keepalive is required; link loss leaves STM32's 1200 ms timeout as the final stop layer.",
+        ])
+        return "\n".join(lines) + "\n"
+
     def start_system_test(self):
+        if self.lowband_test_active:
+            messagebox.showwarning("Motor test active", "Cancel or finish the low-band RPM test first.")
+            return
         if self.serial_port is None or not self.serial_port.is_open:
             messagebox.showwarning("Bagli degil", "Once ARGOS Wi-Fi veya COM baglantisini kur.")
             return
         if not self.robot_ready:
             messagebox.showwarning("STM32 bekleniyor", "Sistem testi icin once STM32 UART baglantisi kurulmalidir.")
+            return
+        if not messagebox.askokcancel(
+                "Motor testi guvenligi",
+                "Test iki motoru da ileri ve geri calistiracak. Tekerleri yerden kaldir veya robotun onunde ve arkasinda acik alan birak."):
             return
 
         self.system_test_active = True
@@ -798,11 +1881,12 @@ class ArgosControlPanel(tk.Tk):
             (3450, "t"),
             (4650, "g"),
             (5150, "V"),
-            (6000, "Y"),
+            (5800, "S SYNC 1"),
+            (6200, "Y"),
         ]
         for delay_ms, command in steps:
             self.after(delay_ms, lambda cmd=command: self._send_system_test_command(cmd))
-        self.system_test_timeout_job = self.after(45000, self._finish_system_test)
+        self.system_test_timeout_job = self.after(60000, self._finish_system_test)
 
     def _send_system_test_command(self, command):
         if self.system_test_active:
@@ -834,6 +1918,50 @@ class ArgosControlPanel(tk.Tk):
         self.system_test_lines.append(text.rstrip())
 
     def _build_system_report(self, finished_at, left_delta, right_delta):
+        ramp_pattern = re.compile(
+            r"MOTOR RAMP\s*\|\s*(LEFT|RIGHT)_(FWD|REV)\s+([+-]?\d+)\s+\d+\s+\d+\s+"
+            r"([+-]?\d+)\s+([+-]?\d+)\s+([+-]?\d+)\s+([+-]?\d+)",
+            re.IGNORECASE,
+        )
+        balance_pattern = re.compile(
+            r"MOTOR BALANCE\s*\|\s*(FWD|REV)\s+([+-]?\d+)\s+"
+            r"L_DENC:\s*([+-]?\d+)\s+R_DENC:\s*([+-]?\d+)\s+"
+            r"L_CPS:\s*(\d+)\s+R_CPS:\s*(\d+)\s+ERRx100:\s*([+-]?\d+)",
+            re.IGNORECASE,
+        )
+        ramp_samples = []
+        balance_samples = []
+        for line in self.system_test_lines:
+            ramp_match = ramp_pattern.search(line)
+            if ramp_match:
+                side, direction, command, l_denc, r_denc, l_rpm, r_rpm = ramp_match.groups()
+                ramp_samples.append({
+                    "side": side.upper(),
+                    "direction": direction.upper(),
+                    "command": int(command),
+                    "left_delta": int(l_denc),
+                    "right_delta": int(r_denc),
+                    "left_rpm_x100": int(l_rpm),
+                    "right_rpm_x100": int(r_rpm),
+                    "wheel_rpm": (
+                        self._calibrated_wheel_rpm("left", int(l_rpm))
+                        if side.upper() == "LEFT"
+                        else self._calibrated_wheel_rpm("right", int(r_rpm))
+                    ),
+                })
+            balance_match = balance_pattern.search(line)
+            if balance_match:
+                direction, command, l_denc, r_denc, l_cps, r_cps, error_x100 = balance_match.groups()
+                balance_samples.append({
+                    "direction": direction.upper(),
+                    "command": int(command),
+                    "left_delta": int(l_denc),
+                    "right_delta": int(r_denc),
+                    "left_cps": int(l_cps),
+                    "right_cps": int(r_cps),
+                    "error_x100": int(error_x100),
+                })
+
         checks = []
         checks.append(("UART", "PASS", "Serial TX/RX aktif; komut yanitlari alindi."))
         checks.append(("I2C", "PASS" if "DEVICE FOUND" in self.last_i2c_var.get() or "cihaz" in self.last_i2c_var.get().lower() else "CHECK",
@@ -845,9 +1973,28 @@ class ArgosControlPanel(tk.Tk):
                        self.tof_right_var.get()))
         checks.append(("Motor Safety", "PASS" if self.motor_state.get("safe") in ("STOP", "TIMEOUT_STOP") else "CHECK",
                        f"SAFE:{self.motor_state.get('safe', '-')}"))
-        enc_ok = abs(left_delta) > 5 and abs(right_delta) > 5
-        checks.append(("Encoders", "PASS" if enc_ok else "CHECK",
-                       f"L delta {left_delta:+d}, R delta {right_delta:+d}"))
+        left_active = [abs(row["left_delta"]) for row in ramp_samples if row["side"] == "LEFT"]
+        right_active = [abs(row["right_delta"]) for row in ramp_samples if row["side"] == "RIGHT"]
+        if left_active and right_active:
+            enc_ok = min(left_active) > 100 and min(right_active) > 100
+            encoder_detail = (f"ramp samples L/R {len(left_active)}/{len(right_active)}, "
+                              f"minimum active delta {min(left_active)}/{min(right_active)}")
+        else:
+            enc_ok = abs(left_delta) > 5 and abs(right_delta) > 5
+            encoder_detail = f"legacy delta L {left_delta:+d}, R {right_delta:+d}"
+        checks.append(("Encoders", "PASS" if enc_ok else "CHECK", encoder_detail))
+
+        balance_eval = [row for row in balance_samples if abs(row["command"]) >= 60]
+        if balance_eval:
+            avg_error = sum(abs(row["error_x100"]) for row in balance_eval) / (100.0 * len(balance_eval))
+            max_error = max(abs(row["error_x100"]) for row in balance_eval) / 100.0
+            balance_status = "PASS" if max_error <= 8.0 else "CHECK"
+            balance_detail = (f"60-80% average mismatch {avg_error:.1f}%, maximum {max_error:.1f}%; "
+                              "+ means left faster")
+        else:
+            balance_status = "CHECK"
+            balance_detail = "paired-wheel samples missing; rerun with updated STM32 firmware"
+        checks.append(("Motor Balance", balance_status, balance_detail))
 
         lines = [
             "ARGOS SYSTEM TEST REPORT",
@@ -867,9 +2014,33 @@ class ArgosControlPanel(tk.Tk):
             f"- ToF: {self.tof_left_distance_var.get()} | {self.tof_right_distance_var.get()}",
             f"- Motors: L {self.left_motor_var.get()} enc {self.motor_state.get('left_enc', 0)} | "
             f"R {self.right_motor_var.get()} enc {self.motor_state.get('right_enc', 0)} | SAFE {self.motor_state.get('safe', '-')}",
-            "",
-            "SERIAL LOG",
         ])
+        if ramp_samples:
+            lines.extend(["", "PWM TO WHEEL RPM CHARACTERIZATION"])
+            if self._motion_calibration_ready():
+                lines.append(
+                    f"- Calibration: L {float(self.motion_calibration['left_counts_per_wheel_rev']):.1f}, "
+                    f"R {float(self.motion_calibration['right_counts_per_wheel_rev']):.1f} count/wheel revolution"
+                )
+                lines.append("- Values are no-load wheel RPM; positive is robot-forward direction.")
+                lines.append("- SIDE   DIR  PWM    WHEEL_RPM   ACTIVE_DELTA")
+                for row in ramp_samples:
+                    active_delta = row["left_delta"] if row["side"] == "LEFT" else row["right_delta"]
+                    lines.append(
+                        f"- {row['side']:<6} {row['direction']:<3}  {abs(row['command']):>3}%  "
+                        f"{float(row['wheel_rpm']):>+9.2f}  {active_delta:>+12d}"
+                    )
+            else:
+                lines.append("- CHECK: wheel encoder calibration is missing; only raw firmware data is available.")
+        if balance_samples:
+            lines.extend(["", "MOTOR BALANCE TABLE", "- Raw count/s is retained for direct left/right comparison."])
+            for row in balance_samples:
+                lines.append(
+                    f"- {row['direction']} {row['command']:+d}%: "
+                    f"L {row['left_cps']} count/s, R {row['right_cps']} count/s, "
+                    f"mismatch {row['error_x100'] / 100.0:+.1f}%"
+                )
+        lines.extend(["", "SERIAL LOG"])
         lines.extend(self.system_test_lines)
         return "\n".join(lines) + "\n"
 
@@ -877,15 +2048,15 @@ class ArgosControlPanel(tk.Tk):
         self.system_test_report_path.write_text(report, encoding="utf-8")
         self._log(f"[SYSTEM TEST] Rapor guncellendi: {self.system_test_report_path}\n", "ok")
 
-    def _show_system_report(self, report):
+    def _show_system_report(self, report, title="ARGOS System Test Report"):
         popup = tk.Toplevel(self)
-        popup.title("ARGOS System Test Report")
+        popup.title(title)
         popup.geometry("760x620")
         popup.configure(bg="#071018")
         popup.grid_columnconfigure(0, weight=1)
         popup.grid_rowconfigure(1, weight=1)
 
-        tk.Label(popup, text="System Test Report", bg="#071018", fg="#f6fbff",
+        tk.Label(popup, text=title, bg="#071018", fg="#f6fbff",
                  font=("Segoe UI", 16, "bold")).grid(row=0, column=0, sticky="w", padx=14, pady=(12, 8))
 
         body = tk.Frame(popup, bg="#050b12")
@@ -918,7 +2089,94 @@ class ArgosControlPanel(tk.Tk):
             Path(path).write_text(report, encoding="utf-8")
             self._log(f"[SYSTEM TEST] Rapor farkli kaydedildi: {path}\n", "ok")
 
+    def _read_connection_logbook(self):
+        records = []
+        try:
+            with self.connection_logbook_path.open("r", encoding="utf-8") as handle:
+                for row in handle:
+                    try:
+                        records.append(json.loads(row))
+                    except (ValueError, TypeError):
+                        continue
+        except OSError:
+            return "No connection events recorded yet.\n"
+
+        records = records[-500:]
+        if not records:
+            return "No connection events recorded yet.\n"
+
+        problem_codes = {
+            "BROWNOUT", "PANIC", "INT_WDT", "TASK_WDT", "WDT",
+            "WIFI_DISCONNECT", "WIFI_DISCONNECT_SUMMARY", "WIFI_TIMEOUT",
+            "HEARTBEAT_TIMEOUT", "LINK_LOST",
+            "TCP_DISCONNECTED", "PANEL_LINE",
+        }
+        reset_faults = ("BROWNOUT", "PANIC", "INT_WDT", "TASK_WDT", "WDT")
+        problem_count = sum(
+            1 for record in records
+            if (record.get("code") in problem_codes or
+                (record.get("code") == "BOOT" and record.get("detail") in reset_faults))
+        )
+        lines = [
+            "ARGOS CONNECTION LOGBOOK",
+            f"Events shown: {len(records)} | flagged: {problem_count}",
+            "",
+        ]
+        for record in records:
+            timestamp = record.get("received_at", "-")
+            source = record.get("source", "-")
+            code = record.get("code", "-")
+            detail = record.get("detail", "")
+            suffix = ""
+            if source == "ESP":
+                suffix = (f" | boot {record.get('boot_id', '-')}"
+                          f" | up {record.get('uptime_ms', '-')} ms")
+            lines.append(f"{timestamp} | {source:<5} | {code:<20} | {detail}{suffix}")
+        return "\n".join(lines) + "\n"
+
+    def _show_connection_logbook(self):
+        popup = tk.Toplevel(self)
+        popup.title("ARGOS Connection Logbook")
+        popup.geometry("920x620")
+        popup.configure(bg="#071018")
+        popup.grid_columnconfigure(0, weight=1)
+        popup.grid_rowconfigure(1, weight=1)
+
+        tk.Label(popup, text="Connection Logbook", bg="#071018", fg="#f6fbff",
+                 font=("Segoe UI", 16, "bold")).grid(
+                     row=0, column=0, sticky="w", padx=14, pady=(12, 8))
+
+        body = tk.Frame(popup, bg="#050b12")
+        body.grid(row=1, column=0, sticky="nsew", padx=14, pady=(0, 12))
+        body.grid_columnconfigure(0, weight=1)
+        body.grid_rowconfigure(0, weight=1)
+        text = tk.Text(body, bg="#050b12", fg="#d8e7f7", insertbackground="#d8e7f7",
+                       relief="flat", wrap="none", font=("Consolas", 9), padx=12, pady=12)
+        vertical = tk.Scrollbar(body, orient="vertical", command=text.yview)
+        horizontal = tk.Scrollbar(body, orient="horizontal", command=text.xview)
+        text.configure(yscrollcommand=vertical.set, xscrollcommand=horizontal.set)
+        text.grid(row=0, column=0, sticky="nsew")
+        vertical.grid(row=0, column=1, sticky="ns")
+        horizontal.grid(row=1, column=0, sticky="ew")
+
+        def refresh():
+            text.configure(state="normal")
+            text.delete("1.0", "end")
+            text.insert("1.0", self._read_connection_logbook())
+            text.configure(state="disabled")
+            text.see("end")
+
+        actions = tk.Frame(popup, bg="#071018")
+        actions.grid(row=2, column=0, sticky="ew", padx=14, pady=(0, 14))
+        actions.grid_columnconfigure(0, weight=1)
+        self._small_button(actions, "REFRESH", refresh).grid(row=0, column=1, padx=(8, 0))
+        self._small_button(actions, "CLOSE", popup.destroy).grid(row=0, column=2, padx=(8, 0))
+        refresh()
+
     def send_command(self, command):
+        if self.firmware_update_active:
+            self._log(f"[STM32 UPDATE] Command blocked during update: {command}\n", "warn")
+            return False
         if self.serial_port is None or not self.serial_port.is_open:
             messagebox.showwarning("Bagli degil", "Once ARGOS Wi-Fi veya COM baglantisini kur.")
             return False
@@ -951,18 +2209,23 @@ class ArgosControlPanel(tk.Tk):
                 if data:
                     self.rx_queue.put(data.decode("utf-8", errors="replace"))
             except Exception as exc:
-                self.rx_queue.put(f"\nRX error: {exc}\n")
-                self.rx_queue.put("__ARGOS_LINK_LOST__")
+                if not self.intentional_disconnect:
+                    self.rx_queue.put(f"\nRX error: {exc}\n")
+                    self.rx_queue.put("__ARGOS_LINK_LOST__")
                 break
             time.sleep(READ_POLL_SECONDS)
 
     def _drain_rx_queue(self):
+        highest_esp_ack = None
         while True:
             try:
                 text = self.rx_queue.get_nowait()
             except queue.Empty:
                 break
             if text == "__ARGOS_LINK_LOST__":
+                if self.link_loss_handled:
+                    continue
+                self.link_loss_handled = True
                 self.reader_alive.clear()
                 if self.serial_port is not None:
                     try:
@@ -971,6 +2234,9 @@ class ArgosControlPanel(tk.Tk):
                         pass
                 self.serial_port = None
                 self.drive_active = False
+                self.keyboard_drive_active = False
+                self.pressed_drive_keys.clear()
+                self.last_keyboard_drive = (0, 0)
                 self.robot_ready = False
                 self.auto_stream_started = False
                 self.left_drive_var.set(0)
@@ -978,10 +2244,22 @@ class ArgosControlPanel(tk.Tk):
                 self.drive_command_var.set("LINK LOST")
                 self.status_var.set("LINK LOST - RETRYING")
                 self.status_badge.configure(bg="#3a1923", fg="#ffb3c0")
+                self.bridge_health_var.set("LOST")
+                self.wifi_rssi_var.set("-")
+                self._append_connection_event("PANEL", "LINK_LOST", "Reader or heartbeat failure")
+                if self.lowband_test_active:
+                    self._abort_lowband_rpm_test("Wi-Fi/STM32 link lost; STM32 timeout is stopping the motors.")
                 if self.link_mode_var.get() == "Wi-Fi":
                     self.after(1200, self._auto_connect_wifi)
                 continue
+            self.last_bridge_rx_time = time.monotonic()
             upper = text.upper()
+            if "ESP LOG |" in text:
+                event_id = self._handle_esp_log_line(text)
+                if event_id is not None:
+                    highest_esp_ack = max(highest_esp_ack or 0, event_id)
+            if upper.startswith("ESP PONG |") or upper.startswith("ESP STATUS |"):
+                self._update_bridge_metrics(text)
             if "ARGOS BRIDGE" in upper and "STM:WAITING" in upper:
                 self.status_var.set("WIFI CONNECTED - STM UART WAITING")
                 self.status_badge.configure(bg="#3a3012", fg="#ffe39a")
@@ -1004,7 +2282,19 @@ class ArgosControlPanel(tk.Tk):
                         self._record_system_line(line)
             self._log(text, self._tag_for_line(text))
 
+        if highest_esp_ack is not None:
+            self._send_bridge_control(f"@ESP ACK {highest_esp_ack}")
         self.after(40, self._drain_rx_queue)
+
+    def _update_bridge_metrics(self, text):
+        rssi_match = re.search(r"rssi:(-?\d+)", text, re.IGNORECASE)
+        heap_match = re.search(r"heap:(\d+)", text, re.IGNORECASE)
+        if rssi_match:
+            rssi = int(rssi_match.group(1))
+            self.wifi_rssi_var.set(f"{rssi} dBm" if rssi != 0 else "AP mode")
+        if heap_match:
+            heap_kb = int(heap_match.group(1)) // 1024
+            self.bridge_health_var.set(f"OK / {heap_kb} KB")
 
     def _mark_robot_online(self):
         if self.robot_ready:
@@ -1019,9 +2309,14 @@ class ArgosControlPanel(tk.Tk):
             self.auto_stream_started = True
             self.after(100, lambda: self.send_command("S MPU 1"))
             self.after(250, lambda: self.send_command("S TOF 1"))
+        if self.pressed_drive_keys:
+            self.last_keyboard_drive = (0, 0)
+            self.after(300, self._apply_keyboard_drive)
 
     def _update_metrics(self, text):
         lower = text.lower()
+        if self.system_test_active and "encoder sayaclari sifirlandi" in lower:
+            self.system_test_start_counts = {"left": 0, "right": 0}
         if "toplam" in lower and "cihaz" in lower:
             self.last_i2c_var.set(text.strip())
         elif "bulundu: 0x" in lower:
@@ -1099,6 +2394,62 @@ class ArgosControlPanel(tk.Tk):
         groups = match.groups()
         left_rpm = int(groups[5] or 0) / 100.0
         right_rpm = int(groups[12] or 0) / 100.0
+        left_distance_mm = 0.0
+        right_distance_mm = 0.0
+        calibrated_units = False
+        left_counts_per_rev = self.motion_calibration.get("left_counts_per_wheel_rev")
+        right_counts_per_rev = self.motion_calibration.get("right_counts_per_wheel_rev")
+        left_forward_sign = self.motion_calibration.get("left_forward_sign")
+        right_forward_sign = self.motion_calibration.get("right_forward_sign")
+        circumference_mm = self.motion_calibration.get("wheel_circumference_mm")
+        if (left_counts_per_rev and right_counts_per_rev and left_forward_sign and
+                right_forward_sign and circumference_mm):
+            left_counts_per_rev = float(left_counts_per_rev)
+            right_counts_per_rev = float(right_counts_per_rev)
+            circumference_mm = float(circumference_mm)
+            left_rpm = self._calibrated_wheel_rpm("left", int(groups[5] or 0))
+            right_rpm = self._calibrated_wheel_rpm("right", int(groups[12] or 0))
+            left_distance_mm = (int(groups[3]) * int(left_forward_sign) * circumference_mm /
+                                left_counts_per_rev)
+            right_distance_mm = (int(groups[10]) * int(right_forward_sign) * circumference_mm /
+                                 right_counts_per_rev)
+            calibrated_units = True
+        sync_match = re.search(
+            r"SYNC:([A-Z_]+)\s+ERRx100:([+-]?\d+)\s+TRIM:([+-]?\d+)\s+APPLIED:([+-]?\d+)/([+-]?\d+)",
+            text,
+            re.IGNORECASE,
+        )
+        if sync_match:
+            sync_state, sync_error, sync_trim, left_applied, right_applied = sync_match.groups()
+        else:
+            sync_state = self.motor_state.get("sync", "IDLE")
+            sync_error = int(self.motor_state.get("sync_error", 0.0) * 100.0)
+            sync_trim = self.motor_state.get("sync_trim", 0)
+            left_applied = int(groups[0])
+            right_applied = int(groups[7])
+        control_match = re.search(
+            r"CTRL:(PWM|PI)\s+TARGET_RPMx100:([+-]?\d+)/([+-]?\d+)\s+"
+            r"RAMP_RPMx100:([+-]?\d+)/([+-]?\d+)\s+"
+            r"MEAS_RPMx100:([+-]?\d+)/([+-]?\d+)\s+"
+            r"I_x100:([+-]?\d+)/([+-]?\d+)",
+            text,
+            re.IGNORECASE,
+        )
+        if control_match:
+            (control_mode, left_target, right_target, left_ramped, right_ramped,
+             left_measured, right_measured, left_pi_i, right_pi_i) = control_match.groups()
+            if control_mode.upper() == "PI":
+                left_rpm = int(left_measured) / 100.0
+                right_rpm = int(right_measured) / 100.0
+                calibrated_units = True
+        else:
+            control_mode = self.motor_state.get("control", "PWM")
+            left_target = int(self.motor_state.get("left_target_rpm", 0.0) * 100.0)
+            right_target = int(self.motor_state.get("right_target_rpm", 0.0) * 100.0)
+            left_ramped = int(self.motor_state.get("left_ramped_rpm", 0.0) * 100.0)
+            right_ramped = int(self.motor_state.get("right_ramped_rpm", 0.0) * 100.0)
+            left_pi_i = int(self.motor_state.get("left_pi_i", 0.0) * 100.0)
+            right_pi_i = int(self.motor_state.get("right_pi_i", 0.0) * 100.0)
         self.motor_state.update({
             "left_pct": int(groups[0]),
             "left_pwm_r": int(groups[1]),
@@ -1113,11 +2464,33 @@ class ArgosControlPanel(tk.Tk):
             "right_enc": int(groups[10]),
             "right_delta": int(groups[11] or 0),
             "right_rpm": right_rpm,
+            "left_distance_mm": left_distance_mm,
+            "right_distance_mm": right_distance_mm,
             "right_ab": int(groups[13]),
             "safe": groups[14] or self.motor_state.get("safe", "STOP"),
+            "sync": sync_state.upper(),
+            "sync_error": int(sync_error) / 100.0,
+            "sync_trim": int(sync_trim),
+            "left_applied": int(left_applied),
+            "right_applied": int(right_applied),
+            "control": control_mode.upper(),
+            "left_target_rpm": int(left_target) / 100.0,
+            "right_target_rpm": int(right_target) / 100.0,
+            "left_ramped_rpm": int(left_ramped) / 100.0,
+            "right_ramped_rpm": int(right_ramped) / 100.0,
+            "left_pi_i": int(left_pi_i) / 100.0,
+            "right_pi_i": int(right_pi_i) / 100.0,
         })
-        self.left_motor_var.set(f"{int(groups[0])}% / {left_rpm:+.1f} rpm")
-        self.right_motor_var.set(f"{int(groups[7])}% / {right_rpm:+.1f} rpm")
+        self.motor_sample_seq += 1
+        rpm_suffix = "wheel rpm" if calibrated_units else "rpm est."
+        if control_mode.upper() == "PI":
+            self.left_motor_var.set(
+                f"T {int(left_target) / 100.0:+.0f} / M {left_rpm:+.1f} rpm / {int(groups[0]):+d}%")
+            self.right_motor_var.set(
+                f"T {int(right_target) / 100.0:+.0f} / M {right_rpm:+.1f} rpm / {int(groups[7]):+d}%")
+        else:
+            self.left_motor_var.set(f"{int(groups[0])}% / {left_rpm:+.1f} {rpm_suffix}")
+            self.right_motor_var.set(f"{int(groups[7])}% / {right_rpm:+.1f} {rpm_suffix}")
         self._draw_motor_field()
 
     def _parse_tof_sample(self, text):
@@ -1238,16 +2611,33 @@ class ArgosControlPanel(tk.Tk):
         self._draw_motor_bar(canvas, "LEFT", self.motor_state["left_pct"],
                              self.motor_state["left_enc"], self.motor_state.get("left_ab", 0),
                              self.motor_state.get("left_delta", 0), self.motor_state.get("left_rpm", 0.0),
+                             self.motor_state.get("left_distance_mm", 0.0),
+                             self.motor_state.get("left_target_rpm", 0.0),
                              left, top, mid_x - 24, "#72f0c0")
         self._draw_motor_bar(canvas, "RIGHT", self.motor_state["right_pct"],
                              self.motor_state["right_enc"], self.motor_state.get("right_ab", 0),
                              self.motor_state.get("right_delta", 0), self.motor_state.get("right_rpm", 0.0),
+                             self.motor_state.get("right_distance_mm", 0.0),
+                             self.motor_state.get("right_target_rpm", 0.0),
                              mid_x + 24, top, right, "#8bc7ff")
-        canvas.create_text(width / 2, top + row_gap + 23,
-                           text=f"PC6/PC8 left PWM    PA0/PA1 right PWM    SAFE {self.motor_state.get('safe', '-')}",
+        if self.motor_state.get("control") == "PI":
+            sync_text = (f"CTRL PI  ramp {self.motor_state.get('left_ramped_rpm', 0.0):+.0f}/"
+                         f"{self.motor_state.get('right_ramped_rpm', 0.0):+.0f} rpm  "
+                         f"I {self.motor_state.get('left_pi_i', 0.0):+.1f}/"
+                         f"{self.motor_state.get('right_pi_i', 0.0):+.1f}%")
+        else:
+            sync_text = (f"CTRL PWM  SYNC {self.motor_state.get('sync', '-')}  "
+                         f"err {self.motor_state.get('sync_error', 0.0):+.1f}%  "
+                         f"trim {self.motor_state.get('sync_trim', 0):+d}%  "
+                         f"applied {self.motor_state.get('left_applied', 0):+d}/"
+                         f"{self.motor_state.get('right_applied', 0):+d}")
+        canvas.create_text(width / 2, top + row_gap + 19,
+                           text=f"SAFE {self.motor_state.get('safe', '-')}    {sync_text}",
                            fill="#627891", font=("Segoe UI", 8))
 
-    def _draw_motor_bar(self, canvas, name, percent, encoder, ab_state, delta, rpm, x1, y, x2, color):
+    def _draw_motor_bar(self, canvas, name, percent, encoder, ab_state, delta, rpm, distance_mm,
+                        target_rpm,
+                        x1, y, x2, color):
         center = (x1 + x2) / 2
         bar_y = y + 22
         half = (x2 - x1) / 2
@@ -1256,9 +2646,12 @@ class ArgosControlPanel(tk.Tk):
 
         canvas.create_text(x1, y, text=name, anchor="w", fill="#e8f1ff",
                            font=("Segoe UI", 9, "bold"))
-        canvas.create_text(x2, y, text=f"{percent:+d}%  {rpm:+.1f} rpm  d{delta:+d}",
+        rpm_text = (f"T{target_rpm:+.0f} M{rpm:+.1f} rpm" if self.motor_state.get("control") == "PI"
+                    else f"{rpm:+.1f} wheel rpm")
+        canvas.create_text(x2, y, text=f"{percent:+d}%  {rpm_text}  d{delta:+d}",
                            anchor="e", fill="#8da4bc", font=("Consolas", 9))
-        canvas.create_text(x2, y + 15, text=f"enc {encoder}  AB {ab_state}",
+        distance_text = f"  {distance_mm / 10.0:+.1f} cm" if self._motion_calibration_ready() else ""
+        canvas.create_text(x2, y + 15, text=f"enc {encoder}  AB {ab_state}{distance_text}",
                            anchor="e", fill="#627891", font=("Consolas", 8))
         canvas.create_rectangle(x1, bar_y - 6, x2, bar_y + 6, fill="#0f1c29", outline="#203247")
         canvas.create_line(center, bar_y - 11, center, bar_y + 11, fill="#314052")

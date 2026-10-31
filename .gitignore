@@ -1,4 +1,7 @@
 firmware/esp32_c3_argos_bridge/wifi_secrets.h
+software/control_panel/argos_connection_logbook.jsonl
+software/control_panel/argos_system_test_report.txt
+software/control_panel/argos_lowband_rpm_report.txt
 
 # Generated build and runtime artifacts
 **/Debug/
@@ -6,3 +9,4 @@ firmware/esp32_c3_argos_bridge/wifi_secrets.h
 **/__pycache__/
 *.py[cod]
 .codex_cubeide_verify*/
+firmware/argos_f446re/Bootloader/build/

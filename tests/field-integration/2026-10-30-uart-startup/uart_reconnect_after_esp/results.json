@@ -1,0 +1,32 @@
+[
+  {
+    "connection": 1,
+    "clean_initial_motor": false,
+    "later_stop": true,
+    "unknown_commands": 0
+  },
+  {
+    "connection": 2,
+    "clean_initial_motor": false,
+    "later_stop": true,
+    "unknown_commands": 0
+  },
+  {
+    "connection": 3,
+    "clean_initial_motor": false,
+    "later_stop": true,
+    "unknown_commands": 0
+  },
+  {
+    "connection": 4,
+    "clean_initial_motor": false,
+    "later_stop": true,
+    "unknown_commands": 0
+  },
+  {
+    "connection": 5,
+    "clean_initial_motor": false,
+    "later_stop": true,
+    "unknown_commands": 0
+  }
+]

@@ -1,0 +1,7 @@
+{
+  "timeout_stop": true,
+  "final_stop": true,
+  "http_probes": 29,
+  "http_errors": 0,
+  "max_http_seconds": 0.31200000003445894
+}

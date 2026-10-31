@@ -6,13 +6,13 @@ A long-term autonomous robotics platform developed to master embedded systems, r
 
 ## Current Status
 
-**Phase 00 - Bench Validation is complete and certified. Phase 01 - Mobile Platform is active.**
+**Phase 00 is certified, Phase 01 - Mobile Platform is complete, and Phase 02 - Motion Control is active.**
 
 The Phase 00 bench platform passed its final integrated system test on 2026-09-29. It includes Power Module V1, STM32 firmware, independent bidirectional motor control, encoder telemetry, MPU6050 and dual VL53L0X sensing, USB/UART communication, an ESP32-C3 wireless bridge, an SSD1306 OLED status display, and a Python control panel. The archived [system-test report](tests/phase-00/2026-09-29-system-test-report.txt) records the certification evidence.
 
-The first Phase 01 milestone is complete: **Chassis V1 has been designed** and its Fusion 360 source and DWG export are stored under [`hardware/mechanical/chassis/v1/`](hardware/mechanical/chassis/v1/). Current work is the mechanical fit review and preparation for mobile-platform assembly.
+The first mobile platform is assembled. Chassis V1 and Wheel V5 manufacturing files are archived under [`hardware/mechanical/`](hardware/mechanical/), and current photographs are stored under [`images/hardware/phase-01/`](images/hardware/phase-01/). The robot can move and stop safely under computer control through a Windows hotspot and the ESP32-C3 bridge.
 
-Phase 01 also carries motor deadband characterization, encoder scale calibration, installed-sensor calibration, battery-level monitoring, and the remaining thermal and oscilloscope measurements. Battery charge level is not currently measured or displayed.
+Phase 02 currently focuses on per-wheel feed-forward plus PI speed control. Wheel geometry, encoder scaling, and low-band PWM/RPM characterization are complete. Single raised-wheel forward runs at 25, 35, and 45 RPM met the initial mean tracking target; repeated runs, reverse operation, disconnect-stop latency, and floor tuning remain open. Battery charge level is not currently measured or displayed.
 
 ## Overview
 
@@ -112,7 +112,7 @@ Topics:
 
 Build the first functional mobile robot.
 
-**Status:** Active - Chassis V1 design complete.
+**Status:** Complete - assembled mobile platform and safe basic motion.
 
 Main goals:
 
@@ -121,17 +121,20 @@ Main goals:
 - PID speed control
 - Reliable movement
 
-### Phase 02 - Localization
+### Phase 02 - Motion Control
 
-Implement robot localization using onboard sensors.
+Develop repeatable closed-loop wheel-speed and differential-drive control.
+
+**Status:** Active - PI tuning.
 
 Topics:
 
+- Independent wheel-speed PI control
+- Straight-line repeatability
 - Wheel odometry
-- IMU integration
-- ToF distance sensing
+- Distance and angle commands
 
-### Phase 03 - Basic Autonomy
+### Phase 03 - Localization and Basic Autonomy
 
 Introduce autonomous behavior.
 

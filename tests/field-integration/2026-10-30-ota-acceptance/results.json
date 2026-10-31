@@ -1,0 +1,67 @@
+[
+  {
+    "test": "initial_stop",
+    "passed": true,
+    "detail": "STOP and zero PWM/targets"
+  },
+  {
+    "test": "corrupt_crc_rejected",
+    "passed": true,
+    "detail": "CACHE FAIL: upload size/CRC mismatch"
+  },
+  {
+    "test": "partial_upload_disconnect",
+    "passed": true,
+    "detail": "TCP upload closed halfway; application responds, no bootloader request; ARGOS UPDATE V1 | STM:ONLINE"
+  },
+  {
+    "test": "ota_01",
+    "passed": true,
+    "detail": "UPDATE PASS: PASS size=41424 crc=12954afe; boot_crc=True; restarted=True; stop=True"
+  },
+  {
+    "test": "ota_02",
+    "passed": true,
+    "detail": "UPDATE PASS: PASS size=41424 crc=12954afe; boot_crc=True; restarted=True; stop=True"
+  },
+  {
+    "test": "ota_03",
+    "passed": true,
+    "detail": "UPDATE PASS: PASS size=41424 crc=12954afe; boot_crc=True; restarted=True; stop=True"
+  },
+  {
+    "test": "ota_04",
+    "passed": true,
+    "detail": "UPDATE PASS: PASS size=41424 crc=12954afe; boot_crc=True; restarted=True; stop=True"
+  },
+  {
+    "test": "ota_05",
+    "passed": true,
+    "detail": "UPDATE PASS: PASS size=41424 crc=12954afe; boot_crc=True; restarted=True; stop=True"
+  },
+  {
+    "test": "ota_06",
+    "passed": true,
+    "detail": "UPDATE PASS: PASS size=41424 crc=12954afe; boot_crc=True; restarted=True; stop=True"
+  },
+  {
+    "test": "ota_07",
+    "passed": true,
+    "detail": "UPDATE PASS: PASS size=41424 crc=12954afe; boot_crc=True; restarted=True; stop=True"
+  },
+  {
+    "test": "ota_08",
+    "passed": true,
+    "detail": "UPDATE PASS: PASS size=41424 crc=12954afe; boot_crc=True; restarted=True; stop=True"
+  },
+  {
+    "test": "ota_09",
+    "passed": true,
+    "detail": "UPDATE PASS: PASS size=41424 crc=12954afe; boot_crc=True; restarted=True; stop=True"
+  },
+  {
+    "test": "ota_10",
+    "passed": true,
+    "detail": "UPDATE PASS: PASS size=41424 crc=12954afe; boot_crc=True; restarted=True; stop=True"
+  }
+]

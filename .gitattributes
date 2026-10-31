@@ -4,3 +4,4 @@
 # Mechanical CAD files
 *.dwg binary
 *.f3d binary
+*.dxf binary

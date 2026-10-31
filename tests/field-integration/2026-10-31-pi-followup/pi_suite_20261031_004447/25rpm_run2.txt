@@ -1,0 +1,6 @@
+START: 25 RPM both wheels, 10 seconds
+STOP confirmed=True
+Traceback (most recent call last):
+  File "C:\Users\yigit\OneDrive\Masaüstü\stm\ARGOS\ARGOS\Tools\installation_backups\pi_raised_check.py", line 73, in <module>
+    raise RuntimeError('No fresh PI feedback; stopping')
+RuntimeError: No fresh PI feedback; stopping

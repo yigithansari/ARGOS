@@ -1,0 +1,9 @@
+1793377410.376 
+> E
+MOTOR | LEFT:0 RPWM:0 LPWM:0 ENC:0 DENC:0 RPMx100:0 AB:2 | RIGHT:0 RPWM:0 LPWM:0 ENC:0 DENC:0 RPMx100:0 AB:0 | SAFE:STOP | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+0/+0 | CTRL:PWM TARGET_RPMx100:+0/+0 RAMP_RPMx100:+0/+0 MEAS_RPMx100:+0/+0 I_x100:+0/+0
+ESP STATUS | uptime:5564446 | heap:184468 | rssi:-40 | net:STA | ip:192.168.137.178 | stm:ONLINE
+
+1793377410.390 CACHE UPLOAD ACTIVE: operator may disable hotspot now; robot power stays ON
+1793377436.424 UPLOAD NETWORK ERROR after 6656 bytes: [WinError 10054] Varolan bir bağlantı uzaktaki bir ana bilgisayar tarafından zorla kapatıldı
+1793377436.425 PARTIAL UPLOAD CLOSED; no final boundary sent; full image cannot be programmed
+1793377436.427 Restore hotspot; reconnect and application checks required before PASS

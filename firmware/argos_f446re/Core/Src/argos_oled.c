@@ -21,6 +21,10 @@ static uint16_t tof_right_mm;
 static int16_t motor_left;
 static int16_t motor_right;
 static char safety_text[13] = "STOP";
+static char last_command[18] = "BOOT";
+static uint32_t command_count;
+static uint32_t uart_overflow_count;
+static uint32_t last_command_ms;
 static uint32_t last_refresh_ms;
 static uint8_t dirty = 1U;
 
@@ -163,19 +167,28 @@ static void Oled_WriteRow(uint8_t page, const char *text)
 static void Oled_Render(void)
 {
   char line[22];
-  Oled_WriteRow(0U, "ARGOS");
-  Oled_WriteRow(1U, network_connected ? "WIFI CLIENT ONLINE" : "WIFI WAITING");
+  Oled_WriteRow(0U, "ARGOS FIELD");
+  Oled_WriteRow(1U, network_connected ? "PC LINK ONLINE" : "PC LINK WAITING");
   snprintf(line, sizeof(line), "%s %s", network_mode, network_address);
   Oled_WriteRow(2U, line);
-  snprintf(line, sizeof(line), "SAFE %s", safety_text);
+  snprintf(line, sizeof(line), "CMD %s", last_command);
   Oled_WriteRow(3U, line);
   snprintf(line, sizeof(line), "MOTOR L%+d R%+d", motor_left, motor_right);
   Oled_WriteRow(4U, line);
-  snprintf(line, sizeof(line), "TOF L%s%u", tof_left_ok ? "" : "-", tof_left_ok ? tof_left_mm : 0U);
+  snprintf(line, sizeof(line), "SAFE %s", safety_text);
   Oled_WriteRow(5U, line);
-  snprintf(line, sizeof(line), "TOF R%s%u", tof_right_ok ? "" : "-", tof_right_ok ? tof_right_mm : 0U);
+  if (uart_overflow_count != 0U)
+  {
+    snprintf(line, sizeof(line), "UART OVF %lu", (unsigned long)uart_overflow_count);
+  }
+  else
+  {
+    snprintf(line, sizeof(line), "UART OK RX %lu", (unsigned long)command_count);
+  }
   Oled_WriteRow(6U, line);
-  Oled_WriteRow(7U, imu_ok ? "IMU OK  UART 115200" : "IMU WAIT UART 115200");
+  snprintf(line, sizeof(line), "CMD AGE %luS",
+           (unsigned long)((HAL_GetTick() - last_command_ms) / 1000U));
+  Oled_WriteRow(7U, line);
 }
 
 void Argos_Oled_Init(void)
@@ -203,7 +216,8 @@ void Argos_Oled_Init(void)
 
 void Argos_Oled_Task(void)
 {
-  if ((oled_ready != 0U) && ((dirty != 0U) || ((HAL_GetTick() - last_refresh_ms) >= OLED_REFRESH_MS)))
+  /* Coalesce dirty updates; rendering must not bypass the refresh interval. */
+  if ((oled_ready != 0U) && ((HAL_GetTick() - last_refresh_ms) >= OLED_REFRESH_MS))
   {
     last_refresh_ms = HAL_GetTick();
     dirty = 0U;
@@ -218,6 +232,23 @@ void Argos_Oled_SetNetworkInfo(const char *mode, const char *address)
   snprintf(network_mode, sizeof(network_mode), "%s", mode);
   snprintf(network_address, sizeof(network_address), "%s", address);
   dirty = 1U;
+}
+
+void Argos_Oled_RecordCommand(const char *command, uint32_t receive_count)
+{
+  snprintf(last_command, sizeof(last_command), "%s", command);
+  command_count = receive_count;
+  last_command_ms = HAL_GetTick();
+  dirty = 1U;
+}
+
+void Argos_Oled_SetUartOverflow(uint32_t overflow_count)
+{
+  if (uart_overflow_count != overflow_count)
+  {
+    uart_overflow_count = overflow_count;
+    dirty = 1U;
+  }
 }
 
 void Argos_Oled_SetImu(uint8_t ok) { imu_ok = ok ? 1U : 0U; dirty = 1U; }

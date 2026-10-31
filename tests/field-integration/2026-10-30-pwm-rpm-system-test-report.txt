@@ -1,0 +1,154 @@
+ARGOS SYSTEM TEST REPORT
+Started : 2026-10-30 01:01:31
+Finished: 2026-10-30 01:02:07
+Link    : Wi-Fi 192.168.137.89:3333
+
+SUMMARY
+- UART: PASS (Serial TX/RX aktif; komut yanitlari alindi.)
+- I2C: PASS (toplam 3 cihaz bulundu)
+- IMU: PASS (OK)
+- ToF Left: PASS (677 mm)
+- ToF Right: PASS (853 mm)
+- Motor Safety: PASS (SAFE:STOP)
+- Encoders: PASS (ramp samples L/R 8/8, minimum active delta 16124/13814)
+- Motor Balance: PASS (60-80% average mismatch 4.4%, maximum 7.6%; + means left faster)
+
+LATEST TELEMETRY
+- MPU: OK | ACC +0.02 / +0.03 / +1.07 g | GYR -3.1 / +5.4 / -0.1 deg/s | roll +1.7 / pitch -1.2
+- ToF: LEFT 677 mm | RIGHT 853 mm
+- Motors: L 0% / +0.6 wheel rpm enc -13449 | R 0% / -0.4 wheel rpm enc -9595 | SAFE STOP
+
+PWM TO WHEEL RPM CHARACTERIZATION
+- Calibration: L 48097.2, R 48036.6 count/wheel revolution
+- Values are no-load wheel RPM; positive is robot-forward direction.
+- SIDE   DIR  PWM    WHEEL_RPM   ACTIVE_DELTA
+- LEFT   FWD   50%     +22.32        -16124
+- LEFT   FWD   60%     +61.30        -44278
+- LEFT   FWD   70%     +66.98        -48380
+- LEFT   FWD   80%     +67.15        -48499
+- LEFT   REV   50%     -22.40        +16178
+- LEFT   REV   60%     -57.25        +41346
+- LEFT   REV   70%     -64.40        +46516
+- LEFT   REV   80%     -64.47        +46563
+- RIGHT  FWD   50%     +20.38        +14700
+- RIGHT  FWD   60%     +60.82        +43872
+- RIGHT  FWD   70%     +68.20        +49197
+- RIGHT  FWD   80%     +68.44        +49366
+- RIGHT  REV   50%     -19.15        -13814
+- RIGHT  REV   60%     -64.95        -46850
+- RIGHT  REV   70%     -69.42        -50075
+- RIGHT  REV   80%     -69.48        -50122
+
+MOTOR BALANCE TABLE
+- Raw count/s is retained for direct left/right comparison.
+- FWD +50%: L 19272 count/s, R 16692 count/s, mismatch +14.3%
+- FWD +60%: L 47911 count/s, R 46497 count/s, mismatch +3.0%
+- FWD +70%: L 52983 count/s, R 53638 count/s, mismatch -1.2%
+- FWD +80%: L 53209 count/s, R 53937 count/s, mismatch -1.4%
+- REV -50%: L 17115 count/s, R 15582 count/s, mismatch +9.4%
+- REV -60%: L 46485 count/s, R 50166 count/s, mismatch -7.6%
+- REV -70%: L 51444 count/s, R 55037 count/s, mismatch -6.7%
+- REV -80%: L 51578 count/s, R 55188 count/s, mismatch -6.8%
+
+SERIAL LOG
+ARGOS SYSTEM TEST
+Started: 2026-10-30 01:01:31
+Link: Wi-Fi 192.168.137.89:3333
+>> S MPU 0
+> S MPU 0
+>> S TOF 0
+MPU6050 surekli akis: KAPALI
+> S TOF 0
+ToF surekli akis: KAPALI
+>> x
+>> Z
+> x
+MOTOR | LEFT:0 RPWM:0 LPWM:0 ENC:0 DENC:0 RPMx100:0 AB:1 | RIGHT:0 RPWM:0 LPWM:0 ENC:0 DENC:0 RPMx100:0 AB:2 | SAFE:STOP | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+0/+0
+ESP STATUS | uptime:16300 | heap:187896 | rssi:-40 | net:STA | ip:192.168.137.89 | stm:ONLINE
+> Z
+>> s
+Encoder sayaclari sifirlandi.
+MOTOR | LEFT:0 RPWM:0 LPWM:0 ENC:0 DENC:0 RPMx100:0 AB:1 | RIGHT:0 RPWM:0 LPWM:0 ENC:0 DENC:0 RPMx100:0 AB:2 | SAFE:STOP | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+0/+0
+> s
+I2C taraniyor...
+  bulundu: 0x30
+  bulundu: 0x31
+  bulundu: 0x68
+  toplam 3 cihaz bulundu
+>> m
+> m
+MPU OK | WHO:0x72 | ACC mg X:   22 Y:   31 Z: 1069 | GYR cdps X:  -314 Y:   542 Z:    -9 | TEMP cC: 4227 | INT:0
+>> T
+> T
+ToF adres atama basladi...
+ToF assign | LEFT 0x30:OK | RIGHT 0x31:OK
+>> t
+ESP PONG | uptime:19355 | heap:191180 | rssi:-40 | net:STA | ip:192.168.137.89 | stm:ONLINE
+> t
+ToF testi:
+TOF LEFT | ADDR 0x30 | STATUS:OK | MODEL:0xEE MODULE:0xAA REV:0x10 | RANGE:OK 677 mm | INT:1
+TOF RIGHT | ADDR 0x31 | STATUS:OK | MODEL:0xEE MODULE:0xAA REV:0x10 | RANGE:OK 853 mm | INT:0
+>> g
+> g
+GPIO | B1:SET | LD2:ON | MPU_INT PB10:LOW
+TOF GPIO | LEFT_XSHUT PA8:HIGH LEFT_INT PC7:HIGH | RIGHT_XSHUT PA9:HIGH RIGHT_INT PA10:HIGH
+>> V
+> V
+ENC PULL teshisi: motorlari durdur, tekerleri cevirmeden oku.
+ENC PULL | NOPULL | LA:0 LB:1 | RA:1 RB:0
+ESP STATUS | uptime:21301 | heap:189532 | rssi:-40 | net:STA | ip:192.168.137.89 | stm:ONLINE
+ENC PULL | PULLDOWN | LA:0 LB:1 | RA:1 RB:0
+ENC PULL | PULLUP | LA:0 LB:1 | RA:1 RB:0
+>> S SYNC 1
+ENC PULL bitti. Encoder girisleri PULLUP moda geri alindi.
+> S SYNC 1
+Motor duz surus encoder esitleme: ACIK
+>> Y
+> Y
+MOTOR RAMP TEST basladi. Her satir: komut, PWM, encoder delta ve RPMx100.
+MOTOR RAMP | CASE       CMD  L_PWM R_PWM  L_DENC R_DENC  L_RPMx100 R_RPMx100  L_AB R_AB
+Encoder sayaclari sifirlandi.
+MOTOR RAMP | LEFT_FWD    +50    500     0  -16124     +0     -74565        +0     1    2
+ESP PONG | uptime:23352 | heap:189236 | rssi:-40 | net:STA | ip:192.168.137.89 | stm:ONLINE
+MOTOR RAMP | LEFT_FWD    +60    600     0  -44278     +0    -204763        +0     0    2
+MOTOR RAMP | LEFT_FWD    +70    700     0  -48380     +0    -223732        +0     1    2
+ESP STATUS | uptime:26302 | heap:191228 | rssi:-40 | net:STA | ip:192.168.137.89 | stm:ONLINE
+MOTOR RAMP | LEFT_FWD    +80    800     0  -48499     +0    -224283        +0     2    2
+ESP PONG | uptime:27342 | heap:191180 | rssi:-41 | net:STA | ip:192.168.137.89 | stm:ONLINE
+MOTOR RAMP | LEFT_REV    -50    500     0  +16178     +0     +74815        +0     3    2
+MOTOR RAMP | LEFT_REV    -60    600     0  +41346     +0    +191204        +0     2    2
+MOTOR RAMP | LEFT_REV    -70    700     0  +46516     +0    +215112        +0     3    2
+ESP STATUS | uptime:31304 | heap:191228 | rssi:-41 | net:STA | ip:192.168.137.89 | stm:ONLINE
+ESP PONG | uptime:31310 | heap:189540 | rssi:-41 | net:STA | ip:192.168.137.89 | stm:ONLINE
+MOTOR RAMP | LEFT_REV    -80    800     0  +46563     +0    +215330        +0     3    2
+MOTOR RAMP | RIGHT_FWD   +50      0   500      +0 +14700         +0    +67980     2    2
+MOTOR RAMP | RIGHT_FWD   +60      0   600      +0 +43872         +0   +202885     2    2
+MOTOR RAMP | RIGHT_FWD   +70      0   700      +0 +49197         +0   +227511     2    2
+ESP PONG | uptime:35330 | heap:191032 | rssi:-44 | net:STA | ip:192.168.137.89 | stm:ONLINE
+MOTOR RAMP | RIGHT_FWD   +80      0   800      +0 +49366         +0   +228292     2    3
+ESP STATUS | uptime:36306 | heap:191228 | rssi:-47 | net:STA | ip:192.168.137.89 | stm:ONLINE
+MOTOR RAMP | RIGHT_REV   -50      0   500      +0 -13814         +0    -63882     2    0
+MOTOR RAMP | RIGHT_REV   -60      0   600      +0 -46850         +0   -216657     2    1
+ESP PONG | uptime:39323 | heap:191032 | rssi:-41 | net:STA | ip:192.168.137.89 | stm:ONLINE
+MOTOR RAMP | RIGHT_REV   -70      0   700      +0 -50075         +0   -231571     2    3
+MOTOR RAMP | RIGHT_REV   -80      0   800      +0 -50122         +0   -231788     2    3
+MOTOR BALANCE TEST basladi. Iki motor birlikte; ham encoder hizi ve yuzde farki.
+MOTOR BALANCE | DIR CMD  L_DENC R_DENC  L_CPS R_CPS  ERRx100
+ESP STATUS | uptime:41308 | heap:191228 | rssi:-40 | net:STA | ip:192.168.137.89 | stm:ONLINE
+MOTOR BALANCE | FWD  +50  L_DENC: -17384 R_DENC: +15057  L_CPS: 19272 R_CPS: 16692  ERRx100: +1434
+MOTOR BALANCE | FWD  +60  L_DENC: -43216 R_DENC: +41941  L_CPS: 47911 R_CPS: 46497  ERRx100:  +299
+ESP PONG | uptime:43623 | heap:191032 | rssi:-40 | net:STA | ip:192.168.137.89 | stm:ONLINE
+MOTOR BALANCE | FWD  +70  L_DENC: -47791 R_DENC: +48382  L_CPS: 52983 R_CPS: 53638  ERRx100:  -122
+MOTOR BALANCE | FWD  +80  L_DENC: -47995 R_DENC: +48652  L_CPS: 53209 R_CPS: 53937  ERRx100:  -135
+ESP STATUS | uptime:46310 | heap:191228 | rssi:-40 | net:STA | ip:192.168.137.89 | stm:ONLINE
+MOTOR BALANCE | REV  -50  L_DENC: +15438 R_DENC: -14055  L_CPS: 17115 R_CPS: 15582  ERRx100:  +937
+ESP PONG | uptime:47618 | heap:191180 | rssi:-40 | net:STA | ip:192.168.137.89 | stm:ONLINE
+MOTOR BALANCE | REV  -60  L_DENC: +41930 R_DENC: -45250  L_CPS: 46485 R_CPS: 50166  ERRx100:  -761
+MOTOR BALANCE | REV  -70  L_DENC: +46403 R_DENC: -49644  L_CPS: 51444 R_CPS: 55037  ERRx100:  -674
+MOTOR BALANCE | REV  -80  L_DENC: +46524 R_DENC: -49780  L_CPS: 51578 R_CPS: 55188  ERRx100:  -676
+MOTOR RAMP TEST bitti.
+>> E
+> E
+MOTOR | LEFT:0 RPWM:0 LPWM:0 ENC:-13449 DENC:-13449 RPMx100:-1982 AB:3 | RIGHT:0 RPWM:0 LPWM:0 ENC:-9595 DENC:-9595 RPMx100:-1414 AB:3 | SAFE:STOP | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+0/+0
+ESP STATUS | uptime:51312 | heap:191228 | rssi:-40 | net:STA | ip:192.168.137.89 | stm:ONLINE
+ESP PONG | uptime:51354 | heap:191180 | rssi:-40 | net:STA | ip:192.168.137.89 | stm:ONLINE
