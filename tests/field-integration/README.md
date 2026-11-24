@@ -1,6 +1,11 @@
 # Field Integration Evidence
 
-## Current Result
+## Milestone Reports
+
+- [Phase 02 exit report](../reports/2026-11-25_Phase02_Exit_Report.md)
+- [Phase 03 baseline verification](../reports/2026-11-25_Phase03_Baseline_Report.md)
+
+## October Field Link Baseline
 
 - ESP32-C3 Wi-Fi/TCP/STM link regression: **PASS**
 - Validation date: `2026-10-08`

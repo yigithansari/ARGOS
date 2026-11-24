@@ -16,6 +16,8 @@ Phase 02 passed the 1 m drive and 90-degree turns in both directions. Link-loss 
 
 Phase 03 starts with prototype sensor-guided exploration, 2D map export and Raspberry Pi UART integration. Repeatable room coverage, map accuracy and battery percentage monitoring are open. See the [Phase 03 work queue](phases/phase-03-localization-and-basic-autonomy.md).
 
+Milestone records: [engineering journal](journal/25-11-2026_Phase02_Closeout_Phase03_Kickoff.md), [Phase 02 exit report](tests/reports/2026-11-25_Phase02_Exit_Report.md) and [Phase 03 baseline verification](tests/reports/2026-11-25_Phase03_Baseline_Report.md).
+
 ![Assembled ARGOS mobile platform with its drive wheel visible](images/hardware/phase-01/2026-10-31_ARGOS_Mobile_Platform_Three_Quarter_View.jpeg)
 
 [Prototype exploration map from the 2026-11-10 run](images/software/phase-03/2026-11-10_Exploration_Map.svg)
