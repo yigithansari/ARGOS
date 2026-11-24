@@ -1,0 +1,13 @@
+{
+  "format": "ARGOS_STM32_OTA_V1",
+  "build_id": 1793816280,
+  "bootloader_bytes": 2740,
+  "application_bytes": 44744,
+  "application_crc32": "05F55FF3",
+  "bootstrap_bytes": 77512,
+  "bootloader_address": "0x08000000",
+  "metadata_address": "0x08004000",
+  "application_address": "0x08008000",
+  "initial_stack_pointer": "0x20020000",
+  "reset_vector": "0x0800DC69"
+}

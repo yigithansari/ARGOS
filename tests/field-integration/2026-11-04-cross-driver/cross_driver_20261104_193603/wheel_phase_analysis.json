@@ -1,0 +1,19 @@
+{
+  "exploratory": true,
+  "mode": "PWM",
+  "source": "ARGOS\\ARGOS\\Tools\\installation_backups\\cross_driver_20261104_193603\\stage_52.log",
+  "results": [
+    {
+      "side": 1,
+      "active": true,
+      "samples": 17,
+      "wheel_frequency_amplitude_rpm": 6.131067108230599,
+      "r_squared": 0.9864187259029057
+    },
+    {
+      "side": 2,
+      "active": false
+    }
+  ],
+  "limitation": "Single short run; counts define both phase and speed. Correlation cannot identify physical cause."
+}

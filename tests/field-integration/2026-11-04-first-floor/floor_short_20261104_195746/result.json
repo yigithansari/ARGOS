@@ -1,0 +1,36 @@
+{
+  "target_estimated_mm": 100,
+  "max_run_seconds": 2.5,
+  "rpm_command": 25,
+  "geometry": {
+    "version": 2,
+    "saved_at": "2026-10-29T23:35:23+03:00",
+    "measurement_turns": 10,
+    "wheel_diameter_mm": 87.0,
+    "track_width_mm": 255.0,
+    "geometry_updated_at": "2026-11-04",
+    "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending.",
+    "left_counts_per_wheel_rev": 48097.2,
+    "right_counts_per_wheel_rev": 48036.6,
+    "left_forward_sign": -1,
+    "right_forward_sign": 1
+  },
+  "scope": "first operator-observed floor screening",
+  "origin_counts": [
+    -322520,
+    -8131
+  ],
+  "latest_estimated_mm": [
+    43.60849770999938,
+    89.25586457507583
+  ],
+  "stop_reason": "abort_wheel_mismatch",
+  "run_seconds": 1.1560000000026776,
+  "stop_confirmed": true,
+  "final_estimated_mm": [
+    52.132441750265095,
+    107.62822300644703
+  ],
+  "mean_estimated_mm": 79.88033237835606,
+  "estimated_heading_deg": 12.46930998729587
+}

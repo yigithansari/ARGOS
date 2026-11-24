@@ -1,4 +1,7 @@
 firmware/esp32_c3_argos_bridge/wifi_secrets.h
+/software/control_panel/experiment_logs/
+/software/control_panel/phase02_results/
+/software/control_panel/installation_backups/
 software/control_panel/argos_connection_logbook.jsonl
 software/control_panel/argos_system_test_report.txt
 software/control_panel/argos_lowband_rpm_report.txt

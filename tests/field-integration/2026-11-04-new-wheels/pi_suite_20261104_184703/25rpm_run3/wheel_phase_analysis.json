@@ -1,0 +1,22 @@
+{
+  "exploratory": true,
+  "mode": "PI",
+  "source": "ARGOS\\ARGOS\\Tools\\installation_backups\\pi_suite_20261104_184703\\25rpm_run3\\telemetry.log",
+  "results": [
+    {
+      "side": 1,
+      "active": true,
+      "samples": 17,
+      "wheel_frequency_amplitude_rpm": 3.770365503092384,
+      "r_squared": 0.638863116648188
+    },
+    {
+      "side": 2,
+      "active": true,
+      "samples": 17,
+      "wheel_frequency_amplitude_rpm": 0.0897717018696151,
+      "r_squared": 0.004571974738398543
+    }
+  ],
+  "limitation": "Single short run; counts define both phase and speed. Correlation cannot identify physical cause."
+}

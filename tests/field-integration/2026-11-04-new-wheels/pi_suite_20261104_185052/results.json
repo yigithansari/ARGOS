@@ -1,0 +1,170 @@
+[
+  {
+    "target_rpm": 35,
+    "mean_rpm": [
+      35.81454545454546,
+      34.85363636363636
+    ],
+    "mean_within_5_percent": true,
+    "duration_seconds": 20.0,
+    "evaluation_start_seconds": 16.0,
+    "within_5_percent_fraction": [
+      0.18181818181818182,
+      0.9090909090909091
+    ],
+    "min_max_rpm": [
+      [
+        31.92,
+        40.27
+      ],
+      [
+        34.06,
+        36.77
+      ]
+    ],
+    "stop_confirmed": true,
+    "samples": 50,
+    "scope": "single forward raised-wheel run",
+    "repetition": 1
+  },
+  {
+    "target_rpm": 35,
+    "mean_rpm": [
+      35.279,
+      35.126999999999995
+    ],
+    "mean_within_5_percent": true,
+    "duration_seconds": 20.0,
+    "evaluation_start_seconds": 16.0,
+    "within_5_percent_fraction": [
+      0.3,
+      1.0
+    ],
+    "min_max_rpm": [
+      [
+        31.63,
+        40.58
+      ],
+      [
+        33.99,
+        36.25
+      ]
+    ],
+    "stop_confirmed": true,
+    "samples": 49,
+    "scope": "single forward raised-wheel run",
+    "repetition": 2
+  },
+  {
+    "target_rpm": 35,
+    "mean_rpm": [
+      34.92363636363637,
+      34.36363636363637
+    ],
+    "mean_within_5_percent": true,
+    "duration_seconds": 20.0,
+    "evaluation_start_seconds": 16.0,
+    "within_5_percent_fraction": [
+      0.36363636363636365,
+      1.0
+    ],
+    "min_max_rpm": [
+      [
+        31.63,
+        39.99
+      ],
+      [
+        34.25,
+        34.51
+      ]
+    ],
+    "stop_confirmed": true,
+    "samples": 50,
+    "scope": "single forward raised-wheel run",
+    "repetition": 3
+  },
+  {
+    "target_rpm": 45,
+    "mean_rpm": [
+      44.653636363636366,
+      46.157272727272726
+    ],
+    "mean_within_5_percent": true,
+    "duration_seconds": 20.0,
+    "evaluation_start_seconds": 16.0,
+    "within_5_percent_fraction": [
+      0.36363636363636365,
+      1.0
+    ],
+    "min_max_rpm": [
+      [
+        40.38,
+        49.7
+      ],
+      [
+        45.74,
+        46.44
+      ]
+    ],
+    "stop_confirmed": true,
+    "samples": 50,
+    "scope": "single forward raised-wheel run",
+    "repetition": 1
+  },
+  {
+    "target_rpm": 45,
+    "mean_rpm": [
+      45.31181818181818,
+      46.13363636363636
+    ],
+    "mean_within_5_percent": true,
+    "duration_seconds": 20.0,
+    "evaluation_start_seconds": 16.0,
+    "within_5_percent_fraction": [
+      0.5454545454545454,
+      1.0
+    ],
+    "min_max_rpm": [
+      [
+        40.25,
+        49.73
+      ],
+      [
+        45.83,
+        46.5
+      ]
+    ],
+    "stop_confirmed": true,
+    "samples": 50,
+    "scope": "single forward raised-wheel run",
+    "repetition": 2
+  },
+  {
+    "target_rpm": 45,
+    "mean_rpm": [
+      45.3609090909091,
+      46.23727272727273
+    ],
+    "mean_within_5_percent": true,
+    "duration_seconds": 20.0,
+    "evaluation_start_seconds": 16.0,
+    "within_5_percent_fraction": [
+      0.5454545454545454,
+      1.0
+    ],
+    "min_max_rpm": [
+      [
+        40.62,
+        49.9
+      ],
+      [
+        44.9,
+        46.58
+      ]
+    ],
+    "stop_confirmed": true,
+    "samples": 50,
+    "scope": "single signed raised-wheel run",
+    "repetition": 3
+  }
+]

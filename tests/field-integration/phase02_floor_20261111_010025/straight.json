@@ -1,0 +1,9 @@
+{
+  "reason": "target cutoff",
+  "encoder_mm": [
+    991.5904102041103,
+    990.3150688567939
+  ],
+  "stop": true,
+  "diagnostic": "LAST MOVE CANCELLED | COUNTS:174425/173979 | T_MS:2485676 | RAW:11/11 | MM:912/1025/1029 | AGE_MS:263/177/97"
+}

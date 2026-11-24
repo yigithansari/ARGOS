@@ -2,7 +2,7 @@
 
 **Document ID:** DOC-004
 **Status:** Phase 00 certified; mobile chassis operational; Phase 02 acceptance in progress
-**Scope:** Published source snapshot updated 2026-10-31
+**Scope:** Published source snapshot updated 2026-11-24
 
 ## Purpose
 
@@ -17,7 +17,11 @@ This document maps the current published STM32, ESP32 and desktop sources. Recen
 - `firmware/esp32_c3_argos_bridge/`
   - ESP32-C3 Arduino sketch providing hotspot STA, fallback `ARGOS` AP, TCP/UART transport, discovery and cached STM32 OTA transfer.
   - Sends a motor stop command when the control client disconnects.
-  - Keeps infrastructure and fallback-AP credentials in ignored `wifi_secrets.h`.
+
+- `software/RaspberryPi/`
+  - UART bridge service, Pi Connect desktop launcher and automatic SSH desktop connection.
+  - Published imports and installer use the adjacent control_panel directory.
+  - The Pi deployment instructions create the same structure on the Pi.
 
 - `software/control_panel/`
   - Python desktop control panel for automatic Wi-Fi/COM connection, manual driving, serial telemetry, sensor visualization, and motor/encoder tests.
@@ -91,9 +95,23 @@ Current implementation supports these Phase 00 validation requirements:
 - UART reception starts before slow OLED initialization; OLED refresh is limited to 500 ms.
 - ESP sends complete telemetry lines and keeps startup NVS logging outside the first UART burst.
 - Panel uses multipart OTA upload and rejects incompatible application vectors locally.
-- Three-repeat PI acceptance, low-speed variation, reverse/disconnect-stop and floor tests remain.
+- Three-repeat external floor distance and turn trials passed on 2026-11-24.
+- Instantaneous speed tracking and exact watchdog timing remain open.
+- The acceptance screen writes raw JSONL and JSON outcomes with physical measurements.
+- Reported ToF YOK/PASS summary ambiguity and Pi keyboard stutter remain unresolved.
 - Validate ToF distances against known ruler distances.
 - Validate IMU roll/pitch against known angles.
 - Split modules only with a specific need and appropriate regression coverage.
 
 Phase 00 functional evidence is archived at `tests/phase-00/2026-09-29-system-test-report.txt`.
+
+## Offline verification
+
+Run Python tests from the repository root with
+python -m unittest discover -s software/control_panel -p "test_*.py".
+OTA tests additionally require locally built OTA/bootstrap binaries under
+firmware/argos_f446re/Debug and explicitly skip when those images are absent.
+The recorded floor replay fixture is included beside the panel tests.
+
+The Pi service uses the existing STM32 protocol. Updating desktop software
+does not require a new STM32 flash operation.

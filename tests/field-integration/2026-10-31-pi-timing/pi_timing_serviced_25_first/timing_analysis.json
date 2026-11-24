@@ -1,0 +1,26 @@
+{
+  "records": 25,
+  "loop_ms_min": 100,
+  "loop_ms_max": 176,
+  "mcu_to_host_elapsed_ratio": 1.0019332519353408,
+  "window_samples": 10,
+  "window_definition": "nearest 1 s, allowed 0.9-1.4 s, MCU timestamps",
+  "window_rpm_mean": [
+    26.0868377112253,
+    25.11927901659197
+  ],
+  "window_rpm_min_max": [
+    [
+      23.894702658011838,
+      27.879621772411408
+    ],
+    [
+      23.212991151157812,
+      28.468177407790144
+    ]
+  ],
+  "window_within_5_percent": [
+    0.5,
+    0.6
+  ]
+}

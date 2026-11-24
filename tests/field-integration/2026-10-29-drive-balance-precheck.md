@@ -1,7 +1,7 @@
 # ARGOS Drive Balance Precheck
 
-**Date:** 2026-10-29
-**Source:** `ARGOS/ARGOS/Tools/argos_system_test_report.txt`
+**Date:** 2026-10-29  
+**Source:** `ARGOS/ARGOS/Tools/argos_system_test_report.txt`  
 **Status:** SUPERSEDED BY LIVE PAIRED TEST
 
 The requested paired-wheel measurement was completed later the same day. See

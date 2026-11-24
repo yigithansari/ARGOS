@@ -1,0 +1,34 @@
+MPU6050 yok/cevap yok. Beklenen adres 0x68.
+
+> T
+ToF adres atama basladi...
+ToF assign | LEFT 0x30:YOK | RIGHT 0x31:YOK
+MPU6050 yok/cevap yok. Beklenen adres 0x68.
+TOF RANGE | LEFT:YOK 0 mm | RIGHT:YOK 0 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:255 R:255
+SIDE RANGE | LEFT:OK 1241 mm | INSET:105 | GUARD:12
+TOF RANGE | LEFT:YOK 0 mm | RIGHT:YOK 0 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:255 R:255
+SIDE RANGE | LEFT:OK 1207 mm | INSET:105 | GUARD:12
+MPU6050 yok/cevap yok. Beklenen adres 0x68.
+TOF RANGE | LEFT:YOK 0 mm | RIGHT:YOK 0 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:255 R:255
+SIDE RANGE | LEFT:OK 1221 mm | INSET:105 | GUARD:12
+MPU6050 yok/cevap yok. Beklenen adres 0x68.
+TOF RANGE | LEFT:YOK 0 mm | RIGHT:YOK 0 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:255 R:255
+SIDE RANGE | LEFT:OK 1197 mm | INSET:105 | GUARD:12
+MPU6050 yok/cevap yok. Beklenen adres 0x68.
+
+> t
+ToF adres atama basladi...
+ToF assign | LEFT 0x30:YOK | RIGHT 0x31:YOK
+ToF testi:
+TOF LEFT | ADDR 0x30 | STATUS:YOK | INT:1
+TOF RIGHT | ADDR 0x31 | STATUS:YOK | INT:1
+MPU6050 yok/cevap yok. Beklenen adres 0x68.
+TOF RANGE | LEFT:YOK 0 mm | RIGHT:YOK 0 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:255 R:255
+SIDE RANGE | LEFT:OK 1224 mm | INSET:105 | GUARD:12
+TOF RANGE | LEFT:YOK 0 mm | RIGHT:YOK 0 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:255 R:255
+SIDE RANGE | LEFT:OK 1234 mm | INSET:105 | GUARD:12
+MPU6050 yok/cevap yok. Beklenen adres 0x68.
+TOF RANGE | LEFT:YOK 0 mm | RIGHT:YOK 0 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:255 R:255
+SIDE RANGE | LEFT:OK 1224 mm | INSET:105 | GUARD:12
+MPU6050 yok/cevap yok. Beklenen adres 0x68.
+TOF RANGE | LEFT:YOK 0 mm | RIGHT:YOK 0 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:255 R:255

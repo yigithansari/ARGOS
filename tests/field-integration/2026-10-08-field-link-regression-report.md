@@ -1,7 +1,7 @@
 # ARGOS Field Link Regression Report
 
-**Date:** 2026-10-08
-**Result:** PASS
+**Date:** 2026-10-08  
+**Result:** PASS  
 **Scope:** ESP32-C3 Wi-Fi, TCP bridge, STM32 UART visibility, persistent diagnostics, and automatic recovery
 
 ## Test Configuration

@@ -1,8 +1,8 @@
 # Phase 02 PWM-to-Wheel-RPM Characterization
 
-**Date:** 2026-10-30
-**Test window:** 01:01:31-01:02:07 Europe/Istanbul
-**Link:** ESP32-C3 Wi-Fi bridge to STM32
+**Date:** 2026-10-30  
+**Test window:** 01:01:31-01:02:07 Europe/Istanbul  
+**Link:** ESP32-C3 Wi-Fi bridge to STM32  
 **Result:** PASS WITH FOLLOW-UP
 
 ## Safety and Platform Health

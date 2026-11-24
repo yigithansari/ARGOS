@@ -1,8 +1,8 @@
 # ARGOS Wireless STM32 Update Design
 
-**Decision date:** 2026-10-29
-**Implementation date:** 2026-10-30
-**Status:** Wired installation and targeted OTA/interruption tests passed; full field regression pending (2026-10-31)
+**Decision date:** 2026-10-29  
+**Implementation date:** 2026-10-30  
+**Status:** Wired installation and targeted OTA/interruption tests passed; full field regression pending (2026-10-31)  
 **Target:** STM32F446RE application update through the existing ESP32-C3 Wi-Fi bridge
 
 ## Decision

@@ -1,0 +1,937 @@
+{
+  "date": "2026-11-24",
+  "phase02_status": "PARTIAL ACCEPTANCE; speed tracking and exact watchdog cutoff remain open",
+  "cases": {
+    "PI +25": [
+      {
+        "file": "run_20261124_222410_579177.json",
+        "case": "PI +25",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "reason": "speed completed",
+        "encoder_mm": [
+          2428.022729352247,
+          2403.8999166135986
+        ],
+        "execution_pass": true,
+        "settled_samples": 18,
+        "sufficient_settled_data": true,
+        "mean_rpm": [
+          25.714444444444446,
+          24.659444444444446
+        ],
+        "mean_pass": true,
+        "in_band_fraction": [
+          0.3333333333333333,
+          0.4444444444444444
+        ],
+        "tracking_pass": false
+      },
+      {
+        "file": "run_20261124_222449_969901.json",
+        "case": "PI +25",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "reason": "speed completed",
+        "encoder_mm": [
+          2424.27219397453,
+          2393.9484595381978
+        ],
+        "execution_pass": true,
+        "settled_samples": 17,
+        "sufficient_settled_data": true,
+        "mean_rpm": [
+          25.649411764705885,
+          24.80529411764706
+        ],
+        "mean_pass": true,
+        "in_band_fraction": [
+          0.17647058823529413,
+          0.4117647058823529
+        ],
+        "tracking_pass": false
+      },
+      {
+        "file": "run_20261124_222515_394371.json",
+        "case": "PI +25",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "reason": "speed completed",
+        "encoder_mm": [
+          2441.5928482643503,
+          2396.958362793136
+        ],
+        "execution_pass": true,
+        "settled_samples": 18,
+        "sufficient_settled_data": true,
+        "mean_rpm": [
+          25.076666666666668,
+          24.725555555555555
+        ],
+        "mean_pass": true,
+        "in_band_fraction": [
+          0.4444444444444444,
+          0.5
+        ],
+        "tracking_pass": false
+      }
+    ],
+    "PI +35": [
+      {
+        "file": "run_20261124_222636_746743.json",
+        "case": "PI +35",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "reason": "speed completed",
+        "encoder_mm": [
+          3353.120693412925,
+          3421.008245257734
+        ],
+        "execution_pass": true,
+        "settled_samples": 18,
+        "sufficient_settled_data": true,
+        "mean_rpm": [
+          35.15166666666667,
+          35.32333333333334
+        ],
+        "mean_pass": true,
+        "in_band_fraction": [
+          0.2777777777777778,
+          0.8888888888888888
+        ],
+        "tracking_pass": false
+      },
+      {
+        "file": "run_20261124_222703_379656.json",
+        "case": "PI +35",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "reason": "speed completed",
+        "encoder_mm": [
+          3351.933023876648,
+          3416.7522761940404
+        ],
+        "execution_pass": true,
+        "settled_samples": 18,
+        "sufficient_settled_data": true,
+        "mean_rpm": [
+          34.477222222222224,
+          35.157222222222224
+        ],
+        "mean_pass": true,
+        "in_band_fraction": [
+          0.16666666666666666,
+          0.7777777777777778
+        ],
+        "tracking_pass": false
+      },
+      {
+        "file": "run_20261124_222728_857809.json",
+        "case": "PI +35",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "reason": "speed completed",
+        "encoder_mm": [
+          3359.854609204735,
+          3402.6245072299357
+        ],
+        "execution_pass": true,
+        "settled_samples": 18,
+        "sufficient_settled_data": true,
+        "mean_rpm": [
+          34.861111111111114,
+          35.175
+        ],
+        "mean_pass": true,
+        "in_band_fraction": [
+          0.2777777777777778,
+          0.7777777777777778
+        ],
+        "tracking_pass": false
+      }
+    ],
+    "PI +45": [
+      {
+        "file": "run_20261124_222811_553283.json",
+        "case": "PI +45",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "reason": "speed completed",
+        "encoder_mm": [
+          4127.36189584898,
+          4288.053835819187
+        ],
+        "execution_pass": true,
+        "settled_samples": 18,
+        "sufficient_settled_data": true,
+        "mean_rpm": [
+          46.105555555555554,
+          45.199444444444445
+        ],
+        "mean_pass": true,
+        "in_band_fraction": [
+          0.2777777777777778,
+          1.0
+        ],
+        "tracking_pass": false
+      },
+      {
+        "file": "run_20261124_222858_982118.json",
+        "case": "PI +45",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "reason": "speed completed",
+        "encoder_mm": [
+          4168.1006657320895,
+          4327.762937551159
+        ],
+        "execution_pass": true,
+        "settled_samples": 17,
+        "sufficient_settled_data": true,
+        "mean_rpm": [
+          45.02,
+          45.23176470588235
+        ],
+        "mean_pass": true,
+        "in_band_fraction": [
+          0.17647058823529413,
+          1.0
+        ],
+        "tracking_pass": false
+      },
+      {
+        "file": "run_20261124_222955_895591.json",
+        "case": "PI +45",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "reason": "speed completed",
+        "encoder_mm": [
+          4148.7740432781275,
+          4301.692282136931
+        ],
+        "execution_pass": true,
+        "settled_samples": 17,
+        "sufficient_settled_data": true,
+        "mean_rpm": [
+          44.74176470588235,
+          45.03529411764706
+        ],
+        "mean_pass": true,
+        "in_band_fraction": [
+          0.23529411764705882,
+          1.0
+        ],
+        "tracking_pass": false
+      },
+      {
+        "file": "run_20261124_223115_193758.json",
+        "case": "PI +45",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "reason": "speed completed",
+        "encoder_mm": [
+          4208.737148286717,
+          4335.59778969114
+        ],
+        "execution_pass": true,
+        "settled_samples": 18,
+        "sufficient_settled_data": true,
+        "mean_rpm": [
+          45.31611111111111,
+          45.090555555555554
+        ],
+        "mean_pass": true,
+        "in_band_fraction": [
+          0.16666666666666666,
+          1.0
+        ],
+        "tracking_pass": false
+      }
+    ],
+    "PI -25": [
+      {
+        "file": "run_20261124_223212_740621.json",
+        "case": "PI -25",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "reason": "speed completed",
+        "encoder_mm": [
+          -2374.5832828491416,
+          -2442.74416901712
+        ],
+        "execution_pass": true,
+        "settled_samples": 18,
+        "sufficient_settled_data": true,
+        "mean_rpm": [
+          -25.074444444444442,
+          -25.438333333333333
+        ],
+        "mean_pass": true,
+        "in_band_fraction": [
+          0.2222222222222222,
+          0.7777777777777778
+        ],
+        "tracking_pass": false
+      },
+      {
+        "file": "run_20261124_223248_633326.json",
+        "case": "PI -25",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "reason": "speed completed",
+        "encoder_mm": [
+          -2376.844969334492,
+          -2449.992971941111
+        ],
+        "execution_pass": true,
+        "settled_samples": 18,
+        "sufficient_settled_data": true,
+        "mean_rpm": [
+          -24.715,
+          -25.453333333333333
+        ],
+        "mean_pass": true,
+        "in_band_fraction": [
+          0.3888888888888889,
+          0.8333333333333334
+        ],
+        "tracking_pass": false
+      },
+      {
+        "file": "run_20261124_223311_692391.json",
+        "case": "PI -25",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "reason": "speed completed",
+        "encoder_mm": [
+          -2367.5254571838013,
+          -2442.4482995100184
+        ],
+        "execution_pass": true,
+        "settled_samples": 17,
+        "sufficient_settled_data": true,
+        "mean_rpm": [
+          -24.877058823529413,
+          -25.454705882352943
+        ],
+        "mean_pass": true,
+        "in_band_fraction": [
+          0.29411764705882354,
+          0.7647058823529411
+        ],
+        "tracking_pass": false
+      },
+      {
+        "file": "run_20261124_223334_114903.json",
+        "case": "PI -25",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "reason": "speed completed",
+        "encoder_mm": [
+          -2388.289784865889,
+          -2452.951667012128
+        ],
+        "execution_pass": true,
+        "settled_samples": 18,
+        "sufficient_settled_data": true,
+        "mean_rpm": [
+          -25.001666666666665,
+          -25.341666666666665
+        ],
+        "mean_pass": true,
+        "in_band_fraction": [
+          0.2222222222222222,
+          0.7777777777777778
+        ],
+        "tracking_pass": false
+      },
+      {
+        "file": "run_20261124_223358_245645.json",
+        "case": "PI -25",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "reason": "speed completed",
+        "encoder_mm": [
+          -2387.3180552452986,
+          -2449.5377880840315
+        ],
+        "execution_pass": true,
+        "settled_samples": 18,
+        "sufficient_settled_data": true,
+        "mean_rpm": [
+          -24.922777777777778,
+          -25.483888888888888
+        ],
+        "mean_pass": true,
+        "in_band_fraction": [
+          0.3888888888888889,
+          0.9444444444444444
+        ],
+        "tracking_pass": false
+      }
+    ],
+    "Watchdog": [
+      {
+        "file": "run_20261124_223620_764798.json",
+        "case": "Watchdog",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "reason": "watchdog completed",
+        "encoder_mm": [
+          170.45615028787353,
+          157.37981858523602
+        ],
+        "execution_pass": true,
+        "last_active_ms": 1177.0,
+        "first_timeout_ms": 1412.0,
+        "timing_status": "MEASUREMENT REQUIRED"
+      },
+      {
+        "file": "run_20261124_223643_530135.json",
+        "case": "Watchdog",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "reason": "watchdog completed",
+        "encoder_mm": [
+          141.1053696425586,
+          155.9630588300761
+        ],
+        "execution_pass": true,
+        "last_active_ms": 958.0,
+        "first_timeout_ms": 1246.0,
+        "timing_status": "MEASUREMENT REQUIRED"
+      },
+      {
+        "file": "run_20261124_223650_107390.json",
+        "case": "Watchdog",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "reason": "watchdog completed",
+        "encoder_mm": [
+          162.69936121123175,
+          155.17786667661397
+        ],
+        "execution_pass": true,
+        "last_active_ms": 1026.0,
+        "first_timeout_ms": 1249.0,
+        "timing_status": "MEASUREMENT REQUIRED"
+      }
+    ],
+    "Straight 1000 mm": [
+      {
+        "file": "run_20261124_225436_105774.json",
+        "case": "Straight 1000 mm",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "range_guard": false,
+        "operator_setup_confirmed": true,
+        "control_method": "host RPM and encoder cutoff",
+        "reason": "distance cutoff",
+        "encoder_mm": [
+          1011.7410139152985,
+          1013.9049722499387
+        ],
+        "execution_pass": true,
+        "left_mm": 990.0,
+        "right_mm": 985.0,
+        "midpoint_mm": 987.5,
+        "external_pass": true
+      },
+      {
+        "file": "run_20261124_225700_232570.json",
+        "case": "Straight 1000 mm",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "range_guard": false,
+        "operator_setup_confirmed": true,
+        "control_method": "host RPM and encoder cutoff",
+        "reason": "distance cutoff",
+        "encoder_mm": [
+          996.4945193419431,
+          1007.9989617043324
+        ],
+        "execution_pass": true,
+        "left_mm": 970.0,
+        "right_mm": 975.0,
+        "midpoint_mm": 972.5,
+        "external_pass": true
+      },
+      {
+        "file": "run_20261124_225831_462880.json",
+        "case": "Straight 1000 mm",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "range_guard": false,
+        "operator_setup_confirmed": true,
+        "control_method": "host RPM and encoder cutoff",
+        "reason": "distance cutoff",
+        "encoder_mm": [
+          999.8188575176468,
+          1012.1126858126883
+        ],
+        "execution_pass": true,
+        "left_mm": 990.0,
+        "right_mm": 975.0,
+        "midpoint_mm": 982.5,
+        "external_pass": true
+      }
+    ],
+    "Left 90 deg": [
+      {
+        "file": "run_20261124_230002_632980.json",
+        "case": "Left 90 deg",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "range_guard": false,
+        "operator_setup_confirmed": true,
+        "control_method": "existing manual STM32 command",
+        "reason": "turn completed",
+        "encoder_mm": [
+          -192.10128552078825,
+          192.0818978893342
+        ],
+        "execution_pass": true,
+        "angle_deg": 88.0,
+        "external_pass": true
+      },
+      {
+        "file": "run_20261124_230535_621710.json",
+        "case": "Left 90 deg",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "range_guard": false,
+        "operator_setup_confirmed": true,
+        "control_method": "existing manual STM32 command",
+        "reason": "turn completed",
+        "encoder_mm": [
+          -191.62394465453337,
+          192.00793051255877
+        ],
+        "execution_pass": true,
+        "angle_deg": 88.0,
+        "external_pass": true
+      },
+      {
+        "file": "run_20261124_230608_542006.json",
+        "case": "Left 90 deg",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "range_guard": false,
+        "operator_setup_confirmed": true,
+        "control_method": "existing manual STM32 command",
+        "reason": "turn completed",
+        "encoder_mm": [
+          -190.41354460081564,
+          191.11463219304025
+        ],
+        "execution_pass": true,
+        "angle_deg": 88.0,
+        "external_pass": true
+      }
+    ],
+    "Right 90 deg": [
+      {
+        "file": "run_20261124_230636_322934.json",
+        "case": "Right 90 deg",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "range_guard": false,
+        "operator_setup_confirmed": true,
+        "control_method": "existing manual STM32 command",
+        "reason": "turn completed",
+        "encoder_mm": [
+          190.35671830721387,
+          -192.02499990719926
+        ],
+        "execution_pass": true,
+        "angle_deg": 87.0,
+        "external_pass": true
+      },
+      {
+        "file": "run_20261124_230659_867428.json",
+        "case": "Right 90 deg",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "range_guard": false,
+        "operator_setup_confirmed": true,
+        "control_method": "existing manual STM32 command",
+        "reason": "turn completed",
+        "encoder_mm": [
+          190.53287981737935,
+          -195.46163802814945
+        ],
+        "execution_pass": true,
+        "angle_deg": 89.0,
+        "external_pass": true
+      },
+      {
+        "file": "run_20261124_230720_790002.json",
+        "case": "Right 90 deg",
+        "calibration": {
+          "version": 2,
+          "wheel_circumference_mm": 273.318560862312,
+          "track_width_mm": 255.0,
+          "left_counts_per_wheel_rev": 48097.2,
+          "right_counts_per_wheel_rev": 48036.6,
+          "left_forward_sign": -1,
+          "right_forward_sign": 1,
+          "saved_at": "2026-10-29T23:35:23+03:00",
+          "measurement_turns": 10,
+          "wheel_diameter_mm": 87.0,
+          "geometry_updated_at": "2026-11-04",
+          "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+        },
+        "stop_confirmed": true,
+        "range_guard": false,
+        "operator_setup_confirmed": true,
+        "control_method": "existing manual STM32 command",
+        "reason": "turn completed",
+        "encoder_mm": [
+          190.52151455865902,
+          -190.52289317883688
+        ],
+        "execution_pass": true,
+        "angle_deg": 89.0,
+        "external_pass": true
+      }
+    ]
+  }
+}

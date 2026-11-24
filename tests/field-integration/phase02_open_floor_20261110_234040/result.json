@@ -1,0 +1,6 @@
+{
+  "result": "MOVE ERROR FRONT_INVALID",
+  "stop": true,
+  "front": "TOF RANGE | LEFT:YOK 0 mm | RIGHT:YOK 0 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:255 R:255",
+  "side": "SIDE RANGE | LEFT:OK 1217 mm | INSET:105 | GUARD:12"
+}

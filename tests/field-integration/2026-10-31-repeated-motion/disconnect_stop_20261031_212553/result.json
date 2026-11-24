@@ -1,0 +1,4 @@
+{
+  "post_disconnect_stop": true,
+  "note": "Zero PWM/STOP after reconnect; exact electrical stop latency not measured"
+}

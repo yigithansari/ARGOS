@@ -6,13 +6,19 @@ A long-term autonomous robotics platform developed to master embedded systems, r
 
 ## Current Status
 
-**Phase 00 is certified, Phase 01 - Mobile Platform is complete, and Phase 02 - Motion Control is active.**
+**Phase 03 - Localization and Basic Autonomy is active.** Phase 00 and Phase 01 are complete. Phase 02 closed with hardware-dependent revalidation carried forward.
 
 The Phase 00 bench platform passed its final integrated system test on 2026-09-29. It includes Power Module V1, STM32 firmware, independent bidirectional motor control, encoder telemetry, MPU6050 and dual VL53L0X sensing, USB/UART communication, an ESP32-C3 wireless bridge, an SSD1306 OLED status display, and a Python control panel. The archived [system-test report](tests/phase-00/2026-09-29-system-test-report.txt) records the certification evidence.
 
 The first mobile platform is assembled. Chassis V1 and Wheel V5 manufacturing files are archived under [`hardware/mechanical/`](hardware/mechanical/), and current photographs are stored under [`images/hardware/phase-01/`](images/hardware/phase-01/). The robot can move and stop safely under computer control through a Windows hotspot and the ESP32-C3 bridge.
 
-Phase 02 currently focuses on per-wheel feed-forward plus PI speed control. Wheel geometry, encoder scaling, and low-band PWM/RPM characterization are complete. Single raised-wheel forward runs at 25, 35, and 45 RPM met the initial mean tracking target; repeated runs, reverse operation, disconnect-stop latency, and floor tuning remain open. Battery charge level is not currently measured or displayed.
+Phase 02 passed the 1 m drive and 90-degree turns in both directions. Link-loss stop passed by operator observation. Instantaneous speed tracking, lateral drift and precise watchdog timing will be rechecked after the new chassis, motors and PCB are installed. See the [Phase 02 closeout](phases/phase-02-motion-control.md).
+
+Phase 03 starts with prototype sensor-guided exploration, 2D map export and Raspberry Pi UART integration. Repeatable room coverage, map accuracy and battery percentage monitoring are open. See the [Phase 03 work queue](phases/phase-03-localization-and-basic-autonomy.md).
+
+![Assembled ARGOS mobile platform with its drive wheel visible](images/hardware/phase-01/2026-10-31_ARGOS_Mobile_Platform_Three_Quarter_View.jpeg)
+
+[Prototype exploration map from the 2026-11-10 run](images/software/phase-03/2026-11-10_Exploration_Map.svg)
 
 ## Overview
 
@@ -125,7 +131,7 @@ Main goals:
 
 Develop repeatable closed-loop wheel-speed and differential-drive control.
 
-**Status:** Active - PI tuning.
+**Status:** Complete with carry-over.
 
 Topics:
 
@@ -135,6 +141,8 @@ Topics:
 - Distance and angle commands
 
 ### Phase 03 - Localization and Basic Autonomy
+
+**Status:** Active.
 
 Introduce autonomous behavior.
 

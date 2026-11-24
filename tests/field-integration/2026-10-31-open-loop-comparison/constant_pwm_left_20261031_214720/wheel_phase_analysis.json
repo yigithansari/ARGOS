@@ -1,0 +1,18 @@
+{
+  "exploratory": true,
+  "source": "ARGOS\\ARGOS\\Tools\\installation_backups\\constant_pwm_left_20261031_214720\\telemetry.log",
+  "results": [
+    {
+      "side": 1,
+      "active": true,
+      "samples": 17,
+      "wheel_frequency_amplitude_rpm": 3.1442051477780733,
+      "r_squared": 0.8862527025141765
+    },
+    {
+      "side": 2,
+      "active": false
+    }
+  ],
+  "limitation": "Single short run; counts define both phase and speed. Correlation cannot identify physical cause."
+}

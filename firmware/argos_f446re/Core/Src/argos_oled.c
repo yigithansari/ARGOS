@@ -164,31 +164,33 @@ static void Oled_WriteRow(uint8_t page, const char *text)
   Oled_Stop();
 }
 
-static void Oled_Render(void)
+static void Oled_Render(uint8_t page)
 {
   char line[22];
-  Oled_WriteRow(0U, "ARGOS FIELD");
-  Oled_WriteRow(1U, network_connected ? "PC LINK ONLINE" : "PC LINK WAITING");
-  snprintf(line, sizeof(line), "%s %s", network_mode, network_address);
-  Oled_WriteRow(2U, line);
-  snprintf(line, sizeof(line), "CMD %s", last_command);
-  Oled_WriteRow(3U, line);
-  snprintf(line, sizeof(line), "MOTOR L%+d R%+d", motor_left, motor_right);
-  Oled_WriteRow(4U, line);
-  snprintf(line, sizeof(line), "SAFE %s", safety_text);
-  Oled_WriteRow(5U, line);
-  if (uart_overflow_count != 0U)
-  {
-    snprintf(line, sizeof(line), "UART OVF %lu", (unsigned long)uart_overflow_count);
-  }
-  else
-  {
-    snprintf(line, sizeof(line), "UART OK RX %lu", (unsigned long)command_count);
-  }
-  Oled_WriteRow(6U, line);
-  snprintf(line, sizeof(line), "CMD AGE %luS",
-           (unsigned long)((HAL_GetTick() - last_command_ms) / 1000U));
-  Oled_WriteRow(7U, line);
+  if (page == 0U) { Oled_WriteRow(0U, "ARGOS FIELD"); return; }
+  if (page == 1U) { Oled_WriteRow(1U, network_connected ? "PC LINK ONLINE" : "PC LINK WAITING"); return; }
+  if (page == 2U) {
+    snprintf(line, sizeof(line), "%s %s", network_mode, network_address);
+  } else if (page == 3U) {
+    snprintf(line, sizeof(line), "CMD %s", last_command);
+  } else if (page == 4U) {
+    snprintf(line, sizeof(line), "MOTOR L%+d R%+d", motor_left, motor_right);
+  } else if (page == 5U) {
+    snprintf(line, sizeof(line), "SAFE %s", safety_text);
+  } else if (page == 6U) {
+    if (uart_overflow_count != 0U)
+    {
+      snprintf(line, sizeof(line), "UART OVF %lu", (unsigned long)uart_overflow_count);
+    }
+    else
+    {
+      snprintf(line, sizeof(line), "UART OK RX %lu", (unsigned long)command_count);
+    }
+  } else if (page == 7U) {
+    snprintf(line, sizeof(line), "CMD AGE %luS",
+             (unsigned long)((HAL_GetTick() - last_command_ms) / 1000U));
+  } else { return; }
+  Oled_WriteRow(page, line);
 }
 
 void Argos_Oled_Init(void)
@@ -211,18 +213,21 @@ void Argos_Oled_Init(void)
     Oled_Command(init[i]);
   }
   oled_ready = 1U;
-  Oled_Render();
+  for (uint8_t page = 0U; page < 8U; ++page) { Oled_Render(page); }
 }
 
 void Argos_Oled_Task(void)
 {
-  /* Coalesce dirty updates; rendering must not bypass the refresh interval. */
-  if ((oled_ready != 0U) && ((HAL_GetTick() - last_refresh_ms) >= OLED_REFRESH_MS))
+  static uint8_t page = 8U;
+  if (oled_ready == 0U) { return; }
+  if ((page >= 8U) && ((HAL_GetTick() - last_refresh_ms) >= OLED_REFRESH_MS))
   {
     last_refresh_ms = HAL_GetTick();
     dirty = 0U;
-    Oled_Render();
+    page = 0U;
   }
+  /* Yield to motor/timeout tasks between display rows. */
+  if (page < 8U) { Oled_Render(page++); }
 }
 
 void Argos_Oled_SetNetwork(uint8_t connected) { network_connected = connected ? 1U : 0U; dirty = 1U; }

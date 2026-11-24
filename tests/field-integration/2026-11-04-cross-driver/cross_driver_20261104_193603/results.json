@@ -1,0 +1,20 @@
+[
+  {
+    "right_driver_pwm_percent": -50,
+    "physical_motor": "left",
+    "feedback_encoder": "left",
+    "left_delta": -18214,
+    "right_delta": 0,
+    "normalized_left_direction": 1,
+    "stop": true
+  },
+  {
+    "right_driver_pwm_percent": -52,
+    "physical_motor": "left",
+    "feedback_encoder": "left",
+    "left_delta": -256882,
+    "right_delta": 0,
+    "normalized_left_direction": 1,
+    "stop": true
+  }
+]

@@ -1,8 +1,8 @@
 # ARGOS Live Sensor Health Report
 
-**Date:** 2026-10-29
-**Connection:** ESP32-C3 Wi-Fi bridge at `192.168.137.33:3333`
-**Motor state:** Explicit STOP before and after test
+**Date:** 2026-10-29  
+**Connection:** ESP32-C3 Wi-Fi bridge at `192.168.137.33:3333`  
+**Motor state:** Explicit STOP before and after test  
 **Result:** PASS WITH MPU CALIBRATION NOTE
 
 ## I2C Inventory

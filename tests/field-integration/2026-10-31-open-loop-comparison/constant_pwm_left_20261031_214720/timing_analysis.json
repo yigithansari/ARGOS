@@ -1,0 +1,32 @@
+{
+  "mode": "PWM",
+  "records": 25,
+  "loop_ms_min": null,
+  "loop_ms_max": null,
+  "mcu_to_host_elapsed_ratio": 1.0034647916064994,
+  "window_samples": 10,
+  "window_definition": "nearest 1 s, allowed 0.9-1.4 s, MCU timestamps",
+  "window_rpm_mean": [
+    27.310583590635872,
+    0.0
+  ],
+  "window_rpm_min_max": [
+    [
+      25.139648300398793,
+      29.556886200352196
+    ],
+    [
+      0.0,
+      0.0
+    ]
+  ],
+  "window_rpm_std": [
+    1.4591429871888717,
+    0.0
+  ],
+  "window_rpm_cv": [
+    0.05342774834328974,
+    null
+  ],
+  "window_within_5_percent": null
+}

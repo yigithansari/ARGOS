@@ -1,0 +1,567 @@
+{"utc": "2026-11-24T19:25:15.395374+00:00", "monotonic": 1043422.781, "event": "start", "case": "PI +25", "calibration": {"version": 2, "wheel_circumference_mm": 273.318560862312, "track_width_mm": 255.0, "left_counts_per_wheel_rev": 48097.2, "right_counts_per_wheel_rev": 48036.6, "left_forward_sign": -1, "right_forward_sign": 1, "saved_at": "2026-10-29T23:35:23+03:00", "measurement_turns": 10, "wheel_diameter_mm": 87.0, "geometry_updated_at": "2026-11-04", "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."}, "link": "Wi-Fi 192.168.137.119:3333"}
+{"utc": "2026-11-24T19:25:15.395374+00:00", "monotonic": 1043422.781, "event": "tx", "command": "x"}
+{"utc": "2026-11-24T19:25:15.395374+00:00", "monotonic": 1043422.781, "event": "tx", "command": "E"}
+{"utc": "2026-11-24T19:25:15.430140+00:00", "monotonic": 1043422.812, "event": "rx", "text": "TOF RANGE | LEFT:OK 589 mm | RIGHT:OK 989 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:15.431136+00:00", "monotonic": 1043422.812, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2452 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:15.475714+00:00", "monotonic": 1043422.859, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:15.522272+00:00", "monotonic": 1043422.906, "event": "rx", "text": "> x\r\n"}
+{"utc": "2026-11-24T19:25:15.523299+00:00", "monotonic": 1043422.906, "event": "rx", "text": "MOTOR | LEFT:0 RPWM:0 LPWM:0 ENC:-854201 DENC:0 RPMx100:0 AB:2 | RIGHT:0 RPWM:0 LPWM:0 ENC:843696 DENC:0 RPMx100:0 AB:1 | SAFE:STOP | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+0/+0 | CTRL:PWM TARGET_RPMx100:+0/+0 RAMP_RPMx100:+0/+0 MEAS_RPMx100:+0/+0 I_x100:+0/+0 T_MS:385404 LOOP_MS:100 LOOP_MAX_MS:130\r\n"}
+{"utc": "2026-11-24T19:25:15.523299+00:00", "monotonic": 1043422.906, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:15.568623+00:00", "monotonic": 1043422.953, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:15.615612+00:00", "monotonic": 1043423.0, "event": "rx", "text": "> E\r\n"}
+{"utc": "2026-11-24T19:25:15.617423+00:00", "monotonic": 1043423.0, "event": "rx", "text": "MOTOR | LEFT:0 RPWM:0 LPWM:0 ENC:-854201 DENC:0 RPMx100:0 AB:2 | RIGHT:0 RPWM:0 LPWM:0 ENC:843696 DENC:0 RPMx100:0 AB:1 | SAFE:STOP | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+0/+0 | CTRL:PWM TARGET_RPMx100:+0/+0 RAMP_RPMx100:+0/+0 MEAS_RPMx100:+0/+0 I_x100:+0/+0 T_MS:385431 LOOP_MS:100 LOOP_MAX_MS:130\r\n"}
+{"utc": "2026-11-24T19:25:15.661818+00:00", "monotonic": 1043423.046, "event": "rx", "text": "MPU OK | WHO:0x72 | ACC mg X:    6 Y:   47 Z: 1071 | GYR cdps X:  -306 Y:   560 Z:  -195 | TEMP cC: 4401 | INT:0\r\n"}
+{"utc": "2026-11-24T19:25:15.707792+00:00", "monotonic": 1043423.093, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:15.708882+00:00", "monotonic": 1043423.093, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:15.739871+00:00", "monotonic": 1043423.125, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:15.756939+00:00", "monotonic": 1043423.14, "event": "rx", "text": "MOTOR | LEFT:0 RPWM:0 LPWM:0 ENC:-854201 DENC:0 RPMx100:0 AB:2 | RIGHT:0 RPWM:0 LPWM:0 ENC:843696 DENC:0 RPMx100:0 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+0/+0 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+0/+0 MEAS_RPMx100:+0/+0 I_x100:+0/+0 T_MS:385533 LOOP_MS:100 LOOP_MAX_MS:130\r\n"}
+{"utc": "2026-11-24T19:25:15.802789+00:00", "monotonic": 1043423.187, "event": "rx", "text": "TOF RANGE | LEFT:OK 589 mm | RIGHT:OK 986 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:15.803799+00:00", "monotonic": 1043423.187, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2462 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:15.850242+00:00", "monotonic": 1043423.234, "event": "rx", "text": "TOF RANGE | LEFT:OK 589 mm | RIGHT:OK 981 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:15.894993+00:00", "monotonic": 1043423.281, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1769 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:15.895997+00:00", "monotonic": 1043423.281, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:15.942278+00:00", "monotonic": 1043423.328, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:15.973600+00:00", "monotonic": 1043423.359, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:15.990295+00:00", "monotonic": 1043423.375, "event": "rx", "text": "MOTOR | LEFT:50 RPWM:500 LPWM:0 ENC:-856942 DENC:-2741 RPMx100:-43757 AB:0 | RIGHT:49 RPWM:490 LPWM:0 ENC:847190 DENC:3494 RPMx100:55779 AB:2 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+50/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+600/+600 MEAS_RPMx100:+769/+999 I_x100:+1/-1 T_MS:385794 LOOP_MS:100 LOOP_MAX_MS:100\r\n"}
+{"utc": "2026-11-24T19:25:15.991285+00:00", "monotonic": 1043423.375, "event": "rx", "text": "TOF RANGE | LEFT:OK 589 mm | RIGHT:OK 998 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:16.037039+00:00", "monotonic": 1043423.421, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1783 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:16.082556+00:00", "monotonic": 1043423.468, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:16.083556+00:00", "monotonic": 1043423.468, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:16.130912+00:00", "monotonic": 1043423.515, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-861370 DENC:-4428 RPMx100:-92250 AB:0 | RIGHT:48 RPWM:480 LPWM:0 ENC:851844 DENC:4654 RPMx100:96958 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+1200/+1200 MEAS_RPMx100:+1968/+2171 I_x100:-16/-24 T_MS:385994 LOOP_MS:100 LOOP_MAX_MS:100\r\n"}
+{"utc": "2026-11-24T19:25:16.190916+00:00", "monotonic": 1043423.562, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:16.223100+00:00", "monotonic": 1043423.609, "event": "rx", "text": "TOF RANGE | LEFT:OK 582 mm | RIGHT:OK 990 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:16.224137+00:00", "monotonic": 1043423.609, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1769 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:16.268713+00:00", "monotonic": 1043423.64, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:16.314333+00:00", "monotonic": 1043423.687, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:16.316147+00:00", "monotonic": 1043423.687, "event": "rx", "text": "MOTOR | LEFT:50 RPWM:500 LPWM:0 ENC:-863686 DENC:-2316 RPMx100:-46172 AB:0 | RIGHT:49 RPWM:490 LPWM:0 ENC:856225 DENC:4381 RPMx100:87340 AB:0 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+50/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+1800/+1800 MEAS_RPMx100:+1607/+2319 I_x100:-17/-37 T_MS:386203 LOOP_MS:100 LOOP_MAX_MS:100\r\n"}
+{"utc": "2026-11-24T19:25:16.409893+00:00", "monotonic": 1043423.781, "event": "rx", "text": "TOF RANGE | LEFT:OK 595 mm | RIGHT:OK 985 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:16.440542+00:00", "monotonic": 1043423.812, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:16.457055+00:00", "monotonic": 1043423.828, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2455 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:16.458052+00:00", "monotonic": 1043423.843, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:16.503625+00:00", "monotonic": 1043423.875, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:16.551384+00:00", "monotonic": 1043423.937, "event": "rx", "text": "MOTOR | LEFT:51 RPWM:510 LPWM:0 ENC:-869558 DENC:-5872 RPMx100:-97866 AB:0 | RIGHT:48 RPWM:480 LPWM:0 ENC:862685 DENC:6460 RPMx100:107666 AB:0 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+51/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2400/+2400 MEAS_RPMx100:+2196/+2983 I_x100:-13/-49 T_MS:386453 LOOP_MS:100 LOOP_MAX_MS:100\r\n"}
+{"utc": "2026-11-24T19:25:16.598857+00:00", "monotonic": 1043423.984, "event": "rx", "text": "TOF RANGE | LEFT:OK 585 mm | RIGHT:OK 990 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:16.645436+00:00", "monotonic": 1043424.031, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2449 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:16.675613+00:00", "monotonic": 1043424.046, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:16.784386+00:00", "monotonic": 1043424.156, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:16.830477+00:00", "monotonic": 1043424.203, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:16.878628+00:00", "monotonic": 1043424.25, "event": "rx", "text": "MOTOR | LEFT:50 RPWM:500 LPWM:0 ENC:-879793 DENC:-10235 RPMx100:-132440 AB:2 | RIGHT:49 RPWM:490 LPWM:0 ENC:872135 DENC:9450 RPMx100:122282 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+50/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+3331/+3444 I_x100:-27/-69 T_MS:386775 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:16.879681+00:00", "monotonic": 1043424.265, "event": "rx", "text": "TOF RANGE | LEFT:OK 584 mm | RIGHT:OK 993 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:16.924595+00:00", "monotonic": 1043424.296, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:16.925690+00:00", "monotonic": 1043424.296, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2452 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:16.926710+00:00", "monotonic": 1043424.312, "event": "rx", "text": "ESP STATUS | uptime:388412 | heap:180340 | rssi:-43 | net:STA | ip:192.168.137.119 | stm:ONLINE\r\n"}
+{"utc": "2026-11-24T19:25:16.970347+00:00", "monotonic": 1043424.343, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:17.017973+00:00", "monotonic": 1043424.39, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:17.019954+00:00", "monotonic": 1043424.406, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-885569 DENC:-5776 RPMx100:-144979 AB:2 | RIGHT:49 RPWM:490 LPWM:0 ENC:875811 DENC:3676 RPMx100:92269 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+3897/+3254 I_x100:-56/-90 T_MS:386941 LOOP_MS:102 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:17.066182+00:00", "monotonic": 1043424.437, "event": "rx", "text": "TOF RANGE | LEFT:OK 589 mm | RIGHT:OK 985 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:17.112932+00:00", "monotonic": 1043424.484, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2459 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:17.174146+00:00", "monotonic": 1043424.546, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:17.254082+00:00", "monotonic": 1043424.625, "event": "rx", "text": "TOF RANGE | LEFT:OK 592 mm | RIGHT:OK 977 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:17.256082+00:00", "monotonic": 1043424.64, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2458 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:17.299693+00:00", "monotonic": 1043424.671, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:17.347069+00:00", "monotonic": 1043424.718, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:17.348253+00:00", "monotonic": 1043424.734, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-894281 DENC:-8712 RPMx100:-126923 AB:2 | RIGHT:48 RPWM:480 LPWM:0 ENC:883522 DENC:7711 RPMx100:112339 AB:2 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+3829/+3338 I_x100:-104/-115 T_MS:387227 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:17.408149+00:00", "monotonic": 1043424.781, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:17.439912+00:00", "monotonic": 1043424.812, "event": "rx", "text": "TOF RANGE | LEFT:OK 582 mm | RIGHT:OK 971 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:17.485516+00:00", "monotonic": 1043424.859, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2459 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:17.486516+00:00", "monotonic": 1043424.859, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:17.531983+00:00", "monotonic": 1043424.906, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:17.579737+00:00", "monotonic": 1043424.953, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-899886 DENC:-5605 RPMx100:-113369 AB:0 | RIGHT:49 RPWM:490 LPWM:0 ENC:887988 DENC:4466 RPMx100:90331 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+3582/+2992 I_x100:-130/-127 T_MS:387433 LOOP_MS:103 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:17.627237+00:00", "monotonic": 1043425.0, "event": "rx", "text": "TOF RANGE | LEFT:OK 574 mm | RIGHT:OK 976 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:17.641270+00:00", "monotonic": 1043425.015, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:17.672239+00:00", "monotonic": 1043425.046, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1776 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:17.718212+00:00", "monotonic": 1043425.093, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:17.719215+00:00", "monotonic": 1043425.093, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:17.766601+00:00", "monotonic": 1043425.14, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-904603 DENC:-4717 RPMx100:-88532 AB:1 | RIGHT:48 RPWM:480 LPWM:0 ENC:894111 DENC:6123 RPMx100:114921 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+3099/+3278 I_x100:-147/-143 T_MS:387655 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:17.858585+00:00", "monotonic": 1043425.234, "event": "rx", "text": "TOF RANGE | LEFT:OK 586 mm | RIGHT:OK 981 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:17.859581+00:00", "monotonic": 1043425.234, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2452 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:17.889714+00:00", "monotonic": 1043425.265, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:18.044106+00:00", "monotonic": 1043425.421, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:18.045622+00:00", "monotonic": 1043425.421, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:18.092025+00:00", "monotonic": 1043425.468, "event": "rx", "text": "MOTOR | LEFT:50 RPWM:500 LPWM:0 ENC:-911943 DENC:-7340 RPMx100:-87380 AB:1 | RIGHT:48 RPWM:480 LPWM:0 ENC:902240 DENC:8129 RPMx100:96773 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+50/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2738/+3119 I_x100:-154/-161 T_MS:388005 LOOP_MS:108 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:18.094040+00:00", "monotonic": 1043425.468, "event": "rx", "text": "TOF RANGE | LEFT:OK 592 mm | RIGHT:OK 979 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:18.137117+00:00", "monotonic": 1043425.515, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:18.138413+00:00", "monotonic": 1043425.515, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1765 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:18.279925+00:00", "monotonic": 1043425.656, "event": "rx", "text": "TOF RANGE | LEFT:OK 587 mm | RIGHT:OK 983 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:18.294528+00:00", "monotonic": 1043425.671, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1766 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:18.341766+00:00", "monotonic": 1043425.718, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:18.342770+00:00", "monotonic": 1043425.718, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:18.389284+00:00", "monotonic": 1043425.765, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:18.390287+00:00", "monotonic": 1043425.765, "event": "rx", "text": "MOTOR | LEFT:50 RPWM:500 LPWM:0 ENC:-917856 DENC:-5913 RPMx100:-98157 AB:3 | RIGHT:48 RPWM:480 LPWM:0 ENC:908314 DENC:6074 RPMx100:100830 AB:2 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+50/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2872/+3081 I_x100:-164/-176 T_MS:388256 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:18.484460+00:00", "monotonic": 1043425.859, "event": "rx", "text": "TOF RANGE | LEFT:OK 588 mm | RIGHT:OK 987 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:18.486479+00:00", "monotonic": 1043425.859, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2455 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:18.530690+00:00", "monotonic": 1043425.906, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:18.577693+00:00", "monotonic": 1043425.953, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:18.579693+00:00", "monotonic": 1043425.953, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-923268 DENC:-5412 RPMx100:-108937 AB:3 | RIGHT:49 RPWM:490 LPWM:0 ENC:911995 DENC:3681 RPMx100:74094 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+3091/+2638 I_x100:-177/-182 T_MS:388463 LOOP_MS:101 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:18.641274+00:00", "monotonic": 1043426.015, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:18.673828+00:00", "monotonic": 1043426.046, "event": "rx", "text": "TOF RANGE | LEFT:OK 580 mm | RIGHT:OK 983 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:18.721505+00:00", "monotonic": 1043426.093, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1766 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:18.722503+00:00", "monotonic": 1043426.093, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:18.767903+00:00", "monotonic": 1043426.14, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:18.814929+00:00", "monotonic": 1043426.187, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-928765 DENC:-5497 RPMx100:-115677 AB:2 | RIGHT:48 RPWM:480 LPWM:0 ENC:917070 DENC:5075 RPMx100:106797 AB:2 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+3272/+2910 I_x100:-193/-187 T_MS:388661 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:18.859419+00:00", "monotonic": 1043426.234, "event": "rx", "text": "TOF RANGE | LEFT:OK 583 mm | RIGHT:OK 994 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:18.874627+00:00", "monotonic": 1043426.25, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:18.907521+00:00", "monotonic": 1043426.281, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2459 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:18.908519+00:00", "monotonic": 1043426.281, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:18.954003+00:00", "monotonic": 1043426.328, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:19.002452+00:00", "monotonic": 1043426.375, "event": "rx", "text": "ESP PONG | uptime:390439 | heap:180292 | rssi:-41 | net:STA | ip:192.168.137.119 | stm:ONLINE\r\n"}
+{"utc": "2026-11-24T19:25:19.003614+00:00", "monotonic": 1043426.375, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-934655 DENC:-5890 RPMx100:-103990 AB:1 | RIGHT:49 RPWM:490 LPWM:0 ENC:922409 DENC:5339 RPMx100:94262 AB:0 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+3277/+2807 I_x100:-213/-193 T_MS:388897 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:19.049704+00:00", "monotonic": 1043426.421, "event": "rx", "text": "TOF RANGE | LEFT:OK 590 mm | RIGHT:OK 984 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:19.096776+00:00", "monotonic": 1043426.468, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2455 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:19.111410+00:00", "monotonic": 1043426.484, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:19.237094+00:00", "monotonic": 1043426.609, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:19.282317+00:00", "monotonic": 1043426.656, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:19.329627+00:00", "monotonic": 1043426.703, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-943306 DENC:-8651 RPMx100:-106329 AB:0 | RIGHT:49 RPWM:490 LPWM:0 ENC:929208 DENC:6799 RPMx100:83566 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+3152/+2568 I_x100:-231/-203 T_MS:389236 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:19.331653+00:00", "monotonic": 1043426.703, "event": "rx", "text": "TOF RANGE | LEFT:OK 592 mm | RIGHT:OK 976 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:19.359818+00:00", "monotonic": 1043426.734, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:19.376180+00:00", "monotonic": 1043426.75, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2459 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:19.515229+00:00", "monotonic": 1043426.89, "event": "rx", "text": "TOF RANGE | LEFT:OK 593 mm | RIGHT:OK 988 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:19.562273+00:00", "monotonic": 1043426.937, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2458 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:19.563274+00:00", "monotonic": 1043426.937, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:19.607905+00:00", "monotonic": 1043426.984, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:19.609003+00:00", "monotonic": 1043426.984, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:19.656138+00:00", "monotonic": 1043427.031, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-948752 DENC:-5446 RPMx100:-89690 AB:3 | RIGHT:48 RPWM:480 LPWM:0 ENC:935281 DENC:6073 RPMx100:100016 AB:0 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2873/+2787 I_x100:-250/-211 T_MS:389489 LOOP_MS:106 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:19.657175+00:00", "monotonic": 1043427.031, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:19.701908+00:00", "monotonic": 1043427.078, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:19.749403+00:00", "monotonic": 1043427.125, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-951585 DENC:-2833 RPMx100:-87438 AB:2 | RIGHT:49 RPWM:490 LPWM:0 ENC:937521 DENC:2240 RPMx100:69135 AB:0 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2790/+2518 I_x100:-253/-211 T_MS:389624 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:19.751401+00:00", "monotonic": 1043427.125, "event": "rx", "text": "TOF RANGE | LEFT:OK 579 mm | RIGHT:OK 1000 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:19.795669+00:00", "monotonic": 1043427.171, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1763 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:19.825897+00:00", "monotonic": 1043427.203, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:19.887896+00:00", "monotonic": 1043427.265, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:19.888896+00:00", "monotonic": 1043427.265, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:19.936145+00:00", "monotonic": 1043427.312, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-955855 DENC:-4270 RPMx100:-78033 AB:1 | RIGHT:48 RPWM:480 LPWM:0 ENC:943114 DENC:5593 RPMx100:102211 AB:2 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2600/+2829 I_x100:-256/-214 T_MS:389852 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:19.937196+00:00", "monotonic": 1043427.312, "event": "rx", "text": "TOF RANGE | LEFT:OK 589 mm | RIGHT:OK 974 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:19.982708+00:00", "monotonic": 1043427.359, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1762 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:20.058490+00:00", "monotonic": 1043427.437, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:20.120947+00:00", "monotonic": 1043427.5, "event": "rx", "text": "TOF RANGE | LEFT:OK 598 mm | RIGHT:OK 970 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:20.125776+00:00", "monotonic": 1043427.5, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1766 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:20.167479+00:00", "monotonic": 1043427.546, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:20.214425+00:00", "monotonic": 1043427.593, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:20.216642+00:00", "monotonic": 1043427.593, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-960854 DENC:-4999 RPMx100:-82655 AB:0 | RIGHT:49 RPWM:490 LPWM:0 ENC:947983 DENC:4869 RPMx100:80505 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2506/+2564 I_x100:-255/-217 T_MS:390104 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:20.277357+00:00", "monotonic": 1043427.656, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:20.309554+00:00", "monotonic": 1043427.687, "event": "rx", "text": "TOF RANGE | LEFT:OK 584 mm | RIGHT:OK 980 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:20.356604+00:00", "monotonic": 1043427.734, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1776 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:20.357620+00:00", "monotonic": 1043427.734, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:20.402506+00:00", "monotonic": 1043427.781, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:20.449511+00:00", "monotonic": 1043427.828, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-964804 DENC:-3950 RPMx100:-82705 AB:3 | RIGHT:48 RPWM:480 LPWM:0 ENC:952588 DENC:4605 RPMx100:96419 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2491/+2763 I_x100:-255/-224 T_MS:390303 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:20.498595+00:00", "monotonic": 1043427.875, "event": "rx", "text": "TOF RANGE | LEFT:OK 582 mm | RIGHT:OK 979 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:20.503753+00:00", "monotonic": 1043427.875, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:20.544800+00:00", "monotonic": 1043427.921, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2462 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:20.591118+00:00", "monotonic": 1043427.968, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:20.592536+00:00", "monotonic": 1043427.968, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:20.639519+00:00", "monotonic": 1043428.015, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-969136 DENC:-4332 RPMx100:-82798 AB:3 | RIGHT:49 RPWM:490 LPWM:0 ENC:957054 DENC:4466 RPMx100:85359 AB:2 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2479/+2576 I_x100:-255/-224 T_MS:390521 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:20.732370+00:00", "monotonic": 1043428.109, "event": "rx", "text": "TOF RANGE | LEFT:OK 586 mm | RIGHT:OK 986 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:20.733365+00:00", "monotonic": 1043428.109, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2449 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:20.736365+00:00", "monotonic": 1043428.109, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:20.777254+00:00", "monotonic": 1043428.156, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:20.823857+00:00", "monotonic": 1043428.203, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:20.825842+00:00", "monotonic": 1043428.203, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-975074 DENC:-5938 RPMx100:-106645 AB:0 | RIGHT:48 RPWM:480 LPWM:0 ENC:962068 DENC:5014 RPMx100:90050 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2778/+2787 I_x100:-259/-231 T_MS:390753 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:20.914792+00:00", "monotonic": 1043428.296, "event": "rx", "text": "TOF RANGE | LEFT:OK 586 mm | RIGHT:OK 984 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:20.916427+00:00", "monotonic": 1043428.296, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2452 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:20.977791+00:00", "monotonic": 1043428.359, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:21.102465+00:00", "monotonic": 1043428.484, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:21.149818+00:00", "monotonic": 1043428.531, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:21.150966+00:00", "monotonic": 1043428.531, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-982707 DENC:-7633 RPMx100:-96376 AB:1 | RIGHT:49 RPWM:490 LPWM:0 ENC:969001 DENC:6933 RPMx100:87537 AB:0 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2843/+2599 I_x100:-275/-233 T_MS:391083 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:21.197823+00:00", "monotonic": 1043428.578, "event": "rx", "text": "TOF RANGE | LEFT:OK 581 mm | RIGHT:OK 971 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:21.199823+00:00", "monotonic": 1043428.578, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2452 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:21.213881+00:00", "monotonic": 1043428.593, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:21.340896+00:00", "monotonic": 1043428.718, "event": "rx", "text": "TOF RANGE | LEFT:OK 576 mm | RIGHT:OK 967 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:21.386552+00:00", "monotonic": 1043428.765, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2466 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:21.431467+00:00", "monotonic": 1043428.812, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:21.431467+00:00", "monotonic": 1043428.812, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:21.462190+00:00", "monotonic": 1043428.843, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:21.478711+00:00", "monotonic": 1043428.859, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-988266 DENC:-5559 RPMx100:-91914 AB:0 | RIGHT:49 RPWM:490 LPWM:0 ENC:973753 DENC:4752 RPMx100:78571 AB:0 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2756/+2407 I_x100:-287/-235 T_MS:391335 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:21.525511+00:00", "monotonic": 1043428.906, "event": "rx", "text": "TOF RANGE | LEFT:OK 586 mm | RIGHT:OK 978 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:21.571609+00:00", "monotonic": 1043428.953, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2455 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:21.617794+00:00", "monotonic": 1043429.0, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:21.618796+00:00", "monotonic": 1043429.0, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:21.664567+00:00", "monotonic": 1043429.046, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-993261 DENC:-4995 RPMx100:-104585 AB:2 | RIGHT:48 RPWM:480 LPWM:0 ENC:978807 DENC:5054 RPMx100:105820 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2941/+2795 I_x100:-295/-238 T_MS:391534 LOOP_MS:111 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:21.693793+00:00", "monotonic": 1043429.078, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:21.759014+00:00", "monotonic": 1043429.14, "event": "rx", "text": "TOF RANGE | LEFT:OK 587 mm | RIGHT:OK 994 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:21.760022+00:00", "monotonic": 1043429.14, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2462 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:21.803707+00:00", "monotonic": 1043429.187, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:21.805225+00:00", "monotonic": 1043429.187, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:21.851819+00:00", "monotonic": 1043429.234, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-996858 DENC:-3597 RPMx100:-74195 AB:0 | RIGHT:49 RPWM:490 LPWM:0 ENC:982388 DENC:3581 RPMx100:73865 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2543/+2477 I_x100:-298/-240 T_MS:391736 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:21.898338+00:00", "monotonic": 1043429.281, "event": "rx", "text": "ESP STATUS | uptime:393415 | heap:180340 | rssi:-42 | net:STA | ip:192.168.137.119 | stm:ONLINE\r\n"}
+{"utc": "2026-11-24T19:25:21.930048+00:00", "monotonic": 1043429.312, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:21.946047+00:00", "monotonic": 1043429.328, "event": "rx", "text": "TOF RANGE | LEFT:OK 580 mm | RIGHT:OK 990 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:21.992513+00:00", "monotonic": 1043429.375, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2455 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:21.993515+00:00", "monotonic": 1043429.375, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:22.039323+00:00", "monotonic": 1043429.421, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:22.087043+00:00", "monotonic": 1043429.468, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1000505 DENC:-3647 RPMx100:-70678 AB:2 | RIGHT:48 RPWM:480 LPWM:0 ENC:987740 DENC:5352 RPMx100:103720 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2307/+2834 I_x100:-295/-244 T_MS:391951 LOOP_MS:103 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:22.134061+00:00", "monotonic": 1043429.515, "event": "rx", "text": "TOF RANGE | LEFT:OK 594 mm | RIGHT:OK 990 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:22.179920+00:00", "monotonic": 1043429.562, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:22.181920+00:00", "monotonic": 1043429.562, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1783 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:22.317205+00:00", "monotonic": 1043429.703, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:22.364817+00:00", "monotonic": 1043429.75, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:22.365817+00:00", "monotonic": 1043429.75, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1007093 DENC:-6588 RPMx100:-75828 AB:2 | RIGHT:48 RPWM:480 LPWM:0 ENC:994709 DENC:6969 RPMx100:80214 AB:0 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2383/+2563 I_x100:-290/-246 T_MS:392313 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:22.412993+00:00", "monotonic": 1043429.796, "event": "rx", "text": "TOF RANGE | LEFT:OK 588 mm | RIGHT:OK 977 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:22.415975+00:00", "monotonic": 1043429.796, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:22.460880+00:00", "monotonic": 1043429.843, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2459 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:22.599103+00:00", "monotonic": 1043429.984, "event": "rx", "text": "TOF RANGE | LEFT:OK 567 mm | RIGHT:OK 972 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:22.600100+00:00", "monotonic": 1043429.984, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2452 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:22.645045+00:00", "monotonic": 1043430.031, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:22.660247+00:00", "monotonic": 1043430.031, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:22.691297+00:00", "monotonic": 1043430.062, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:22.692567+00:00", "monotonic": 1043430.078, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1012197 DENC:-5104 RPMx100:-84391 AB:2 | RIGHT:48 RPWM:480 LPWM:0 ENC:999814 DENC:5105 RPMx100:84408 AB:2 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2452/+2550 I_x100:-284/-247 T_MS:392565 LOOP_MS:112 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:22.737110+00:00", "monotonic": 1043430.109, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:22.783714+00:00", "monotonic": 1043430.156, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:22.784800+00:00", "monotonic": 1043430.156, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1014678 DENC:-2481 RPMx100:-89891 AB:0 | RIGHT:49 RPWM:490 LPWM:0 ENC:1001712 DENC:1898 RPMx100:68768 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2545/+2371 I_x100:-284/-246 T_MS:392680 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:22.831444+00:00", "monotonic": 1043430.203, "event": "rx", "text": "TOF RANGE | LEFT:OK 590 mm | RIGHT:OK 986 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:22.878388+00:00", "monotonic": 1043430.25, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2462 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:22.892508+00:00", "monotonic": 1043430.265, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:22.923151+00:00", "monotonic": 1043430.296, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:22.969100+00:00", "monotonic": 1043430.343, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:23.016222+00:00", "monotonic": 1043430.39, "event": "rx", "text": "ESP PONG | uptime:394451 | heap:180292 | rssi:-44 | net:STA | ip:192.168.137.119 | stm:ONLINE\r\n"}
+{"utc": "2026-11-24T19:25:23.018375+00:00", "monotonic": 1043430.39, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1020222 DENC:-5544 RPMx100:-90234 AB:0 | RIGHT:48 RPWM:480 LPWM:0 ENC:1007952 DENC:6240 RPMx100:101562 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2563/+2796 I_x100:-284/-249 T_MS:392936 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:23.063457+00:00", "monotonic": 1043430.437, "event": "rx", "text": "TOF RANGE | LEFT:OK 570 mm | RIGHT:OK 999 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:23.109773+00:00", "monotonic": 1043430.484, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2456 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:23.123971+00:00", "monotonic": 1043430.5, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:23.203242+00:00", "monotonic": 1043430.578, "event": "rx", "text": "TOF RANGE | LEFT:OK 566 mm | RIGHT:OK 995 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:23.206239+00:00", "monotonic": 1043430.578, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2445 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:23.249026+00:00", "monotonic": 1043430.625, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:23.295376+00:00", "monotonic": 1043430.671, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:23.296443+00:00", "monotonic": 1043430.671, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-1026586 DENC:-6364 RPMx100:-105224 AB:0 | RIGHT:49 RPWM:490 LPWM:0 ENC:1012083 DENC:4131 RPMx100:68303 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2968/+2327 I_x100:-296/-249 T_MS:393188 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:23.356938+00:00", "monotonic": 1043430.734, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:23.389123+00:00", "monotonic": 1043430.765, "event": "rx", "text": "TOF RANGE | LEFT:OK 597 mm | RIGHT:OK 990 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:23.434891+00:00", "monotonic": 1043430.812, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2476 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:23.435894+00:00", "monotonic": 1043430.812, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:23.482212+00:00", "monotonic": 1043430.859, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:23.529899+00:00", "monotonic": 1043430.906, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1030492 DENC:-3906 RPMx100:-81783 AB:3 | RIGHT:48 RPWM:480 LPWM:0 ENC:1017187 DENC:5104 RPMx100:106867 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2679/+2792 I_x100:-301/-252 T_MS:393387 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:23.576502+00:00", "monotonic": 1043430.953, "event": "rx", "text": "TOF RANGE | LEFT:OK 572 mm | RIGHT:OK 977 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:23.591506+00:00", "monotonic": 1043430.968, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:23.623106+00:00", "monotonic": 1043431.0, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2452 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:23.624613+00:00", "monotonic": 1043431.0, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:23.670377+00:00", "monotonic": 1043431.046, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:23.718503+00:00", "monotonic": 1043431.093, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-1035649 DENC:-5157 RPMx100:-95077 AB:2 | RIGHT:48 RPWM:480 LPWM:0 ENC:1021080 DENC:3893 RPMx100:71773 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2780/+2484 I_x100:-307/-254 T_MS:393613 LOOP_MS:112 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:23.812734+00:00", "monotonic": 1043431.187, "event": "rx", "text": "TOF RANGE | LEFT:OK 582 mm | RIGHT:OK 991 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:23.813757+00:00", "monotonic": 1043431.187, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2452 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:23.842737+00:00", "monotonic": 1043431.218, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:23.999448+00:00", "monotonic": 1043431.375, "event": "rx", "text": "TOF RANGE | LEFT:OK 587 mm | RIGHT:OK 973 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:24.000447+00:00", "monotonic": 1043431.375, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2459 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:24.045269+00:00", "monotonic": 1043431.421, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:24.092953+00:00", "monotonic": 1043431.468, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:24.094143+00:00", "monotonic": 1043431.468, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:24.095169+00:00", "monotonic": 1043431.468, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-1044256 DENC:-8607 RPMx100:-92191 AB:3 | RIGHT:48 RPWM:480 LPWM:0 ENC:1029318 DENC:8238 RPMx100:88239 AB:2 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2797/+2667 I_x100:-317/-255 T_MS:394002 LOOP_MS:102 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:24.139765+00:00", "monotonic": 1043431.515, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:24.187456+00:00", "monotonic": 1043431.562, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:24.189731+00:00", "monotonic": 1043431.562, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1045863 DENC:-1607 RPMx100:-58735 AB:1 | RIGHT:49 RPWM:490 LPWM:0 ENC:1031204 DENC:1886 RPMx100:68932 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2480/+2445 I_x100:-317/-255 T_MS:394116 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:24.235011+00:00", "monotonic": 1043431.609, "event": "rx", "text": "TOF RANGE | LEFT:OK 587 mm | RIGHT:OK 974 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:24.281131+00:00", "monotonic": 1043431.656, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2456 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:24.343273+00:00", "monotonic": 1043431.718, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:24.422583+00:00", "monotonic": 1043431.796, "event": "rx", "text": "TOF RANGE | LEFT:OK 594 mm | RIGHT:OK 981 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:24.423597+00:00", "monotonic": 1043431.796, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1783 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:24.468832+00:00", "monotonic": 1043431.843, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:24.515672+00:00", "monotonic": 1043431.89, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:24.518020+00:00", "monotonic": 1043431.89, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1050525 DENC:-4662 RPMx100:-71153 AB:2 | RIGHT:49 RPWM:490 LPWM:0 ENC:1036359 DENC:5155 RPMx100:78678 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2226/+2317 I_x100:-309/-253 T_MS:394389 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:24.577463+00:00", "monotonic": 1043431.953, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:24.609688+00:00", "monotonic": 1043431.984, "event": "rx", "text": "TOF RANGE | LEFT:OK 586 mm | RIGHT:OK 970 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:24.610823+00:00", "monotonic": 1043431.984, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2452 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:24.656467+00:00", "monotonic": 1043432.031, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:24.657555+00:00", "monotonic": 1043432.031, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:24.704790+00:00", "monotonic": 1043432.078, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1054306 DENC:-3781 RPMx100:-74312 AB:0 | RIGHT:48 RPWM:480 LPWM:0 ENC:1041656 DENC:5297 RPMx100:104107 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2236/+2779 I_x100:-302/-256 T_MS:394601 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:24.796776+00:00", "monotonic": 1043432.171, "event": "rx", "text": "TOF RANGE | LEFT:OK 576 mm | RIGHT:OK 996 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:24.798915+00:00", "monotonic": 1043432.171, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2465 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:24.828229+00:00", "monotonic": 1043432.203, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:24.983729+00:00", "monotonic": 1043432.359, "event": "rx", "text": "TOF RANGE | LEFT:OK 576 mm | RIGHT:OK 988 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:25.030503+00:00", "monotonic": 1043432.406, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1793 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:25.030503+00:00", "monotonic": 1043432.406, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:25.075376+00:00", "monotonic": 1043432.453, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:25.076217+00:00", "monotonic": 1043432.453, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:25.121571+00:00", "monotonic": 1043432.5, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1061671 DENC:-7365 RPMx100:-77689 AB:1 | RIGHT:49 RPWM:490 LPWM:0 ENC:1048946 DENC:7290 RPMx100:76898 AB:2 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2419/+2441 I_x100:-292/-256 T_MS:394996 LOOP_MS:104 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:25.122752+00:00", "monotonic": 1043432.5, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:25.167785+00:00", "monotonic": 1043432.546, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:25.216763+00:00", "monotonic": 1043432.593, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1063949 DENC:-2278 RPMx100:-92152 AB:2 | RIGHT:48 RPWM:480 LPWM:0 ENC:1051783 DENC:2837 RPMx100:114765 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2531/+2767 I_x100:-292/-259 T_MS:395099 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:25.217777+00:00", "monotonic": 1043432.593, "event": "rx", "text": "TOF RANGE | LEFT:OK 566 mm | RIGHT:OK 983 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:25.263282+00:00", "monotonic": 1043432.64, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1766 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:25.309469+00:00", "monotonic": 1043432.687, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:25.403547+00:00", "monotonic": 1043432.781, "event": "rx", "text": "TOF RANGE | LEFT:OK 584 mm | RIGHT:OK 984 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:25.450032+00:00", "monotonic": 1043432.828, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1755 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:25.450032+00:00", "monotonic": 1043432.828, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:25.496266+00:00", "monotonic": 1043432.875, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:25.543957+00:00", "monotonic": 1043432.921, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1071228 DENC:-7279 RPMx100:-103512 AB:3 | RIGHT:48 RPWM:480 LPWM:0 ENC:1056971 DENC:5188 RPMx100:73777 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2793/+2510 I_x100:-296/-261 T_MS:395392 LOOP_MS:100 LOOP_MAX_MS:124\r\n"}
+{"utc": "2026-11-24T19:25:25.545970+00:00", "monotonic": 1043432.921, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:25.592358+00:00", "monotonic": 1043432.968, "event": "rx", "text": "TOF RANGE | LEFT:OK 590 mm | RIGHT:OK 981 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:25.639240+00:00", "monotonic": 1043433.015, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2459 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:25.639240+00:00", "monotonic": 1043433.015, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:25.684041+00:00", "monotonic": 1043433.062, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:25.685560+00:00", "monotonic": 1043433.062, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-1075874 DENC:-4646 RPMx100:-97278 AB:0 | RIGHT:49 RPWM:490 LPWM:0 ENC:1061462 DENC:4491 RPMx100:94032 AB:2 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2985/+2440 I_x100:-307/-260 T_MS:395591 LOOP_MS:100 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:25.780893+00:00", "monotonic": 1043433.156, "event": "rx", "text": "TOF RANGE | LEFT:OK 590 mm | RIGHT:OK 988 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:25.781903+00:00", "monotonic": 1043433.156, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:25.826036+00:00", "monotonic": 1043433.203, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2466 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:25.827451+00:00", "monotonic": 1043433.203, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:25.873275+00:00", "monotonic": 1043433.25, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:25.920194+00:00", "monotonic": 1043433.296, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1080342 DENC:-4468 RPMx100:-86188 AB:0 | RIGHT:48 RPWM:480 LPWM:0 ENC:1065823 DENC:4361 RPMx100:84124 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2676/+2722 I_x100:-312/-265 T_MS:395807 LOOP_MS:100 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:26.013385+00:00", "monotonic": 1043433.39, "event": "rx", "text": "TOF RANGE | LEFT:OK 583 mm | RIGHT:OK 985 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:26.014384+00:00", "monotonic": 1043433.39, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2460 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:26.017381+00:00", "monotonic": 1043433.39, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:26.200004+00:00", "monotonic": 1043433.578, "event": "rx", "text": "TOF RANGE | LEFT:OK 579 mm | RIGHT:OK 976 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:26.202005+00:00", "monotonic": 1043433.578, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2455 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:26.245767+00:00", "monotonic": 1043433.625, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:26.261279+00:00", "monotonic": 1043433.64, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:26.292451+00:00", "monotonic": 1043433.671, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:26.293456+00:00", "monotonic": 1043433.671, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-1088896 DENC:-8554 RPMx100:-91859 AB:3 | RIGHT:48 RPWM:480 LPWM:0 ENC:1073912 DENC:8089 RPMx100:86866 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2718/+2728 I_x100:-322/-264 T_MS:396195 LOOP_MS:100 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:26.339896+00:00", "monotonic": 1043433.718, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:26.386535+00:00", "monotonic": 1043433.765, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:26.387863+00:00", "monotonic": 1043433.765, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-1090946 DENC:-2050 RPMx100:-72387 AB:0 | RIGHT:48 RPWM:480 LPWM:0 ENC:1075915 DENC:2003 RPMx100:70727 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2665/+2675 I_x100:-323/-266 T_MS:396313 LOOP_MS:100 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:26.433300+00:00", "monotonic": 1043433.812, "event": "rx", "text": "TOF RANGE | LEFT:OK 588 mm | RIGHT:OK 986 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:26.481465+00:00", "monotonic": 1043433.859, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2455 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:26.496536+00:00", "monotonic": 1043433.875, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:26.621489+00:00", "monotonic": 1043434.0, "event": "rx", "text": "TOF RANGE | LEFT:OK 589 mm | RIGHT:OK 985 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:26.623833+00:00", "monotonic": 1043434.0, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2452 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:26.668373+00:00", "monotonic": 1043434.046, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:26.715395+00:00", "monotonic": 1043434.093, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:26.717396+00:00", "monotonic": 1043434.093, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1096015 DENC:-5069 RPMx100:-75701 AB:1 | RIGHT:49 RPWM:490 LPWM:0 ENC:1081190 DENC:5275 RPMx100:78778 AB:2 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2382/+2385 I_x100:-321/-263 T_MS:396592 LOOP_MS:100 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:26.746684+00:00", "monotonic": 1043434.125, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:26.808789+00:00", "monotonic": 1043434.187, "event": "rx", "text": "TOF RANGE | LEFT:OK 581 mm | RIGHT:OK 982 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:26.810926+00:00", "monotonic": 1043434.187, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2462 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:26.855124+00:00", "monotonic": 1043434.234, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:26.902687+00:00", "monotonic": 1043434.281, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:26.903697+00:00", "monotonic": 1043434.281, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1099418 DENC:-3403 RPMx100:-70193 AB:0 | RIGHT:48 RPWM:480 LPWM:0 ENC:1085575 DENC:4385 RPMx100:90449 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2256/+2656 I_x100:-317/-266 T_MS:396794 LOOP_MS:100 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:26.948022+00:00", "monotonic": 1043434.328, "event": "rx", "text": "ESP STATUS | uptime:398417 | heap:180292 | rssi:-43 | net:STA | ip:192.168.137.119 | stm:ONLINE\r\n"}
+{"utc": "2026-11-24T19:25:26.993837+00:00", "monotonic": 1043434.375, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:26.994943+00:00", "monotonic": 1043434.375, "event": "rx", "text": "TOF RANGE | LEFT:OK 585 mm | RIGHT:OK 961 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:27.041437+00:00", "monotonic": 1043434.421, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2456 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:27.042448+00:00", "monotonic": 1043434.421, "event": "rx", "text": "ESP PONG | uptime:398503 | heap:180292 | rssi:-43 | net:STA | ip:192.168.137.119 | stm:ONLINE\r\n"}
+{"utc": "2026-11-24T19:25:27.087088+00:00", "monotonic": 1043434.468, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:27.133474+00:00", "monotonic": 1043434.515, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:27.135583+00:00", "monotonic": 1043434.515, "event": "rx", "text": "MOTOR | LEFT:50 RPWM:500 LPWM:0 ENC:-1102716 DENC:-3298 RPMx100:-60535 AB:3 | RIGHT:49 RPWM:490 LPWM:0 ENC:1089318 DENC:3743 RPMx100:68704 AB:2 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+50/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+1981/+2269 I_x100:-307/-264 T_MS:397021 LOOP_MS:108 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:27.180232+00:00", "monotonic": 1043434.562, "event": "rx", "text": "TOF RANGE | LEFT:OK 591 mm | RIGHT:OK 987 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:27.225975+00:00", "monotonic": 1043434.609, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:27.227319+00:00", "monotonic": 1043434.609, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2455 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:27.414716+00:00", "monotonic": 1043434.796, "event": "rx", "text": "TOF RANGE | LEFT:OK 604 mm | RIGHT:OK 994 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:27.416714+00:00", "monotonic": 1043434.796, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2458 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:27.461643+00:00", "monotonic": 1043434.843, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:27.463649+00:00", "monotonic": 1043434.843, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:27.508479+00:00", "monotonic": 1043434.89, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:27.509489+00:00", "monotonic": 1043434.89, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1110210 DENC:-7494 RPMx100:-81955 AB:0 | RIGHT:48 RPWM:480 LPWM:0 ENC:1097337 DENC:8019 RPMx100:87696 AB:0 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2296/+2457 I_x100:-297/-267 T_MS:397402 LOOP_MS:100 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:27.554712+00:00", "monotonic": 1043434.937, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:27.555712+00:00", "monotonic": 1043434.937, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:27.602708+00:00", "monotonic": 1043434.984, "event": "rx", "text": "MOTOR | LEFT:50 RPWM:500 LPWM:0 ENC:-1111909 DENC:-1699 RPMx100:-75310 AB:2 | RIGHT:49 RPWM:490 LPWM:0 ENC:1098852 DENC:1515 RPMx100:67154 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+50/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2248/+2288 I_x100:-294/-265 T_MS:397496 LOOP_MS:102 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:27.649698+00:00", "monotonic": 1043435.031, "event": "rx", "text": "TOF RANGE | LEFT:OK 581 mm | RIGHT:OK 965 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:27.650694+00:00", "monotonic": 1043435.031, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2452 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:27.711812+00:00", "monotonic": 1043435.093, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:27.790577+00:00", "monotonic": 1043435.171, "event": "rx", "text": "TOF RANGE | LEFT:OK 592 mm | RIGHT:OK 988 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:27.838661+00:00", "monotonic": 1043435.218, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2459 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:27.885190+00:00", "monotonic": 1043435.265, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:27.886195+00:00", "monotonic": 1043435.265, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:27.932095+00:00", "monotonic": 1043435.312, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-1120044 DENC:-8135 RPMx100:-110409 AB:3 | RIGHT:48 RPWM:480 LPWM:0 ENC:1105939 DENC:7087 RPMx100:96186 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2985/+2711 I_x100:-301/-269 T_MS:397803 LOOP_MS:100 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:27.946581+00:00", "monotonic": 1043435.328, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:27.979209+00:00", "monotonic": 1043435.359, "event": "rx", "text": "TOF RANGE | LEFT:OK 573 mm | RIGHT:OK 990 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:28.023626+00:00", "monotonic": 1043435.406, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2451 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:28.071105+00:00", "monotonic": 1043435.453, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:28.071925+00:00", "monotonic": 1043435.453, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:28.119376+00:00", "monotonic": 1043435.5, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-1124322 DENC:-4278 RPMx100:-87377 AB:0 | RIGHT:49 RPWM:490 LPWM:0 ENC:1109358 DENC:3419 RPMx100:69832 AB:2 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2846/+2331 I_x100:-310/-267 T_MS:398007 LOOP_MS:100 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:28.180649+00:00", "monotonic": 1043435.562, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:28.213763+00:00", "monotonic": 1043435.593, "event": "rx", "text": "TOF RANGE | LEFT:OK 579 mm | RIGHT:OK 988 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:28.214778+00:00", "monotonic": 1043435.593, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2466 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:28.258371+00:00", "monotonic": 1043435.64, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:28.304717+00:00", "monotonic": 1043435.687, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:28.305821+00:00", "monotonic": 1043435.687, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-1128935 DENC:-4613 RPMx100:-94219 AB:1 | RIGHT:48 RPWM:480 LPWM:0 ENC:1113461 DENC:4103 RPMx100:83803 AB:0 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2790/+2465 I_x100:-315/-267 T_MS:398211 LOOP_MS:100 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:28.397570+00:00", "monotonic": 1043435.781, "event": "rx", "text": "TOF RANGE | LEFT:OK 585 mm | RIGHT:OK 993 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:28.426845+00:00", "monotonic": 1043435.812, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:28.442202+00:00", "monotonic": 1043435.828, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1779 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:28.488641+00:00", "monotonic": 1043435.859, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:28.490641+00:00", "monotonic": 1043435.875, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:28.536573+00:00", "monotonic": 1043435.921, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1134114 DENC:-5179 RPMx100:-81124 AB:0 | RIGHT:48 RPWM:480 LPWM:0 ENC:1119479 DENC:6018 RPMx100:94266 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2560/+2745 I_x100:-320/-266 T_MS:398477 LOOP_MS:102 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:28.582357+00:00", "monotonic": 1043435.953, "event": "rx", "text": "TOF RANGE | LEFT:OK 593 mm | RIGHT:OK 985 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:28.628317+00:00", "monotonic": 1043436.0, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1780 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:28.659894+00:00", "monotonic": 1043436.031, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:28.768392+00:00", "monotonic": 1043436.14, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:28.816146+00:00", "monotonic": 1043436.187, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:28.817231+00:00", "monotonic": 1043436.203, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-1140859 DENC:-6745 RPMx100:-94309 AB:1 | RIGHT:49 RPWM:490 LPWM:0 ENC:1124494 DENC:5015 RPMx100:70120 AB:2 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2715/+2262 I_x100:-326/-266 T_MS:398775 LOOP_MS:100 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:28.863842+00:00", "monotonic": 1043436.25, "event": "rx", "text": "TOF RANGE | LEFT:OK 570 mm | RIGHT:OK 970 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:28.909485+00:00", "monotonic": 1043436.281, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:28.911485+00:00", "monotonic": 1043436.296, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1773 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:29.050069+00:00", "monotonic": 1043436.421, "event": "rx", "text": "TOF RANGE | LEFT:OK 590 mm | RIGHT:OK 984 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:29.052084+00:00", "monotonic": 1043436.437, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1776 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:29.094979+00:00", "monotonic": 1043436.468, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:29.140254+00:00", "monotonic": 1043436.515, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:29.142265+00:00", "monotonic": 1043436.515, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1144968 DENC:-4109 RPMx100:-64851 AB:3 | RIGHT:48 RPWM:480 LPWM:0 ENC:1130765 DENC:6271 RPMx100:98974 AB:0 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2238/+2723 I_x100:-322/-267 T_MS:399039 LOOP_MS:100 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:29.145122+00:00", "monotonic": 1043436.531, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:29.234563+00:00", "monotonic": 1043436.609, "event": "rx", "text": "TOF RANGE | LEFT:OK 584 mm | RIGHT:OK 985 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:29.282140+00:00", "monotonic": 1043436.656, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1773 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:29.283138+00:00", "monotonic": 1043436.656, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:29.327873+00:00", "monotonic": 1043436.703, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:29.374636+00:00", "monotonic": 1043436.75, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1148686 DENC:-3718 RPMx100:-75202 AB:0 | RIGHT:48 RPWM:480 LPWM:0 ENC:1134070 DENC:3305 RPMx100:66848 AB:2 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2265/+2444 I_x100:-317/-269 T_MS:399245 LOOP_MS:100 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:29.377666+00:00", "monotonic": 1043436.75, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:29.419962+00:00", "monotonic": 1043436.796, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:29.421283+00:00", "monotonic": 1043436.796, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:29.468832+00:00", "monotonic": 1043436.843, "event": "rx", "text": "MOTOR | LEFT:50 RPWM:500 LPWM:0 ENC:-1151016 DENC:-2330 RPMx100:-58838 AB:3 | RIGHT:49 RPWM:490 LPWM:0 ENC:1137561 DENC:3491 RPMx100:88156 AB:0 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+50/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2019/+2399 I_x100:-309/-266 T_MS:399410 LOOP_MS:100 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:29.515352+00:00", "monotonic": 1043436.89, "event": "rx", "text": "TOF RANGE | LEFT:OK 593 mm | RIGHT:OK 978 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:29.517433+00:00", "monotonic": 1043436.89, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2452 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:29.625824+00:00", "monotonic": 1043437.0, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:29.658342+00:00", "monotonic": 1043437.031, "event": "rx", "text": "TOF RANGE | LEFT:OK 591 mm | RIGHT:OK 972 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:29.751472+00:00", "monotonic": 1043437.125, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2455 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:29.845389+00:00", "monotonic": 1043437.218, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:29.846372+00:00", "monotonic": 1043437.218, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:29.876852+00:00", "monotonic": 1043437.25, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:29.893038+00:00", "monotonic": 1043437.265, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1157867 DENC:-6851 RPMx100:-83224 AB:1 | RIGHT:48 RPWM:480 LPWM:0 ENC:1144451 DENC:6890 RPMx100:83697 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2372/+2477 I_x100:-303/-270 T_MS:399753 LOOP_MS:100 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:29.940095+00:00", "monotonic": 1043437.312, "event": "rx", "text": "TOF RANGE | LEFT:OK 591 mm | RIGHT:OK 978 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:29.941088+00:00", "monotonic": 1043437.312, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2459 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:29.986746+00:00", "monotonic": 1043437.359, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:30.032794+00:00", "monotonic": 1043437.406, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:30.034064+00:00", "monotonic": 1043437.406, "event": "rx", "text": "MOTOR | LEFT:50 RPWM:500 LPWM:0 ENC:-1160575 DENC:-2708 RPMx100:-72329 AB:1 | RIGHT:48 RPWM:480 LPWM:0 ENC:1147623 DENC:3172 RPMx100:84722 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+50/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2222/+2417 I_x100:-298/-268 T_MS:399909 LOOP_MS:100 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:30.082013+00:00", "monotonic": 1043437.453, "event": "rx", "text": "TOF RANGE | LEFT:OK 579 mm | RIGHT:OK 990 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:30.112951+00:00", "monotonic": 1043437.484, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:30.129846+00:00", "monotonic": 1043437.515, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2455 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:30.268296+00:00", "monotonic": 1043437.64, "event": "rx", "text": "TOF RANGE | LEFT:OK 590 mm | RIGHT:OK 990 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:30.314548+00:00", "monotonic": 1043437.687, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1762 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:30.315056+00:00", "monotonic": 1043437.687, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:30.360111+00:00", "monotonic": 1043437.734, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:30.361270+00:00", "monotonic": 1043437.734, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:30.408458+00:00", "monotonic": 1043437.781, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-1169652 DENC:-9077 RPMx100:-100320 AB:3 | RIGHT:48 RPWM:480 LPWM:0 ENC:1154859 DENC:7236 RPMx100:79973 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2832/+2439 I_x100:-304/-266 T_MS:400286 LOOP_MS:100 LOOP_MAX_MS:127\r\n"}
+{"utc": "2026-11-24T19:25:30.500796+00:00", "monotonic": 1043437.875, "event": "rx", "text": "TOF RANGE | LEFT:OK 594 mm | RIGHT:OK 981 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:30.501835+00:00", "monotonic": 1043437.875, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2451 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:30.546526+00:00", "monotonic": 1043437.921, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:30.594131+00:00", "monotonic": 1043437.968, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:30.595218+00:00", "monotonic": 1043437.968, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:30.596218+00:00", "monotonic": 1043437.968, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-1174442 DENC:-4790 RPMx100:-95494 AB:0 | RIGHT:49 RPWM:490 LPWM:0 ENC:1158651 DENC:3792 RPMx100:75598 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2802/+2287 I_x100:-309/-264 T_MS:400495 LOOP_MS:100 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:30.688229+00:00", "monotonic": 1043438.062, "event": "rx", "text": "TOF RANGE | LEFT:OK 582 mm | RIGHT:OK 985 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:30.733988+00:00", "monotonic": 1043438.109, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1800 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:30.779606+00:00", "monotonic": 1043438.156, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:30.780927+00:00", "monotonic": 1043438.156, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:30.826999+00:00", "monotonic": 1043438.203, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1178973 DENC:-4531 RPMx100:-88220 AB:2 | RIGHT:48 RPWM:480 LPWM:0 ENC:1162769 DENC:4118 RPMx100:80179 AB:0 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2683/+2465 I_x100:-314/-264 T_MS:400709 LOOP_MS:100 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:30.829522+00:00", "monotonic": 1043438.203, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:30.874091+00:00", "monotonic": 1043438.25, "event": "rx", "text": "TOF RANGE | LEFT:OK 567 mm | RIGHT:OK 995 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:30.875104+00:00", "monotonic": 1043438.25, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2452 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:30.920234+00:00", "monotonic": 1043438.296, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:30.967606+00:00", "monotonic": 1043438.343, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:30.969781+00:00", "monotonic": 1043438.343, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-1182489 DENC:-3516 RPMx100:-94516 AB:2 | RIGHT:49 RPWM:490 LPWM:0 ENC:1166009 DENC:3240 RPMx100:87096 AB:0 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2787/+2421 I_x100:-320/-262 T_MS:400864 LOOP_MS:100 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:31.062631+00:00", "monotonic": 1043438.437, "event": "rx", "text": "TOF RANGE | LEFT:OK 587 mm | RIGHT:OK 979 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:31.064655+00:00", "monotonic": 1043438.437, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:31.107741+00:00", "monotonic": 1043438.484, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2455 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:31.108892+00:00", "monotonic": 1043438.484, "event": "rx", "text": "ESP PONG | uptime:402565 | heap:177020 | rssi:-42 | net:STA | ip:192.168.137.119 | stm:ONLINE\r\n"}
+{"utc": "2026-11-24T19:25:31.154685+00:00", "monotonic": 1043438.531, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:31.200739+00:00", "monotonic": 1043438.578, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:31.201866+00:00", "monotonic": 1043438.578, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1187564 DENC:-5075 RPMx100:-88476 AB:3 | RIGHT:48 RPWM:480 LPWM:0 ENC:1171175 DENC:5166 RPMx100:90062 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2655/+2691 I_x100:-322/-267 T_MS:401103 LOOP_MS:100 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:31.248221+00:00", "monotonic": 1043438.625, "event": "rx", "text": "TOF RANGE | LEFT:OK 575 mm | RIGHT:OK 969 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:31.295374+00:00", "monotonic": 1043438.671, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2455 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:31.297402+00:00", "monotonic": 1043438.671, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:31.436149+00:00", "monotonic": 1043438.812, "event": "rx", "text": "TOF RANGE | LEFT:OK 593 mm | RIGHT:OK 986 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:31.480667+00:00", "monotonic": 1043438.859, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1763 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:31.527143+00:00", "monotonic": 1043438.906, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:31.528246+00:00", "monotonic": 1043438.906, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:31.530244+00:00", "monotonic": 1043438.906, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:31.574472+00:00", "monotonic": 1043438.953, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1194101 DENC:-6537 RPMx100:-73022 AB:2 | RIGHT:48 RPWM:480 LPWM:0 ENC:1178978 DENC:7803 RPMx100:87164 AB:2 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2274/+2729 I_x100:-323/-266 T_MS:401476 LOOP_MS:100 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:31.666613+00:00", "monotonic": 1043439.046, "event": "rx", "text": "TOF RANGE | LEFT:OK 597 mm | RIGHT:OK 982 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:31.667611+00:00", "monotonic": 1043439.046, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2455 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:31.712795+00:00", "monotonic": 1043439.093, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:31.759313+00:00", "monotonic": 1043439.14, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:31.760489+00:00", "monotonic": 1043439.14, "event": "rx", "text": "MOTOR | LEFT:50 RPWM:500 LPWM:0 ENC:-1196864 DENC:-2763 RPMx100:-62229 AB:3 | RIGHT:48 RPWM:480 LPWM:0 ENC:1182119 DENC:3141 RPMx100:70743 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+50/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2051/+2449 I_x100:-315/-268 T_MS:401661 LOOP_MS:108 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:31.763561+00:00", "monotonic": 1043439.14, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:31.806937+00:00", "monotonic": 1043439.187, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:31.808147+00:00", "monotonic": 1043439.187, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:31.855661+00:00", "monotonic": 1043439.234, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1199618 DENC:-2754 RPMx100:-83152 AB:0 | RIGHT:49 RPWM:490 LPWM:0 ENC:1184413 DENC:2294 RPMx100:69263 AB:0 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2166/+2278 I_x100:-311/-266 T_MS:401799 LOOP_MS:100 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:31.902125+00:00", "monotonic": 1043439.281, "event": "rx", "text": "TOF RANGE | LEFT:OK 578 mm | RIGHT:OK 988 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:31.903120+00:00", "monotonic": 1043439.281, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2455 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:31.946950+00:00", "monotonic": 1043439.328, "event": "rx", "text": "ESP STATUS | uptime:403419 | heap:180340 | rssi:-44 | net:STA | ip:192.168.137.119 | stm:ONLINE\r\n"}
+{"utc": "2026-11-24T19:25:32.009126+00:00", "monotonic": 1043439.39, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:32.040736+00:00", "monotonic": 1043439.421, "event": "rx", "text": "TOF RANGE | LEFT:OK 593 mm | RIGHT:OK 986 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:32.088883+00:00", "monotonic": 1043439.468, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1780 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:32.089895+00:00", "monotonic": 1043439.468, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:32.134103+00:00", "monotonic": 1043439.515, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:32.182836+00:00", "monotonic": 1043439.562, "event": "rx", "text": "MOTOR | LEFT:50 RPWM:500 LPWM:0 ENC:-1204184 DENC:-4566 RPMx100:-72064 AB:3 | RIGHT:48 RPWM:480 LPWM:0 ENC:1190774 DENC:6361 RPMx100:100394 AB:2 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+50/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2106/+2747 I_x100:-304/-267 T_MS:402063 LOOP_MS:109 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:32.229703+00:00", "monotonic": 1043439.609, "event": "rx", "text": "TOF RANGE | LEFT:OK 579 mm | RIGHT:OK 992 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:32.235802+00:00", "monotonic": 1043439.609, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:32.276408+00:00", "monotonic": 1043439.656, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2458 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:32.322559+00:00", "monotonic": 1043439.703, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:32.323679+00:00", "monotonic": 1043439.703, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:32.370140+00:00", "monotonic": 1043439.75, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1208740 DENC:-4556 RPMx100:-90396 AB:3 | RIGHT:48 RPWM:480 LPWM:0 ENC:1194124 DENC:3350 RPMx100:66468 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2413/+2434 I_x100:-301/-268 T_MS:402273 LOOP_MS:100 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:32.462223+00:00", "monotonic": 1043439.843, "event": "rx", "text": "TOF RANGE | LEFT:OK 580 mm | RIGHT:OK 997 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:32.464223+00:00", "monotonic": 1043439.843, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2455 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:32.467629+00:00", "monotonic": 1043439.843, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:32.507659+00:00", "monotonic": 1043439.89, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:32.522054+00:00", "monotonic": 1043439.906, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:32.570910+00:00", "monotonic": 1043439.953, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-1214375 DENC:-5635 RPMx100:-99487 AB:1 | RIGHT:48 RPWM:480 LPWM:0 ENC:1199688 DENC:5564 RPMx100:98234 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2797/+2761 I_x100:-305/-268 T_MS:402509 LOOP_MS:105 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:32.664586+00:00", "monotonic": 1043440.046, "event": "rx", "text": "TOF RANGE | LEFT:OK 572 mm | RIGHT:OK 979 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:32.665581+00:00", "monotonic": 1043440.046, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2466 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:32.695189+00:00", "monotonic": 1043440.078, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:32.756537+00:00", "monotonic": 1043440.14, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:32.803104+00:00", "monotonic": 1043440.187, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:32.850830+00:00", "monotonic": 1043440.234, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-1220033 DENC:-5658 RPMx100:-88627 AB:2 | RIGHT:48 RPWM:480 LPWM:0 ENC:1204491 DENC:4803 RPMx100:75234 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2739/+2500 I_x100:-310/-270 T_MS:402775 LOOP_MS:100 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:32.896929+00:00", "monotonic": 1043440.281, "event": "rx", "text": "TOF RANGE | LEFT:OK 590 mm | RIGHT:OK 987 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:32.897942+00:00", "monotonic": 1043440.281, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2459 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:32.942845+00:00", "monotonic": 1043440.328, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:33.082793+00:00", "monotonic": 1043440.468, "event": "rx", "text": "TOF RANGE | LEFT:OK 586 mm | RIGHT:OK 979 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:33.083791+00:00", "monotonic": 1043440.468, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1762 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:33.128147+00:00", "monotonic": 1043440.5, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:33.128147+00:00", "monotonic": 1043440.5, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:33.175205+00:00", "monotonic": 1043440.546, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-1226309 DENC:-6276 RPMx100:-91754 AB:2 | RIGHT:48 RPWM:480 LPWM:0 ENC:1210053 DENC:5562 RPMx100:81315 AB:0 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2762/+2473 I_x100:-316/-268 T_MS:403060 LOOP_MS:106 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:33.178242+00:00", "monotonic": 1043440.562, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:33.222443+00:00", "monotonic": 1043440.593, "event": "rx", "text": "TOF RANGE | LEFT:OK 592 mm | RIGHT:OK 978 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:33.268278+00:00", "monotonic": 1043440.64, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1756 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:33.313941+00:00", "monotonic": 1043440.687, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:33.315033+00:00", "monotonic": 1043440.687, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:33.361931+00:00", "monotonic": 1043440.734, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-1230753 DENC:-4444 RPMx100:-92122 AB:2 | RIGHT:48 RPWM:480 LPWM:0 ENC:1214079 DENC:4026 RPMx100:83457 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2722/+2429 I_x100:-319/-266 T_MS:403261 LOOP_MS:100 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:33.423621+00:00", "monotonic": 1043440.796, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:33.455279+00:00", "monotonic": 1043440.828, "event": "rx", "text": "TOF RANGE | LEFT:OK 571 mm | RIGHT:OK 977 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:33.457433+00:00", "monotonic": 1043440.828, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2452 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:33.501600+00:00", "monotonic": 1043440.875, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:33.547914+00:00", "monotonic": 1043440.921, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:33.548737+00:00", "monotonic": 1043440.921, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1234564 DENC:-3811 RPMx100:-77839 AB:3 | RIGHT:49 RPWM:490 LPWM:0 ENC:1217557 DENC:3478 RPMx100:71037 AB:0 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2556/+2297 I_x100:-321/-264 T_MS:403465 LOOP_MS:100 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:33.640959+00:00", "monotonic": 1043441.015, "event": "rx", "text": "TOF RANGE | LEFT:OK 580 mm | RIGHT:OK 980 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:33.670877+00:00", "monotonic": 1043441.046, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:33.686080+00:00", "monotonic": 1043441.062, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2452 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:33.688339+00:00", "monotonic": 1043441.062, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:33.732946+00:00", "monotonic": 1043441.109, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:33.781016+00:00", "monotonic": 1043441.156, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1239891 DENC:-5327 RPMx100:-90226 AB:1 | RIGHT:48 RPWM:480 LPWM:0 ENC:1223471 DENC:5914 RPMx100:100169 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2600/+2725 I_x100:-322/-265 T_MS:403711 LOOP_MS:100 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:33.828542+00:00", "monotonic": 1043441.203, "event": "rx", "text": "TOF RANGE | LEFT:OK 572 mm | RIGHT:OK 979 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:33.874983+00:00", "monotonic": 1043441.25, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2452 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:33.904785+00:00", "monotonic": 1043441.281, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:34.012498+00:00", "monotonic": 1043441.39, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:34.060028+00:00", "monotonic": 1043441.437, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:34.060976+00:00", "monotonic": 1043441.437, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1245582 DENC:-5691 RPMx100:-78259 AB:0 | RIGHT:49 RPWM:490 LPWM:0 ENC:1228444 DENC:4973 RPMx100:68385 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2493/+2252 I_x100:-323/-264 T_MS:404014 LOOP_MS:100 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:34.106875+00:00", "monotonic": 1043441.484, "event": "rx", "text": "TOF RANGE | LEFT:OK 585 mm | RIGHT:OK 975 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:34.152847+00:00", "monotonic": 1043441.531, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:34.155100+00:00", "monotonic": 1043441.531, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2455 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:34.248550+00:00", "monotonic": 1043441.625, "event": "rx", "text": "TOF RANGE | LEFT:OK 594 mm | RIGHT:OK 980 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:34.294669+00:00", "monotonic": 1043441.671, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2455 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:34.294669+00:00", "monotonic": 1043441.671, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:34.340641+00:00", "monotonic": 1043441.718, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:34.387677+00:00", "monotonic": 1043441.765, "event": "rx", "text": "MOTOR | LEFT:50 RPWM:500 LPWM:0 ENC:-1249578 DENC:-3996 RPMx100:-65294 AB:0 | RIGHT:48 RPWM:480 LPWM:0 ENC:1234528 DENC:6084 RPMx100:99411 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+50/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2147/+2688 I_x100:-312/-267 T_MS:404269 LOOP_MS:100 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:34.390673+00:00", "monotonic": 1043441.765, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:34.434893+00:00", "monotonic": 1043441.812, "event": "rx", "text": "TOF RANGE | LEFT:OK 579 mm | RIGHT:OK 974 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:34.480218+00:00", "monotonic": 1043441.859, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2455 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:34.525158+00:00", "monotonic": 1043441.906, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:34.526228+00:00", "monotonic": 1043441.906, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:34.572911+00:00", "monotonic": 1043441.953, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1253862 DENC:-4284 RPMx100:-89250 AB:0 | RIGHT:49 RPWM:490 LPWM:0 ENC:1237736 DENC:3208 RPMx100:66833 AB:1 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2430/+2303 I_x100:-311/-265 T_MS:404469 LOOP_MS:100 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:34.635439+00:00", "monotonic": 1043442.015, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:34.667011+00:00", "monotonic": 1043442.046, "event": "rx", "text": "TOF RANGE | LEFT:OK 587 mm | RIGHT:OK 970 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:34.668040+00:00", "monotonic": 1043442.046, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1780 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:34.712009+00:00", "monotonic": 1043442.093, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:34.759503+00:00", "monotonic": 1043442.14, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:34.761588+00:00", "monotonic": 1043442.14, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1257753 DENC:-3891 RPMx100:-78321 AB:2 | RIGHT:48 RPWM:480 LPWM:0 ENC:1241985 DENC:4249 RPMx100:85527 AB:0 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2381/+2441 I_x100:-309/-265 T_MS:404676 LOOP_MS:100 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:34.853513+00:00", "monotonic": 1043442.234, "event": "rx", "text": "TOF RANGE | LEFT:OK 584 mm | RIGHT:OK 969 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:34.883602+00:00", "monotonic": 1043442.265, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:34.899314+00:00", "monotonic": 1043442.281, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1766 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:35.039446+00:00", "monotonic": 1043442.421, "event": "rx", "text": "TOF RANGE | LEFT:OK 573 mm | RIGHT:OK 983 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:35.085119+00:00", "monotonic": 1043442.468, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2466 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:35.086125+00:00", "monotonic": 1043442.468, "event": "rx", "text": "ESP PONG | uptime:406554 | heap:176808 | rssi:-42 | net:STA | ip:192.168.137.119 | stm:ONLINE\r\n"}
+{"utc": "2026-11-24T19:25:35.131467+00:00", "monotonic": 1043442.515, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:35.132470+00:00", "monotonic": 1043442.515, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:35.178438+00:00", "monotonic": 1043442.562, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:35.180479+00:00", "monotonic": 1043442.562, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-1266927 DENC:-9174 RPMx100:-97762 AB:1 | RIGHT:48 RPWM:480 LPWM:0 ENC:1249306 DENC:7321 RPMx100:78015 AB:2 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2839/+2464 I_x100:-316/-263 T_MS:405067 LOOP_MS:106 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:35.224448+00:00", "monotonic": 1043442.609, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:35.270590+00:00", "monotonic": 1043442.656, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:35.272592+00:00", "monotonic": 1043442.656, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1270341 DENC:-3414 RPMx100:-82703 AB:2 | RIGHT:48 RPWM:480 LPWM:0 ENC:1252886 DENC:3580 RPMx100:86724 AB:2 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2625/+2447 I_x100:-319/-261 T_MS:405239 LOOP_MS:100 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:35.319184+00:00", "monotonic": 1043442.703, "event": "rx", "text": "TOF RANGE | LEFT:OK 583 mm | RIGHT:OK 973 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:35.364793+00:00", "monotonic": 1043442.75, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:35.365858+00:00", "monotonic": 1043442.75, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1765 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:35.504269+00:00", "monotonic": 1043442.875, "event": "rx", "text": "TOF RANGE | LEFT:OK 590 mm | RIGHT:OK 990 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:35.506269+00:00", "monotonic": 1043442.89, "event": "rx", "text": "SIDE RANGE | LEFT:OK 1766 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:35.551971+00:00", "monotonic": 1043442.937, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:35.598993+00:00", "monotonic": 1043442.984, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:35.601020+00:00", "monotonic": 1043442.984, "event": "rx", "text": "MOTOR | LEFT:48 RPWM:480 LPWM:0 ENC:-1275986 DENC:-5645 RPMx100:-92601 AB:0 | RIGHT:49 RPWM:490 LPWM:0 ENC:1257641 DENC:4755 RPMx100:78001 AB:0 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+48/+49 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2774/+2328 I_x100:-324/-259 T_MS:405493 LOOP_MS:100 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:35.602034+00:00", "monotonic": 1043442.984, "event": "tx", "command": "V 25 25"}
+{"utc": "2026-11-24T19:25:35.647509+00:00", "monotonic": 1043443.031, "event": "rx", "text": "TOF RANGE | LEFT:OK 603 mm | RIGHT:OK 993 mm | YAW L:-15 R:15 | UP:5 | BASE:70 | RAW L:11 R:11\r\n"}
+{"utc": "2026-11-24T19:25:35.692212+00:00", "monotonic": 1043443.078, "event": "rx", "text": "SIDE RANGE | LEFT:OK 2455 mm | INSET:105 | GUARD:12\r\n"}
+{"utc": "2026-11-24T19:25:35.738476+00:00", "monotonic": 1043443.109, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:35.739476+00:00", "monotonic": 1043443.125, "event": "rx", "text": "> V 25 25\r\n"}
+{"utc": "2026-11-24T19:25:35.786006+00:00", "monotonic": 1043443.171, "event": "rx", "text": "MOTOR | LEFT:49 RPWM:490 LPWM:0 ENC:-1279833 DENC:-3847 RPMx100:-81781 AB:2 | RIGHT:48 RPWM:480 LPWM:0 ENC:1261523 DENC:3882 RPMx100:82525 AB:3 | SAFE:RUN | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+49/+48 | CTRL:PI TARGET_RPMx100:+2500/+2500 RAMP_RPMx100:+2500/+2500 MEAS_RPMx100:+2537/+2490 I_x100:-325/-259 T_MS:405689 LOOP_MS:100 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:35.786006+00:00", "monotonic": 1043443.171, "event": "tx", "command": "x"}
+{"utc": "2026-11-24T19:25:35.831900+00:00", "monotonic": 1043443.203, "event": "rx", "text": "\r\n"}
+{"utc": "2026-11-24T19:25:35.833906+00:00", "monotonic": 1043443.218, "event": "tx", "command": "E"}
+{"utc": "2026-11-24T19:25:35.879147+00:00", "monotonic": 1043443.25, "event": "rx", "text": "> x\r\n"}
+{"utc": "2026-11-24T19:25:35.881144+00:00", "monotonic": 1043443.265, "event": "rx", "text": "MOTOR | LEFT:0 RPWM:0 LPWM:0 ENC:-1283860 DENC:-4027 RPMx100:-102311 AB:3 | RIGHT:0 RPWM:0 LPWM:0 ENC:1264969 DENC:3446 RPMx100:87550 AB:0 | SAFE:STOP | SYNC:IDLE ERRx100:+0 TRIM:+0 APPLIED:+0/+0 | CTRL:PWM TARGET_RPMx100:+0/+0 RAMP_RPMx100:+0/+0 MEAS_RPMx100:+0/+0 I_x100:+0/+0 T_MS:405853 LOOP_MS:100 LOOP_MAX_MS:131\r\n"}
+{"utc": "2026-11-24T19:25:35.881144+00:00", "monotonic": 1043443.265, "event": "finished", "result": {"case": "PI +25", "calibration": {"version": 2, "wheel_circumference_mm": 273.318560862312, "track_width_mm": 255.0, "left_counts_per_wheel_rev": 48097.2, "right_counts_per_wheel_rev": 48036.6, "left_forward_sign": -1, "right_forward_sign": 1, "saved_at": "2026-10-29T23:35:23+03:00", "measurement_turns": 10, "wheel_diameter_mm": 87.0, "geometry_updated_at": "2026-11-04", "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."}, "stop_confirmed": true, "reason": "speed completed", "encoder_mm": [2441.5928482643503, 2396.958362793136], "execution_pass": true, "settled_samples": 18, "sufficient_settled_data": true, "mean_rpm": [25.076666666666668, 24.725555555555555], "mean_pass": true, "in_band_fraction": [0.4444444444444444, 0.5], "tracking_pass": false}}

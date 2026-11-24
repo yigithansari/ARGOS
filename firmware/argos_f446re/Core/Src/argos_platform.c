@@ -1,9 +1,12 @@
 #include "argos_platform.h"
 #include "argos_oled.h"
+#include "argos_straight_guard.h"
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <errno.h>
 
 extern UART_HandleTypeDef huart2;
 
@@ -39,6 +42,9 @@ static uint8_t VL53L0X_ReadRangeMm(uint8_t address, uint16_t *range_mm);
 static void Run_ToFTest(void);
 static void Run_ToFSingleTest(const char *name, uint8_t address, GPIO_TypeDef *int_port, uint16_t int_pin);
 static void Run_ToFStreamSample(void);
+static void Range_Task(void);
+static void SideRange_Init(void);
+static const char *Range_BlockReason(uint8_t forward, uint8_t search, uint8_t recovery_turn);
 static const char *PinLevel(GPIO_TypeDef *port, uint16_t pin);
 static const char *PinOnOff(GPIO_TypeDef *port, uint16_t pin);
 static const char *PinSetReset(GPIO_TypeDef *port, uint16_t pin);
@@ -70,6 +76,9 @@ static void Run_EncoderPullDiagnostic(void);
 static void Print_ToFGPIOState(void);
 static void Run_GPIOTest(void);
 static void Run_AllTests(void);
+static void Straight_HandleLine(const char *line);
+static void Straight_Finish(const char *reason);
+static uint8_t Straight_Task(uint32_t now);
 
 static uint8_t mpu_stream_enabled = 0U;
 static uint8_t tof_stream_enabled = 0U;
@@ -95,9 +104,15 @@ static uint8_t tof_stream_enabled = 0U;
 #define TOF_RIGHT_YAW_DEG     15
 #define TOF_UP_TILT_DEG        5
 #define TOF_BASELINE_MM       70
-#define TOF_STREAM_PERIOD_MS  500U
+#define TOF_STREAM_PERIOD_MS  200U
 #define TOF_RANGE_TIMEOUT_MS  160U
-#define TOF_INTER_SENSOR_MS    60U
+#define RANGE_MAX_AGE_MS     450U
+#define RANGE_FRONT_STOP_MM  200U
+#define RANGE_TURN_CLEARANCE_MM 150U
+#define RANGE_SIDE_TURN_CLEARANCE_MM 80U
+#define SIDE_INSET_MM        105U
+#define SIDE_TRIGGER_PIN GPIO_PIN_3
+#define SIDE_ECHO_PIN GPIO_PIN_5
 
 #define I2C_TIMEOUT_MS      20U
 #define MOTOR_PWM_MAX        1000U
@@ -137,6 +152,17 @@ static uint8_t tof_left_ready = 0U;
 static uint8_t tof_right_ready = 0U;
 static uint8_t tof_left_initialized = 0U;
 static uint8_t tof_right_initialized = 0U;
+static struct { uint16_t mm; uint32_t tick; } front_range[2], side_range;
+static uint8_t side_no_echo;
+/* VL53L0X device status, or 254=timeout / 255=unavailable or bus error. */
+static uint8_t front_status[2] = {255U, 255U};
+static uint32_t front_no_return_tick[2];
+static uint8_t front_no_return_seen[2];
+static uint8_t tof_waiting;
+static volatile uint8_t side_phase;
+static volatile uint16_t side_result_mm;
+static volatile uint8_t side_result_no_echo;
+static uint32_t side_started_cycles, side_rise_cycles, side_cycles_per_us;
 static uint16_t oled_tof_left_mm = 0U;
 static uint16_t oled_tof_right_mm = 0U;
 static uint8_t oled_tof_left_ok = 0U;
@@ -165,6 +191,8 @@ static int32_t right_speed_integral_x100 = 0;
 static int32_t speed_left_encoder = 0;
 static int32_t speed_right_encoder = 0;
 static uint32_t speed_last_ms = 0U;
+static uint32_t speed_period_ms = 0U;
+static uint32_t speed_max_period_ms = 0U;
 static uint8_t speed_loop_initialized = 0U;
 static volatile int32_t left_encoder_count = 0;
 static volatile int32_t right_encoder_count = 0;
@@ -183,17 +211,46 @@ static volatile uint16_t uart_rx_tail = 0U;
 static volatile uint32_t uart_rx_overflow_count = 0U;
 static uint32_t uart_command_count = 0U;
 
+static struct {
+  uint8_t active;
+  uint8_t guarded;
+  uint8_t cruise;
+  uint8_t traction_retry;
+  uint8_t scan;
+  uint8_t cruise_straight_rpm;
+  uint8_t search;
+  uint8_t saved_mpu_stream;
+  uint8_t saved_tof_stream;
+  int8_t direction_left;
+  int8_t direction_right;
+  int32_t origin_left;
+  int32_t origin_right;
+  int32_t cruise_origin_left;
+  int32_t cruise_origin_right;
+  uint32_t goal_left;
+  uint32_t goal_right;
+  uint32_t started_ms;
+  uint32_t hold;
+  int32_t last_left_progress;
+  int32_t last_right_progress;
+  uint32_t left_progress_ms;
+  uint32_t right_progress_ms;
+} straight_move;
+static char last_move_status[192] = "LAST MOVE NONE";
+
 static void TestPlatform_Init(void)
 {
   I2C1_BusInit();
   Motor_Init();
   Motor_Stop();
+  SideRange_Init();
   /* USART is already enabled. Discard stale data/overrun before arming RX,
      then buffer commands during the slow OLED and sensor initialization. */
   __HAL_UART_CLEAR_OREFLAG(&huart2);
   (void)HAL_UART_Receive_IT(&huart2, &uart_rx_byte, 1U);
   Argos_Oled_Init();
   ToF_AssignAddresses();
+  tof_stream_enabled = 1U;
   TestPlatform_PrintLine("\r\nARGOS test platform hazir.");
   TestPlatform_PrintLine("MPU6050: SCL PB8/CN10-3, SDA PB9/CN10-5, INT PB10/CN10-25, AD0 GND => 0x68");
   TestPlatform_PrintLine("VL53L0X Left: XSHUT PA8, INT PC7, assigned 0x30");
@@ -207,6 +264,7 @@ static void TestPlatform_Task(void)
   uint8_t command;
   static char line[40];
   static uint8_t line_len = 0U;
+  static uint8_t line_overflow = 0U;
   static uint32_t last_stream_ms = 0U;
   static uint32_t last_tof_stream_ms = 0U;
   static uint32_t last_motor_status_ms = 0U;
@@ -214,6 +272,7 @@ static void TestPlatform_Task(void)
   Motor_Task();
   Argos_Oled_SetUartOverflow(uart_rx_overflow_count);
   Argos_Oled_Task();
+  Motor_Task();
 
   while (UartRx_Pop(&command) != 0U)
   {
@@ -222,8 +281,12 @@ static void TestPlatform_Task(void)
       if (line_len > 0U)
       {
         line[line_len] = '\0';
-        TestPlatform_HandleLine(line);
+        if (line_overflow != 0U) { TestPlatform_PrintLine("UART ERROR LINE_TOO_LONG"); }
+        else { TestPlatform_HandleLine(line); }
         line_len = 0U;
+        line_overflow = 0U;
+        /* Service timeout/speed control between queued command responses. */
+        Motor_Task();
       }
     }
     else if (line_len < (sizeof(line) - 1U))
@@ -231,21 +294,29 @@ static void TestPlatform_Task(void)
       line[line_len] = (char)command;
       line_len++;
     }
+    else { line_overflow = 1U; }
   }
 
-  if ((mpu_stream_enabled != 0U) && ((HAL_GetTick() - last_stream_ms) >= 250U))
+  if ((mpu_stream_enabled != 0U) &&
+      left_motor_percent == 0 && right_motor_percent == 0 &&
+      left_speed_target_rpm_x100 == 0 && right_speed_target_rpm_x100 == 0 &&
+      ((HAL_GetTick() - last_stream_ms) >= 250U))
   {
     last_stream_ms = HAL_GetTick();
     Run_MPU6050Test();
   }
 
-  if ((tof_stream_enabled != 0U) && ((HAL_GetTick() - last_tof_stream_ms) >= TOF_STREAM_PERIOD_MS))
+  Range_Task();
+  Motor_Task();
+  if (((tof_stream_enabled != 0U) || straight_move.active) &&
+      ((HAL_GetTick() - last_tof_stream_ms) >= TOF_STREAM_PERIOD_MS))
   {
     last_tof_stream_ms = HAL_GetTick();
     Run_ToFStreamSample();
   }
 
-  if ((motor_status_stream_enabled != 0U) && ((HAL_GetTick() - last_motor_status_ms) >= MOTOR_STATUS_PERIOD_MS))
+  if (((motor_status_stream_enabled != 0U) || straight_move.active) &&
+      ((HAL_GetTick() - last_motor_status_ms) >= MOTOR_STATUS_PERIOD_MS))
   {
     last_motor_status_ms = HAL_GetTick();
     Run_MotorStatus();
@@ -305,6 +376,25 @@ static void TestPlatform_HandleLine(char *line)
   uart_command_count++;
   Argos_Oled_RecordCommand(line, uart_command_count);
   TestPlatform_Printf("\r\n> %s\r\n", line);
+
+  if (line[0] == 'G')
+  {
+    Straight_HandleLine(line);
+    return;
+  }
+  if (straight_move.active && ((strcmp(line, "x") == 0) || (strcmp(line, "X") == 0)))
+  {
+    Straight_Finish("CANCELLED");
+    return;
+  }
+  if (straight_move.active && (strcmp(line, "x") != 0) &&
+      (strcmp(line, "X") != 0) && (strcmp(line, "E") != 0) &&
+      (line[0] != 'N') && (line[0] != 'W') &&
+      (strcmp(line, "U ARGOS_OTA") != 0))
+  {
+    TestPlatform_PrintLine("MOVE BUSY | use x to stop");
+    return;
+  }
 
   if (sscanf(line, "S SYNC %d", &enabled) == 1)
   {
@@ -389,6 +479,20 @@ static void TestPlatform_HandleLine(char *line)
     NVIC_SystemReset();
   }
 
+  if (strchr("smcTtLRKkYyQqVvZz", line[0]) != NULL &&
+      (left_motor_percent || right_motor_percent ||
+       left_speed_target_rpm_x100 || right_speed_target_rpm_x100))
+  {
+    TestPlatform_PrintLine("DIAGNOSTIC STOP_REQUIRED");
+    return;
+  }
+  if (strchr("tLR", line[0]) != NULL)
+  {
+    tof_waiting = 0U;
+    front_range[0].mm = front_range[1].mm = 0U;
+    front_status[0] = front_status[1] = 255U;
+    front_no_return_seen[0] = front_no_return_seen[1] = 0U;
+  }
   TestPlatform_HandleCommand((uint8_t)line[0]);
 }
 
@@ -428,10 +532,6 @@ static void TestPlatform_HandleCommand(uint8_t command)
 
     case 'D':
       tof_stream_enabled = (tof_stream_enabled == 0U) ? 1U : 0U;
-      if (tof_stream_enabled != 0U)
-      {
-        ToF_AssignAddresses();
-      }
       TestPlatform_Printf("ToF surekli akis: %s\r\n", (tof_stream_enabled != 0U) ? "ACIK" : "KAPALI");
       break;
 
@@ -961,6 +1061,10 @@ static void ToF_SetXshut(GPIO_TypeDef *port, uint16_t pin, GPIO_PinState state)
 
 static void ToF_AssignAddresses(void)
 {
+  tof_waiting = 0U;
+  front_range[0].mm = front_range[1].mm = 0U;
+  front_status[0] = front_status[1] = 255U;
+  front_no_return_seen[0] = front_no_return_seen[1] = 0U;
   uint8_t left_ok;
   uint8_t right_ok;
 
@@ -1131,45 +1235,254 @@ static void Run_ToFTest(void)
 
 static void Run_ToFStreamSample(void)
 {
-  uint16_t left_mm = 0U;
-  uint16_t right_mm = 0U;
-  uint8_t left_ok;
-  uint8_t right_ok;
+  uint32_t now = HAL_GetTick();
+  oled_tof_left_mm = (now - front_range[0].tick <= RANGE_MAX_AGE_MS) ? front_range[0].mm : 0U;
+  oled_tof_right_mm = (now - front_range[1].tick <= RANGE_MAX_AGE_MS) ? front_range[1].mm : 0U;
+  oled_tof_left_ok = oled_tof_left_mm != 0U;
+  oled_tof_right_ok = oled_tof_right_mm != 0U;
+  Argos_Oled_SetTof(oled_tof_left_mm, oled_tof_left_ok, oled_tof_right_mm, oled_tof_right_ok);
 
-  if (tof_addresses_assigned == 0U)
-  {
-    ToF_AssignAddresses();
-  }
-
-  if ((tof_left_ready != 0U) && (tof_left_initialized == 0U))
-  {
-    tof_left_initialized = VL53L0X_BasicInit(VL53L0X_LEFT_ADDR);
-  }
-
-  if ((tof_right_ready != 0U) && (tof_right_initialized == 0U))
-  {
-    tof_right_initialized = VL53L0X_BasicInit(VL53L0X_RIGHT_ADDR);
-  }
-
-  left_ok = (tof_left_initialized != 0U) ? VL53L0X_ReadRangeMm(VL53L0X_LEFT_ADDR, &left_mm) : 0U;
-  HAL_Delay(TOF_INTER_SENSOR_MS);
-  right_ok = (tof_right_initialized != 0U) ? VL53L0X_ReadRangeMm(VL53L0X_RIGHT_ADDR, &right_mm) : 0U;
-
-  Argos_Oled_SetTof(left_mm, left_ok, right_mm, right_ok);
-  oled_tof_left_mm = left_mm;
-  oled_tof_right_mm = right_mm;
-  oled_tof_left_ok = left_ok;
-  oled_tof_right_ok = right_ok;
-
-  TestPlatform_Printf("TOF RANGE | LEFT:%s %u mm | RIGHT:%s %u mm | YAW L:%d R:%d | UP:%d | BASE:%d\r\n",
-                      (left_ok != 0U) ? "OK" : "YOK",
-                      (left_ok != 0U) ? left_mm : 0U,
-                      (right_ok != 0U) ? "OK" : "YOK",
-                      (right_ok != 0U) ? right_mm : 0U,
+  TestPlatform_Printf("TOF RANGE | LEFT:%s %u mm | RIGHT:%s %u mm | YAW L:%d R:%d | UP:%d | BASE:%d | RAW L:%u R:%u\r\n",
+                      oled_tof_left_ok ? "OK" : "YOK", oled_tof_left_mm,
+                      oled_tof_right_ok ? "OK" : "YOK", oled_tof_right_mm,
                       TOF_LEFT_YAW_DEG,
                       TOF_RIGHT_YAW_DEG,
                       TOF_UP_TILT_DEG,
-                      TOF_BASELINE_MM);
+                      TOF_BASELINE_MM,
+                      now - front_range[0].tick <= RANGE_MAX_AGE_MS ? front_status[0] : 255U,
+                      now - front_range[1].tick <= RANGE_MAX_AGE_MS ? front_status[1] : 255U);
+  uint16_t side_mm = (now - side_range.tick <= RANGE_MAX_AGE_MS) ? side_range.mm : 0U;
+  TestPlatform_Printf("SIDE RANGE | LEFT:%s %u mm | INSET:%u | GUARD:12\r\n",
+                      side_mm ? "OK" : "YOK", side_mm, SIDE_INSET_MM);
+}
+
+enum { SIDE_IDLE, SIDE_TRIGGER, SIDE_RISE, SIDE_FALL, SIDE_READY };
+
+static void SideRange_Init(void)
+{
+  GPIO_InitTypeDef pin = {0};
+  /* D3/PB3 is GPIO here. D4/PB5 is sampled without taking EXTI5 from PC5. */
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_TIM5_CLK_ENABLE();
+  GPIOB->BSRR = (uint32_t)SIDE_TRIGGER_PIN << 16;
+  pin.Pin = SIDE_TRIGGER_PIN;
+  pin.Mode = GPIO_MODE_OUTPUT_PP;
+  HAL_GPIO_Init(GPIOB, &pin);
+  pin.Pin = SIDE_ECHO_PIN;
+  pin.Mode = GPIO_MODE_INPUT;
+  HAL_GPIO_Init(GPIOB, &pin);
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+  side_cycles_per_us = HAL_RCC_GetHCLKFreq()/1000000U;
+  /* APB1 is HCLK/2 in this project. TIM5 runs at HCLK. */
+  TIM5->ARR = HAL_RCC_GetHCLKFreq()/50000U - 1U;
+  TIM5->DIER = TIM_DIER_UIE;
+  TIM5->SR = 0U;
+  HAL_NVIC_SetPriority(TIM5_IRQn, 7U, 0U);
+  HAL_NVIC_EnableIRQ(TIM5_IRQn);
+}
+
+void TIM5_IRQHandler(void)
+{
+  TIM5->SR = 0U;
+  uint32_t now = DWT->CYCCNT;
+  uint8_t echo_high = (GPIOB->IDR & SIDE_ECHO_PIN) != 0U;
+  if (side_phase == SIDE_TRIGGER)
+  {
+    GPIOB->BSRR = (uint32_t)SIDE_TRIGGER_PIN << 16;
+    side_phase = SIDE_RISE;
+  }
+  else if (now - side_started_cycles >= 30000U * side_cycles_per_us)
+  {
+    side_result_mm = 0U;
+    side_result_no_echo = side_phase == SIDE_RISE;
+    side_phase = SIDE_READY;
+  }
+  else if (side_phase == SIDE_RISE && echo_high)
+  {
+    side_rise_cycles = now;
+    side_phase = SIDE_FALL;
+  }
+  else if (side_phase == SIDE_FALL && !echo_high)
+  {
+    uint32_t us = (now - side_rise_cycles)/side_cycles_per_us;
+    uint32_t mm = us * 343U / 2000U;
+    side_result_mm = (mm >= 20U && mm <= 4000U) ? (uint16_t)mm : 0U;
+    side_result_no_echo = 0U;
+    side_phase = SIDE_READY;
+  }
+  if (side_phase == SIDE_READY) { TIM5->CR1 = 0U; }
+}
+
+static uint8_t Range_IsNoReturn(uint8_t status)
+{
+  return status == 4U || status == 6U || status == 8U || status == 9U;
+}
+
+static void Range_Task(void)
+{
+  static uint32_t last_side_ms, tof_started, last_poll, last_finish;
+  static uint8_t sensor;
+  uint32_t now = HAL_GetTick();
+  if (side_phase == SIDE_READY)
+  {
+    side_range.mm = side_result_mm;
+    side_no_echo = side_result_no_echo;
+    side_range.tick = now;
+    side_phase = SIDE_IDLE;
+  }
+  if (side_phase == SIDE_IDLE && now - last_side_ms >= 80U)
+  {
+    last_side_ms = now;
+    if ((GPIOB->IDR & SIDE_ECHO_PIN) == 0U)
+    {
+      side_started_cycles = DWT->CYCCNT;
+      side_phase = SIDE_TRIGGER;
+      TIM5->CNT = 0U;
+      TIM5->SR = 0U;
+      GPIOB->BSRR = SIDE_TRIGGER_PIN;
+      TIM5->CR1 = TIM_CR1_CEN;
+    }
+    else { side_range.mm = 0U; side_no_echo = 0U; }
+  }
+
+  uint8_t address = sensor ? VL53L0X_RIGHT_ADDR : VL53L0X_LEFT_ADDR;
+  uint8_t *initialized = sensor ? &tof_right_initialized : &tof_left_initialized;
+  uint8_t ready = sensor ? tof_right_ready : tof_left_ready;
+  uint16_t mm = 0U;
+  uint8_t status;
+  uint8_t result = 255U;
+  if (!tof_waiting)
+  {
+    if (now - last_finish < 35U) { return; }
+    if (ready && !*initialized && !straight_move.active &&
+        left_motor_percent == 0 && right_motor_percent == 0 &&
+        left_speed_target_rpm_x100 == 0 && right_speed_target_rpm_x100 == 0)
+    {
+      *initialized = VL53L0X_BasicInit(address);
+    }
+    if (*initialized &&
+        I2C1_WriteReg(address, VL53L0X_SYSTEM_INTERRUPT_CLEAR, 0x01U) &&
+        I2C1_WriteReg(address, VL53L0X_SYSRANGE_START, 0x01U))
+    {
+      tof_waiting = 1U;
+      tof_started = last_poll = HAL_GetTick();
+      return;
+    }
+  }
+  else if (now - tof_started < TOF_RANGE_TIMEOUT_MS)
+  {
+    if (now - last_poll < 5U) { return; }
+    last_poll = now;
+    if (I2C1_ReadReg(address, VL53L0X_RESULT_INTERRUPT_STATUS, &status))
+    {
+      if ((status & 7U) == 0U) { return; }
+      if (I2C1_ReadReg(address, VL53L0X_RESULT_RANGE_STATUS, &status))
+      {
+        result = (status >> 3) & 15U;
+        if (result == 11U &&
+            (!I2C1_ReadReg16(address, VL53L0X_RESULT_RANGE_STATUS + 10U, &mm) ||
+             mm == 0U || mm > 4000U))
+        {
+          mm = 0U;
+          result = 255U;
+        }
+      }
+    }
+  }
+  else { result = 254U; }
+  last_finish = HAL_GetTick();
+  front_range[sensor].mm = mm;
+  front_status[sensor] = result;
+  front_range[sensor].tick = tof_waiting ? tof_started : last_finish;
+  if (Range_IsNoReturn(result))
+  {
+    front_no_return_seen[sensor] = 1U;
+    front_no_return_tick[sensor] = front_range[sensor].tick;
+  }
+  else if (result != 254U && result != 255U)
+  {
+    front_no_return_seen[sensor] = 0U;
+  }
+  tof_waiting = 0U;
+  sensor ^= 1U;
+}
+
+static uint8_t Range_IsOpticalFailure(uint8_t status)
+{
+  return status == 4U || status == 6U || status == 9U;
+}
+
+enum { RANGE_PIVOT, RANGE_FORWARD, RANGE_ARC, RANGE_TRACTION, RANGE_SCAN, RANGE_CRUISE };
+
+static const char *Range_BlockReason(uint8_t motion, uint8_t search, uint8_t recovery_turn)
+{
+  uint32_t now = HAL_GetTick();
+  uint16_t left = (now - front_range[0].tick <= RANGE_MAX_AGE_MS) ? front_range[0].mm : 0U;
+  uint16_t right = (now - front_range[1].tick <= RANGE_MAX_AGE_MS) ? front_range[1].mm : 0U;
+  if (motion == RANGE_TRACTION)
+  {
+    return left >= 400U && right >= 400U && now - side_range.tick <= RANGE_MAX_AGE_MS &&
+           side_range.mm >= SIDE_INSET_MM + 250U ? NULL : "TRACTION_CLEARANCE";
+  }
+  if (search || motion == RANGE_SCAN || motion == RANGE_CRUISE)
+  {
+    if ((left && left <= RANGE_FRONT_STOP_MM) || (right && right <= RANGE_FRONT_STOP_MM))
+    {
+      return "FRONT_OBSTACLE";
+    }
+    if (motion == RANGE_CRUISE && (left || right))
+    {
+      return NULL;
+    }
+    uint8_t left_no_return = Range_IsNoReturn(front_status[0]) &&
+                             now - front_range[0].tick <= RANGE_MAX_AGE_MS;
+    uint8_t right_no_return = Range_IsNoReturn(front_status[1]) &&
+                              now - front_range[1].tick <= RANGE_MAX_AGE_MS;
+    if (motion == RANGE_CRUISE && (left_no_return || right_no_return))
+    {
+      left_no_return |= front_no_return_seen[0] &&
+                        now - front_no_return_tick[0] <= RANGE_MAX_AGE_MS;
+      right_no_return |= front_no_return_seen[1] &&
+                         now - front_no_return_tick[1] <= RANGE_MAX_AGE_MS;
+    }
+    if ((!left && !left_no_return) || (!right && !right_no_return))
+    {
+      return "FRONT_INVALID";
+    }
+    if (now - side_range.tick > RANGE_MAX_AGE_MS ||
+        (!side_no_echo && side_range.mm < SIDE_INSET_MM + 110U))
+    {
+      return "SEARCH_SIDE_CLEARANCE";
+    }
+    return NULL;
+  }
+  uint8_t side_fresh = side_range.mm && now - side_range.tick <= RANGE_MAX_AGE_MS;
+  if (!left && !right &&
+      !(motion == RANGE_ARC && side_fresh &&
+        side_range.mm >= SIDE_INSET_MM + RANGE_SIDE_TURN_CLEARANCE_MM &&
+        now - front_range[0].tick <= RANGE_MAX_AGE_MS &&
+        now - front_range[1].tick <= RANGE_MAX_AGE_MS &&
+        Range_IsOpticalFailure(front_status[0]) && Range_IsOpticalFailure(front_status[1])))
+  {
+    return "FRONT_INVALID";
+  }
+  if (recovery_turn && !left) { return "FRONT_INVALID"; }
+  if (motion != RANGE_FORWARD && ((left && left < RANGE_TURN_CLEARANCE_MM) ||
+                   (!recovery_turn && right && right < RANGE_TURN_CLEARANCE_MM)))
+  {
+    return "TURN_CLEARANCE";
+  }
+  if (motion != RANGE_FORWARD && side_fresh &&
+      side_range.mm < SIDE_INSET_MM + RANGE_SIDE_TURN_CLEARANCE_MM)
+  {
+    return "SIDE_CLEARANCE";
+  }
+  if (motion == RANGE_FORWARD && left && right && left <= RANGE_FRONT_STOP_MM && right <= RANGE_FRONT_STOP_MM)
+  {
+    return "FRONT_OBSTACLE";
+  }
+  return NULL;
 }
 
 static void Run_ToFSingleTest(const char *name, uint8_t address, GPIO_TypeDef *int_port, uint16_t int_pin)
@@ -1593,6 +1906,8 @@ static void Motor_SpeedTask(uint32_t now)
 
   if (speed_loop_initialized == 0U)
   {
+    speed_period_ms = 0U;
+    speed_max_period_ms = 0U;
     speed_left_encoder = left_encoder_count;
     speed_right_encoder = right_encoder_count;
     speed_last_ms = now;
@@ -1604,6 +1919,8 @@ static void Motor_SpeedTask(uint32_t now)
     return;
   }
 
+  speed_period_ms = elapsed_ms;
+  if (elapsed_ms > speed_max_period_ms) { speed_max_period_ms = elapsed_ms; }
   left_now = left_encoder_count;
   right_now = right_encoder_count;
   raw_left_rpm_x100 = Motor_WheelRpmX100(0U, left_now - speed_left_encoder, elapsed_ms);
@@ -1627,6 +1944,16 @@ static void Motor_SpeedTask(uint32_t now)
   right_output = Motor_ComputePiOutput(1U, right_speed_ramped_rpm_x100,
                                       right_speed_measured_rpm_x100,
                                       &right_speed_integral_x100);
+  if (straight_move.active && ((straight_move.hold & 256U) != 0U))
+  {
+    left_output = 0;
+    left_speed_integral_x100 = 0;
+  }
+  if (straight_move.active && ((straight_move.hold & 512U) != 0U))
+  {
+    right_output = 0;
+    right_speed_integral_x100 = 0;
+  }
   left_motor_percent = left_output;
   right_motor_percent = right_output;
   Motor_ApplyOutputs(left_output, right_output);
@@ -1737,7 +2064,368 @@ static void Motor_SetSpeeds(int16_t left_percent, int16_t right_percent)
 
 static void Motor_Stop(void)
 {
+  if (straight_move.active)
+  {
+    Straight_Finish("CANCELLED");
+    return;
+  }
   Motor_SetSpeeds(0, 0);
+}
+
+static void Straight_Finish(const char *reason)
+{
+  int32_t left = (int32_t)((uint32_t)straight_move.origin_left - (uint32_t)left_encoder_count);
+  int32_t right = (int32_t)((uint32_t)right_encoder_count - (uint32_t)straight_move.origin_right);
+  straight_move.active = 0U;
+  straight_move.hold = 0U;
+  Motor_Stop();
+  mpu_stream_enabled = straight_move.saved_mpu_stream;
+  tof_stream_enabled = straight_move.saved_tof_stream;
+  uint32_t now = HAL_GetTick();
+  (void)snprintf(last_move_status, sizeof(last_move_status),
+                 "LAST MOVE %s | COUNTS:%ld/%ld | T_MS:%lu | RAW:%u/%u | MM:%u/%u/%u | AGE_MS:%lu/%lu/%lu",
+                 reason, (long)left, (long)right, (unsigned long)now,
+                 (unsigned)front_status[0], (unsigned)front_status[1],
+                 (unsigned)front_range[0].mm, (unsigned)front_range[1].mm, (unsigned)side_range.mm,
+                 (unsigned long)(now - front_range[0].tick), (unsigned long)(now - front_range[1].tick),
+                 (unsigned long)(now - side_range.tick));
+  TestPlatform_Printf("MOVE %s | COUNTS:%ld/%ld\r\n", reason, (long)left, (long)right);
+  Run_MotorStatus();
+}
+
+static void Straight_HandleLine(const char *line)
+{
+  if (strcmp(line, "G LAST") == 0)
+  {
+    TestPlatform_PrintLine(last_move_status);
+    return;
+  }
+  if (strncmp(line, "G C ", 4U) == 0 || strncmp(line, "G U ", 4U) == 0)
+  {
+    uint8_t update = line[2] == 'U';
+    if (update && (!straight_move.active || !straight_move.cruise))
+    {
+      TestPlatform_PrintLine("MOVE IDLE");
+      return;
+    }
+    int left, right;
+    char extra;
+    if (sscanf(line + 4, "%d %d %c", &left, &right, &extra) != 2 ||
+        left < 22 || left > 25 || right < 22 || right > 25)
+    {
+      TestPlatform_PrintLine("MOVE ERROR VALUES");
+      return;
+    }
+    if ((straight_move.active && !update) ||
+        (!straight_move.active && (left_motor_percent || right_motor_percent ||
+          left_speed_target_rpm_x100 || right_speed_target_rpm_x100 ||
+          TIM3->CCR1 || TIM3->CCR3 || TIM2->CCR1 || TIM2->CCR2)))
+    {
+      TestPlatform_PrintLine("MOVE ERROR STOP_REQUIRED");
+      return;
+    }
+    const char *blocked = Range_BlockReason(RANGE_CRUISE, 0U, 0U);
+    if (blocked)
+    {
+      if (straight_move.active)
+      {
+        char reason[36];
+        (void)snprintf(reason, sizeof(reason), "ABORT %s", blocked);
+        Straight_Finish(reason);
+      }
+      else { TestPlatform_Printf("MOVE ERROR %s\r\n", blocked); }
+      return;
+    }
+    if (!straight_move.active)
+    {
+      straight_move.cruise = straight_move.guarded = 1U;
+      straight_move.cruise_straight_rpm = 0U;
+      straight_move.search = 0U;
+      straight_move.traction_retry = 0U;
+      straight_move.scan = 0U;
+      straight_move.direction_left = straight_move.direction_right = 1;
+      straight_move.hold = 0U;
+      straight_move.origin_left = left_encoder_count;
+      straight_move.origin_right = right_encoder_count;
+      straight_move.started_ms = HAL_GetTick();
+      straight_move.left_progress_ms = straight_move.right_progress_ms = straight_move.started_ms;
+      straight_move.last_left_progress = straight_move.last_right_progress = 0;
+      straight_move.saved_mpu_stream = mpu_stream_enabled;
+      straight_move.saved_tof_stream = tof_stream_enabled;
+      mpu_stream_enabled = 0U;
+      straight_move.active = 1U;
+    }
+    uint8_t straight_rpm = left == right ? (uint8_t)left : 0U;
+    if (straight_rpm && !straight_move.cruise_straight_rpm)
+    {
+      straight_move.cruise_origin_left = left_encoder_count;
+      straight_move.cruise_origin_right = right_encoder_count;
+    }
+    straight_move.cruise_straight_rpm = straight_rpm;
+    Motor_SetSpeedTargets(left * 100L, right * 100L);
+    TestPlatform_PrintLine("MOVE ACTIVE | CRUISE");
+    return;
+  }
+  if (strcmp(line, "G KEEP") == 0)
+  {
+    if (straight_move.active)
+    {
+      last_motor_command_ms = HAL_GetTick();
+      TestPlatform_Printf("MOVE ACTIVE | HOLD:%lu\r\n", (unsigned long)straight_move.hold);
+    }
+    else { TestPlatform_PrintLine("MOVE IDLE"); }
+    return;
+  }
+  uint8_t rolling_curve = straight_move.active && straight_move.cruise && strncmp(line, "G A Q ", 6U) == 0;
+  if (straight_move.active && !rolling_curve) { TestPlatform_PrintLine("MOVE BUSY | use x to stop"); return; }
+  if ((line[0] != 'G') || (line[1] != ' '))
+  {
+    TestPlatform_PrintLine("MOVE ERROR FORMAT"); return;
+  }
+  const char *cursor = line + 2;
+  while (*cursor == ' ') { ++cursor; }
+  uint8_t guarded = (cursor[0] == 'A' && cursor[1] == ' ');
+  if (guarded)
+  {
+    cursor += 2;
+    if (strchr("FLRSBHQTV", cursor[0]) == NULL || cursor[0] == '\0' || cursor[1] != ' ')
+    {
+      TestPlatform_PrintLine("MOVE ERROR FORMAT"); return;
+    }
+  }
+  uint8_t search = guarded && cursor[0] == 'S';
+  uint8_t recovery_turn = guarded && cursor[0] == 'H';
+  uint8_t curve = guarded && cursor[0] == 'Q';
+  uint8_t traction_retry = guarded && cursor[0] == 'T';
+  uint8_t scan = guarded && cursor[0] == 'V';
+  if (search || recovery_turn || curve || traction_retry || scan)
+  {
+    cursor += 2;
+    while (*cursor == ' ') { ++cursor; }
+  }
+  if (scan && *cursor != 'L' && *cursor != 'R')
+  {
+    TestPlatform_PrintLine("MOVE ERROR FORMAT"); return;
+  }
+  char direction = 'F'; /* Legacy G counts counts remains forward. */
+  int32_t direction_left = 1L;
+  int32_t direction_right = 1L;
+  if ((*cursor == 'F') || (*cursor == 'B') || (*cursor == 'L') || (*cursor == 'R'))
+  {
+    direction = *cursor++;
+    if (*cursor != ' ') { TestPlatform_PrintLine("MOVE ERROR FORMAT"); return; }
+    while (*cursor == ' ') { ++cursor; }
+    direction_left = ((direction == 'B') || (direction == 'L')) ? -1L : 1L;
+    direction_right = ((direction == 'B') || (direction == 'R')) ? -1L : 1L;
+  }
+  if ((*cursor < '0') || (*cursor > '9')) { TestPlatform_PrintLine("MOVE ERROR VALUES"); return; }
+  char *end;
+  errno = 0;
+  unsigned long left = strtoul(cursor, &end, 10);
+  if ((errno != 0) || (*end != ' ')) { TestPlatform_PrintLine("MOVE ERROR VALUES"); return; }
+  cursor = end;
+  while (*cursor == ' ') { ++cursor; }
+  if ((*cursor < '0') || (*cursor > '9')) { TestPlatform_PrintLine("MOVE ERROR VALUES"); return; }
+  errno = 0;
+  unsigned long right = strtoul(cursor, &end, 10);
+  while (*end == ' ') { ++end; }
+  if ((errno != 0) || (*end != '\0') || (left < 5000UL) || (right < 5000UL) ||
+      (left > (unsigned long)(LEFT_WHEEL_CPR_X10 / 10LL)) ||
+      (right > (unsigned long)(RIGHT_WHEEL_CPR_X10 / 10LL)) ||
+      (search && (left > 18000UL || right > 18000UL)) ||
+      (traction_retry && (left > 8000UL || right > 8000UL)) ||
+      (scan && (left > 35500UL || right > 35500UL)) ||
+      (recovery_turn && (left > 12000UL || right > 12000UL)) ||
+      (guarded && direction == 'B' && (left > 16000UL || right > 16000UL)))
+  {
+    TestPlatform_PrintLine("MOVE ERROR VALUES"); return;
+  }
+  int64_t scale = (int64_t)left * RIGHT_WHEEL_CPR_X10;
+  int64_t difference = scale - (int64_t)right * LEFT_WHEEL_CPR_X10;
+  int64_t tolerance = scale / ((guarded && direction == 'F' && !traction_retry) ? 6LL : 50LL);
+  if (difference > tolerance || difference < -tolerance)
+  {
+    TestPlatform_PrintLine("MOVE ERROR STRAIGHT_ONLY"); return;
+  }
+  if (!rolling_curve && ((left_motor_percent != 0) || (right_motor_percent != 0) ||
+      (left_speed_target_rpm_x100 != 0) || (right_speed_target_rpm_x100 != 0) ||
+      (TIM3->CCR1 != 0U) || (TIM3->CCR3 != 0U) || (TIM2->CCR1 != 0U) || (TIM2->CCR2 != 0U)))
+  {
+    TestPlatform_PrintLine("MOVE ERROR STOP_REQUIRED"); return;
+  }
+  const char *blocked = guarded && direction != 'B' ?
+    Range_BlockReason(scan ? RANGE_SCAN : traction_retry ? RANGE_TRACTION : curve ? RANGE_ARC :
+                      (direction == 'F' && !recovery_turn ? RANGE_FORWARD : RANGE_PIVOT),
+                      search, recovery_turn) : NULL;
+  if (blocked)
+  {
+    if (rolling_curve)
+    {
+      char reason[40];
+      (void)snprintf(reason, sizeof(reason), "ABORT CURVE_%s", blocked);
+      Straight_Finish(reason);
+    }
+    else { TestPlatform_Printf("MOVE ERROR %s\r\n", blocked); }
+    return;
+  }
+  straight_move.guarded = guarded;
+  straight_move.cruise = 0U;
+  straight_move.search = search;
+  straight_move.traction_retry = traction_retry;
+  straight_move.scan = scan;
+  if (recovery_turn)
+  {
+    direction_left = 0;
+    direction_right = -1;
+    right *= 2U;
+  }
+  if (curve)
+  {
+    direction_left = 1;
+    direction_right = 0;
+    left *= 2U;
+  }
+  straight_move.origin_left = left_encoder_count;
+  straight_move.origin_right = right_encoder_count;
+  straight_move.direction_left = (int8_t)direction_left;
+  straight_move.direction_right = (int8_t)direction_right;
+  straight_move.goal_left = (uint32_t)left;
+  straight_move.goal_right = (uint32_t)right;
+  straight_move.started_ms = HAL_GetTick();
+  straight_move.left_progress_ms = straight_move.started_ms;
+  straight_move.right_progress_ms = straight_move.started_ms;
+  straight_move.last_left_progress = 0;
+  straight_move.last_right_progress = 0;
+  straight_move.hold = 0U;
+  if (!rolling_curve)
+  {
+    straight_move.saved_mpu_stream = mpu_stream_enabled;
+    straight_move.saved_tof_stream = tof_stream_enabled;
+  }
+  int32_t left_rpm = traction_retry ? 3000L : search || curve ? 2500L : 1500L;
+  int32_t right_rpm = left_rpm;
+  if (guarded && !search && !recovery_turn && !curve && !traction_retry && direction == 'F' && difference != 0)
+  {
+    int64_t right_scale = scale - difference;
+    if (difference > 0) { left_rpm = (int32_t)(1500LL * scale / right_scale); }
+    else { right_rpm = (int32_t)(1500LL * right_scale / scale); }
+  }
+  Motor_SetSpeedTargets(direction_left * left_rpm, direction_right * right_rpm);
+  if ((direction_left && !left_speed_target_rpm_x100) ||
+      (direction_right && !right_speed_target_rpm_x100))
+  {
+    TestPlatform_PrintLine("MOVE ERROR CLEARANCE");
+    return;
+  }
+  mpu_stream_enabled = 0U;
+  straight_move.active = 1U;
+  TestPlatform_Printf("MOVE START | GOALS:%lu/%lu RPM:%ld/%ld DIR:%c\r\n",
+                      left, right, direction_left * left_rpm/100L, direction_right * right_rpm/100L,
+                      scan ? 'V' : traction_retry ? 'T' : curve ? 'Q' : recovery_turn ? 'H' : direction);
+}
+
+static uint8_t Straight_Task(uint32_t now)
+{
+  const char *blocked = straight_move.guarded &&
+    (straight_move.direction_left >= 0 || straight_move.direction_right >= 0) ?
+    Range_BlockReason(straight_move.scan ? RANGE_SCAN : straight_move.traction_retry ? RANGE_TRACTION :
+                      straight_move.cruise ? RANGE_CRUISE :
+                      straight_move.direction_right == 0 ? RANGE_ARC :
+                      (straight_move.direction_left > 0 && straight_move.direction_right > 0 ? RANGE_FORWARD : RANGE_PIVOT),
+                      straight_move.search, straight_move.direction_left == 0) : NULL;
+  if (blocked)
+  {
+    char reason[40];
+    (void)snprintf(reason, sizeof(reason), "ABORT %s%s",
+                   straight_move.direction_right == 0 ? "CURVE_" : "", blocked);
+    Straight_Finish(reason);
+    return 1U;
+  }
+  if (straight_move.traction_retry && now - straight_move.started_ms >= 1200U)
+  {
+    Straight_Finish("ABORT DURATION");
+    return 1U;
+  }
+  int32_t left_delta = (int32_t)((uint32_t)straight_move.origin_left - (uint32_t)left_encoder_count);
+  int32_t right_delta = (int32_t)((uint32_t)right_encoder_count - (uint32_t)straight_move.origin_right);
+  int32_t left, right;
+  uint32_t action;
+  if (straight_move.cruise)
+  {
+    left = left_delta / 10;
+    right = right_delta / 10;
+    action = (now - straight_move.started_ms >= 90000U) ? 1U :
+             ((left < -30 || right < -30) ? 2U : 0U);
+    if (straight_move.cruise_straight_rpm)
+    {
+      int32_t dl = (int32_t)((uint32_t)straight_move.cruise_origin_left - (uint32_t)left_encoder_count);
+      int32_t dr = (int32_t)((uint32_t)right_encoder_count - (uint32_t)straight_move.cruise_origin_right);
+      int64_t error = (int64_t)dl - (int64_t)dr * LEFT_WHEEL_CPR_X10 / RIGHT_WHEEL_CPR_X10;
+      int32_t trim = Argos_CruiseTrim(error);
+      int32_t base = straight_move.cruise_straight_rpm * 100L;
+      left_speed_target_rpm_x100 = base - trim;
+      right_speed_target_rpm_x100 = base + trim;
+    }
+  }
+  else
+  {
+    left = (int32_t)((int64_t)left_delta * straight_move.direction_left * 1000LL / straight_move.goal_left);
+    right = (int32_t)((int64_t)right_delta * straight_move.direction_right * 1000LL / straight_move.goal_right);
+    if (!straight_move.direction_left) { left = right; }
+    if (!straight_move.direction_right)
+    {
+      int64_t difference = (int64_t)left_delta -
+        (int64_t)right_delta * LEFT_WHEEL_CPR_X10 / RIGHT_WHEEL_CPR_X10;
+      left = right = (int32_t)(difference * 1000LL / straight_move.goal_left);
+    }
+    action = Argos_StraightDecision(left, right, now - straight_move.started_ms, straight_move.hold);
+    if (straight_move.search && (action & 255U) == 0U)
+    {
+      int32_t trim = Argos_CruiseTrim((int64_t)(left - right) * straight_move.goal_left / 1000LL);
+      left_speed_target_rpm_x100 = 2500L - trim;
+      right_speed_target_rpm_x100 = 2500L + trim;
+    }
+  }
+  const char *reasons[] = {"", "ABORT DURATION", "ABORT REVERSE", "ABORT OVERTRAVEL", "ABORT MISMATCH", "DONE"};
+  if ((action & 255U) != 0U)
+  {
+    Straight_Finish(reasons[action & 255U]); return 1U;
+  }
+  straight_move.hold = action;
+  if ((action & 256U) != 0U)
+  {
+    Motor_WriteLeft(0); left_motor_applied_percent = 0;
+    straight_move.left_progress_ms = now;
+  }
+  else if (left >= straight_move.last_left_progress + 10)
+  {
+    straight_move.last_left_progress = left;
+    straight_move.left_progress_ms = now;
+  }
+  if ((action & 512U) != 0U)
+  {
+    Motor_WriteRight(0); right_motor_applied_percent = 0;
+    straight_move.right_progress_ms = now;
+  }
+  else if (right >= straight_move.last_right_progress + 10)
+  {
+    straight_move.last_right_progress = right;
+    straight_move.right_progress_ms = now;
+  }
+  if (((now - straight_move.left_progress_ms) > 1200U) ||
+      ((now - straight_move.right_progress_ms) > 1200U))
+  {
+    Straight_Finish("ABORT STALL"); return 1U;
+  }
+  int32_t left_speed = left_speed_measured_rpm_x100 * straight_move.direction_left;
+  int32_t right_speed = right_speed_measured_rpm_x100 * straight_move.direction_right;
+  if ((left_speed > 4000L) || (right_speed > 4000L) ||
+      (left_speed < -4000L) || (right_speed < -4000L) ||
+      (((now - straight_move.started_ms) > 250U) && ((left_speed < -200L) || (right_speed < -200L))))
+  {
+    Straight_Finish("ABORT SPEED"); return 1U;
+  }
+  return 0U;
 }
 
 static void Motor_Task(void)
@@ -1754,6 +2442,7 @@ static void Motor_Task(void)
   if ((command_active != 0U) &&
       ((now - last_motor_command_ms) >= MOTOR_COMMAND_TIMEOUT_MS))
   {
+    if (straight_move.active) { Straight_Finish("ABORT WATCHDOG"); }
     motor_control_mode = MOTOR_CONTROL_PWM;
     Motor_ResetSpeedController();
     left_motor_percent = 0;
@@ -1765,6 +2454,7 @@ static void Motor_Task(void)
     return;
   }
 
+  if (straight_move.active && (Straight_Task(now) != 0U)) { return; }
   if (motor_control_mode == MOTOR_CONTROL_PI)
   {
     Motor_SpeedTask(now);
@@ -1906,7 +2596,7 @@ static void Run_MotorStatus(void)
                       ((left_speed_target_rpm_x100 != 0) ||
                        (right_speed_target_rpm_x100 != 0)))) ? 1U : 0U;
 
-  TestPlatform_Printf("MOTOR | LEFT:%d RPWM:%lu LPWM:%lu ENC:%ld DENC:%ld RPMx100:%ld AB:%u | RIGHT:%d RPWM:%lu LPWM:%lu ENC:%ld DENC:%ld RPMx100:%ld AB:%u | SAFE:%s | SYNC:%s ERRx100:%+ld TRIM:%+d APPLIED:%+d/%+d | CTRL:%s TARGET_RPMx100:%+ld/%+ld RAMP_RPMx100:%+ld/%+ld MEAS_RPMx100:%+ld/%+ld I_x100:%+ld/%+ld\r\n",
+  TestPlatform_Printf("MOTOR | LEFT:%d RPWM:%lu LPWM:%lu ENC:%ld DENC:%ld RPMx100:%ld AB:%u | RIGHT:%d RPWM:%lu LPWM:%lu ENC:%ld DENC:%ld RPMx100:%ld AB:%u | SAFE:%s | SYNC:%s ERRx100:%+ld TRIM:%+d APPLIED:%+d/%+d | CTRL:%s TARGET_RPMx100:%+ld/%+ld RAMP_RPMx100:%+ld/%+ld MEAS_RPMx100:%+ld/%+ld I_x100:%+ld/%+ld T_MS:%lu LOOP_MS:%lu LOOP_MAX_MS:%lu\r\n",
                       left_motor_percent,
                       TIM3->CCR1,
                       TIM3->CCR3,
@@ -1935,7 +2625,10 @@ static void Run_MotorStatus(void)
                       left_speed_measured_rpm_x100,
                       right_speed_measured_rpm_x100,
                       left_speed_integral_x100,
-                      right_speed_integral_x100);
+                      right_speed_integral_x100,
+                      (unsigned long)now,
+                      (unsigned long)speed_period_ms,
+                      (unsigned long)speed_max_period_ms);
 }
 
 static void Run_MotorPinTest(void)

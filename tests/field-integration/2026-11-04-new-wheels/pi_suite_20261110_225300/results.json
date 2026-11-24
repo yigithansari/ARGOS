@@ -1,0 +1,254 @@
+[
+  {
+    "target_rpm": 25,
+    "mean_rpm": [
+      24.35090909090909,
+      25.155454545454543
+    ],
+    "mean_within_5_percent": true,
+    "duration_seconds": 20.0,
+    "evaluation_start_seconds": 16.0,
+    "within_5_percent_fraction": [
+      0.2727272727272727,
+      0.5454545454545454
+    ],
+    "min_max_rpm": [
+      [
+        20.6,
+        27.21
+      ],
+      [
+        22.76,
+        27.32
+      ]
+    ],
+    "stop_confirmed": true,
+    "samples": 51,
+    "scope": "single signed raised-wheel run",
+    "repetition": 1
+  },
+  {
+    "target_rpm": 25,
+    "mean_rpm": [
+      24.548181818181817,
+      24.863636363636363
+    ],
+    "mean_within_5_percent": true,
+    "duration_seconds": 20.0,
+    "evaluation_start_seconds": 16.0,
+    "within_5_percent_fraction": [
+      0.36363636363636365,
+      0.45454545454545453
+    ],
+    "min_max_rpm": [
+      [
+        20.78,
+        27.63
+      ],
+      [
+        22.88,
+        27.79
+      ]
+    ],
+    "stop_confirmed": true,
+    "samples": 50,
+    "scope": "single signed raised-wheel run",
+    "repetition": 2
+  },
+  {
+    "target_rpm": 25,
+    "mean_rpm": [
+      25.134545454545457,
+      25.485454545454544
+    ],
+    "mean_within_5_percent": true,
+    "duration_seconds": 20.0,
+    "evaluation_start_seconds": 16.0,
+    "within_5_percent_fraction": [
+      0.36363636363636365,
+      0.5454545454545454
+    ],
+    "min_max_rpm": [
+      [
+        21.13,
+        28.32
+      ],
+      [
+        22.91,
+        27.62
+      ]
+    ],
+    "stop_confirmed": true,
+    "samples": 50,
+    "scope": "single signed raised-wheel run",
+    "repetition": 3
+  },
+  {
+    "target_rpm": 35,
+    "mean_rpm": [
+      35.76363636363636,
+      35.14727272727273
+    ],
+    "mean_within_5_percent": true,
+    "duration_seconds": 20.0,
+    "evaluation_start_seconds": 16.0,
+    "within_5_percent_fraction": [
+      0.09090909090909091,
+      0.9090909090909091
+    ],
+    "min_max_rpm": [
+      [
+        30.13,
+        40.94
+      ],
+      [
+        34.37,
+        36.83
+      ]
+    ],
+    "stop_confirmed": true,
+    "samples": 50,
+    "scope": "single signed raised-wheel run",
+    "repetition": 1
+  },
+  {
+    "target_rpm": 35,
+    "mean_rpm": [
+      34.846363636363634,
+      35.29363636363637
+    ],
+    "mean_within_5_percent": true,
+    "duration_seconds": 20.0,
+    "evaluation_start_seconds": 16.0,
+    "within_5_percent_fraction": [
+      0.18181818181818182,
+      1.0
+    ],
+    "min_max_rpm": [
+      [
+        30.38,
+        39.18
+      ],
+      [
+        34.52,
+        36.73
+      ]
+    ],
+    "stop_confirmed": true,
+    "samples": 51,
+    "scope": "single signed raised-wheel run",
+    "repetition": 2
+  },
+  {
+    "target_rpm": 35,
+    "mean_rpm": [
+      34.695454545454545,
+      34.911818181818184
+    ],
+    "mean_within_5_percent": true,
+    "duration_seconds": 20.0,
+    "evaluation_start_seconds": 16.0,
+    "within_5_percent_fraction": [
+      0.09090909090909091,
+      1.0
+    ],
+    "min_max_rpm": [
+      [
+        30.8,
+        41.07
+      ],
+      [
+        34.36,
+        35.46
+      ]
+    ],
+    "stop_confirmed": true,
+    "samples": 50,
+    "scope": "single signed raised-wheel run",
+    "repetition": 3
+  },
+  {
+    "target_rpm": 45,
+    "mean_rpm": [
+      44.97909090909091,
+      45.558181818181815
+    ],
+    "mean_within_5_percent": true,
+    "duration_seconds": 20.0,
+    "evaluation_start_seconds": 16.0,
+    "within_5_percent_fraction": [
+      0.36363636363636365,
+      1.0
+    ],
+    "min_max_rpm": [
+      [
+        40.88,
+        49.7
+      ],
+      [
+        44.57,
+        46.59
+      ]
+    ],
+    "stop_confirmed": true,
+    "samples": 50,
+    "scope": "single signed raised-wheel run",
+    "repetition": 1
+  },
+  {
+    "target_rpm": 45,
+    "mean_rpm": [
+      45.829,
+      45.599000000000004
+    ],
+    "mean_within_5_percent": true,
+    "duration_seconds": 20.0,
+    "evaluation_start_seconds": 16.0,
+    "within_5_percent_fraction": [
+      0.3,
+      1.0
+    ],
+    "min_max_rpm": [
+      [
+        41.63,
+        50.04
+      ],
+      [
+        44.74,
+        46.51
+      ]
+    ],
+    "stop_confirmed": true,
+    "samples": 49,
+    "scope": "single signed raised-wheel run",
+    "repetition": 2
+  },
+  {
+    "target_rpm": 45,
+    "mean_rpm": [
+      44.699999999999996,
+      45.61818181818182
+    ],
+    "mean_within_5_percent": true,
+    "duration_seconds": 20.0,
+    "evaluation_start_seconds": 16.0,
+    "within_5_percent_fraction": [
+      0.2727272727272727,
+      1.0
+    ],
+    "min_max_rpm": [
+      [
+        40.62,
+        49.87
+      ],
+      [
+        44.47,
+        46.29
+      ]
+    ],
+    "stop_confirmed": true,
+    "samples": 50,
+    "scope": "single signed raised-wheel run",
+    "repetition": 3
+  }
+]

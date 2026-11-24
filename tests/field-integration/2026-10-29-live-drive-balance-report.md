@@ -1,9 +1,9 @@
 # ARGOS Live Drive Balance Report
 
-**Date:** 2026-10-29
-**Connection:** ESP32-C3 Wi-Fi bridge at `192.168.137.33:3333`
-**Wheel state:** Driven wheels unloaded
-**Measurement result:** PASS
+**Date:** 2026-10-29  
+**Connection:** ESP32-C3 Wi-Fi bridge at `192.168.137.33:3333`  
+**Wheel state:** Driven wheels unloaded  
+**Measurement result:** PASS  
 **Open-loop balance result:** CHECK
 
 ## Method

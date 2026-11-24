@@ -1,0 +1,114 @@
+{
+  "pi_20261104_local_move_regression_35": {
+    "left": {
+      "samples": 30,
+      "mean_rpm": 35.439,
+      "rms_error_rpm": 3.597309642867384,
+      "first_harmonic_amplitude_rpm": 5.095856602086263,
+      "phase_fit_r_squared": 0.9840356394637493
+    },
+    "right": {
+      "samples": 30,
+      "mean_rpm": 35.86466666666667,
+      "rms_error_rpm": 1.2552688954961009,
+      "first_harmonic_amplitude_rpm": 0.22670864057082007,
+      "phase_fit_r_squared": 0.030759920796806006
+    }
+  },
+  "pi_20261104_left_kp008_35": {
+    "left": {
+      "samples": 29,
+      "mean_rpm": 35.13206896551724,
+      "rms_error_rpm": 3.7205046932390493,
+      "first_harmonic_amplitude_rpm": 5.283595345728815,
+      "phase_fit_r_squared": 0.9848906271290796
+    },
+    "right": {
+      "samples": 29,
+      "mean_rpm": 35.50413793103448,
+      "rms_error_rpm": 1.023513219428468,
+      "first_harmonic_amplitude_rpm": 0.16077801940730313,
+      "phase_fit_r_squared": 0.015158930191655484
+    }
+  },
+  "pi_20261104_left_wheel_removed_35": {
+    "left": {
+      "samples": 30,
+      "mean_rpm": 35.955000000000005,
+      "rms_error_rpm": 1.309614447079751,
+      "first_harmonic_amplitude_rpm": 0.13357248931209062,
+      "phase_fit_r_squared": 0.010578851695348668
+    },
+    "right": {
+      "samples": 30,
+      "mean_rpm": 35.400333333333336,
+      "rms_error_rpm": 0.965606890337194,
+      "first_harmonic_amplitude_rpm": 0.2364530132212384,
+      "phase_fit_r_squared": 0.038879687466529256
+    }
+  },
+  "pi_20261104_left_wheel_removed_35_repeat": {
+    "left": {
+      "samples": 29,
+      "mean_rpm": 35.756206896551724,
+      "rms_error_rpm": 1.323411214014492,
+      "first_harmonic_amplitude_rpm": 0.4669429733866605,
+      "phase_fit_r_squared": 0.09812876958861505
+    },
+    "right": {
+      "samples": 29,
+      "mean_rpm": 35.67172413793104,
+      "rms_error_rpm": 1.1296047523588608,
+      "first_harmonic_amplitude_rpm": 0.22371006065953605,
+      "phase_fit_r_squared": 0.028330357853294297
+    }
+  },
+  "pi_20261104_hub_shifted_35": {
+    "left": {
+      "samples": 29,
+      "mean_rpm": 35.716206896551725,
+      "rms_error_rpm": 1.3810228593079243,
+      "first_harmonic_amplitude_rpm": 0.40923626724963175,
+      "phase_fit_r_squared": 0.06073536203157426
+    },
+    "right": {
+      "samples": 29,
+      "mean_rpm": 35.31896551724138,
+      "rms_error_rpm": 0.7540899973729467,
+      "first_harmonic_amplitude_rpm": 0.19309588832698016,
+      "phase_fit_r_squared": 0.03961335591428905
+    }
+  },
+  "pi_20261104_hub_clearance_wheel_fitted_35": {
+    "left": {
+      "samples": 30,
+      "mean_rpm": 35.03666666666666,
+      "rms_error_rpm": 3.3686268221141193,
+      "first_harmonic_amplitude_rpm": 4.9230944390685,
+      "phase_fit_r_squared": 0.9875544900918826
+    },
+    "right": {
+      "samples": 30,
+      "mean_rpm": 35.626666666666665,
+      "rms_error_rpm": 0.9303726851823056,
+      "first_harmonic_amplitude_rpm": 0.14460438575020967,
+      "phase_fit_r_squared": 0.02100170381550026
+    }
+  },
+  "pi_20261104_outer_rings_swapped_35": {
+    "left": {
+      "samples": 30,
+      "mean_rpm": 35.432,
+      "rms_error_rpm": 3.6539978106178443,
+      "first_harmonic_amplitude_rpm": 4.9936249907309085,
+      "phase_fit_r_squared": 0.9837447952154745
+    },
+    "right": {
+      "samples": 30,
+      "mean_rpm": 35.50366666666666,
+      "rms_error_rpm": 0.9865106858688013,
+      "first_harmonic_amplitude_rpm": 0.17011435922080803,
+      "phase_fit_r_squared": 0.02108446920951601
+    }
+  }
+}

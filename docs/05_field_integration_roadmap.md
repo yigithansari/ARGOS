@@ -54,14 +54,13 @@
    - Design, installation, and acceptance criteria are recorded in
      `docs/07_wireless_stm32_update_design.md`.
 
-5. **Mobile platform integration - COMPLETE (2026-10-31)**
+5. **Mobile platform acceptance run - Link regression passed; drive validation pending**
    - Follow `docs/06_field_link_regression.md`.
    - Connection endurance and intentional-outage recovery: PASS (2026-10-08).
    - No brownout, panic, watchdog, CPU-lockup, power-glitch, or silent TCP-stall
      event was recorded in the accepted boot session.
    - First field link regression report archived under `tests/field-integration/`.
-   - Chassis assembly, basic computer-controlled motion and safe stop are operational.
-   - Precision closed-loop floor acceptance continues under Phase 02.
+   - Full chassis drive validation remains pending.
 
 6. **Phase 02 motion control - Started (2026-10-29)**
    - Both wheel circumferences measured as 260.0 mm.
@@ -70,14 +69,13 @@
      floor test.
    - Guided manual counts-per-wheel-revolution calibration completed: left
      48097.2 and right 48036.6 counts per wheel revolution.
-   - Calibrated PWM-to-wheel-RPM and focused 50-60% characterization passed.
-   - Feed-forward plus independent PI loops are implemented.
-   - Single forward raised-wheel runs at 25/35/45 RPM met the initial mean target.
-   - Repeated, reverse, disconnect-stop latency and floor tuning remain open.
+   - Next step: calibrated PWM-to-wheel-RPM characterization before PI tuning.
+   - Focused 50-60% characterization workflow added to the desktop panel;
+     hardware run pending.
    - Detailed sequence and acceptance targets are in
      `docs/08_phase_02_motion_control.md`.
 
 ## Release Rule
 
-Published status must distinguish completed basic safe motion from open Phase 02
-PI repeatability, reverse, disconnect-stop latency and floor acceptance work.
+Do not publish the field-integration revision until the updated ESP, STM32, OLED,
+and keyboard-drive path have completed a hardware regression run.

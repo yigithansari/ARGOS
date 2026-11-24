@@ -1,0 +1,3 @@
+START: 25 RPM both wheels, 20 seconds
+STOP confirmed=True
+{"target_rpm": 25, "mean_rpm": [24.35090909090909, 25.155454545454543], "mean_within_5_percent": true, "duration_seconds": 20.0, "evaluation_start_seconds": 16.0, "within_5_percent_fraction": [0.2727272727272727, 0.5454545454545454], "min_max_rpm": [[20.6, 27.21], [22.76, 27.32]], "stop_confirmed": true, "samples": 51, "scope": "single signed raised-wheel run"}

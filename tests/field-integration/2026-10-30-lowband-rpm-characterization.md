@@ -1,8 +1,8 @@
 # Phase 02 Low-band Wheel-RPM Characterization
 
-**Date:** 2026-10-30
-**Test window:** 01:20:38-01:22:17 Europe/Istanbul
-**Result:** PASS
+**Date:** 2026-10-30  
+**Test window:** 01:20:38-01:22:17 Europe/Istanbul  
+**Result:** PASS  
 **Final safety state:** `SAFE:STOP`
 
 ## Method

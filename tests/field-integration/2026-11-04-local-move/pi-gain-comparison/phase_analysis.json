@@ -1,0 +1,34 @@
+{
+  "pi_20261104_local_move_regression_35": {
+    "left": {
+      "samples": 30,
+      "mean_rpm": 35.439,
+      "rms_error_rpm": 3.597309642867384,
+      "first_harmonic_amplitude_rpm": 5.095856602086263,
+      "phase_fit_r_squared": 0.9840356394637493
+    },
+    "right": {
+      "samples": 30,
+      "mean_rpm": 35.86466666666667,
+      "rms_error_rpm": 1.2552688954961009,
+      "first_harmonic_amplitude_rpm": 0.22670864057082007,
+      "phase_fit_r_squared": 0.030759920796806006
+    }
+  },
+  "pi_20261104_left_kp008_35": {
+    "left": {
+      "samples": 29,
+      "mean_rpm": 35.13206896551724,
+      "rms_error_rpm": 3.7205046932390493,
+      "first_harmonic_amplitude_rpm": 5.283595345728815,
+      "phase_fit_r_squared": 0.9848906271290796
+    },
+    "right": {
+      "samples": 29,
+      "mean_rpm": 35.50413793103448,
+      "rms_error_rpm": 1.023513219428468,
+      "first_harmonic_amplitude_rpm": 0.16077801940730313,
+      "phase_fit_r_squared": 0.015158930191655484
+    }
+  }
+}

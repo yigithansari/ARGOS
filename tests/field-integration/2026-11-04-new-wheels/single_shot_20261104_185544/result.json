@@ -1,0 +1,8 @@
+{
+  "target_rpm": 25,
+  "timeout_stop": true,
+  "final_stop": true,
+  "http_probes": 30,
+  "http_errors": 0,
+  "max_http_seconds": 0.2340000000112923
+}

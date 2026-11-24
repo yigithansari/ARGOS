@@ -1,28 +1,27 @@
+2026-11-24 publication
+----------------------
+Run run_argos_control_panel.bat from this folder.
+PHASE 02 ACCEPTANCE provides the operator-run ESP tests described in
+PHASE02_ACCEPTANCE.md. Logs are written to phase02_results beside the panel.
+Historical records for the current review are under
+tests/field-integration/2026-11-24-phase-02-acceptance at repository root.
+
+For Pi Connect or automatic PC-to-Pi connection, use
+software/RaspberryPi/README.md at repository root. OTA image selection points
+to firmware/argos_f446re/Debug after a local firmware build.
+
 ARGOS Robot Control Platform
 ============================
 
 Wi-Fi ile calistirma:
-Normal kullanim: wifi_secrets.h ile ayarlanan hotspot'u ac; ESP STA adresi
-DHCP ile degisebilir. Panel AUTO kesfi UDP 3334 kullanir. Asagidaki ARGOS
-SSID ve 192.168.4.1 adimlari fallback AP icindir.
 1. ESP32-C3'e ESP32/esp32_c3_argos_bridge sketch'ini yukle.
-2. Bilgisayari hotspot agina veya yerel secrets dosyanda parolasini belirledigin ARGOS fallback agina bagla.
+2. Bilgisayari hotspot veya yerel olarak yapilandirilan ARGOS fallback agina bagla.
 3. run_argos_control_panel.bat dosyasina cift tikla.
 4. Panel 192.168.4.1:3333 adresine otomatik baglanir.
 
 USB/COM ile servis:
 1. Panelde Link Mode alanini COM yap.
 2. STLink Virtual COM Port'u sec ve CONNECT'e bas.
-Not: SB13/SB14 OFF olan mevcut ESP-UART baglantisinda ST-LINK VCP
-STM32 USART2'ye bagli degildir; portun gorunmesi UART iletisimini kanitlamaz.
-
-2026-10-31 yayin kopyasi:
-- STM32 WIRELESS UPDATE icin yalniz ARGOS_OTA.bin secilir.
-- Dosya secicide firmware/argos_f446re/Debug/ klasorune git; binary dosyalar
-  bu kaynak agacina eklenmez, yerel derlemeden elde edilir.
-- Multipart aktarim ve OTA vektor denetimi aktiftir.
-- 25/35/45 RPM tek kosu taramasi yapildi; tekrarlanabilir PI kabul ve zemin
-  ayari tamamlanmadi. Son durum icin docs/08_phase_02_motion_control.md.
 
 Komutlar:
 - SCAN I2C    : s
@@ -62,7 +61,7 @@ Baglantilar:
 - Right encoder A PC2, B PC3
 - OLED VCC 3V3, GND GND, SCL D12/PA6, SDA D11/PA7
 - ESP RX Nucleo D1/PA2, ESP TX Nucleo D0/PA3, UART 115200 8N1
-- ESP fallback Wi-Fi SSID ARGOS; parola yerel wifi_secrets.h dosyasinda ayarlanir, TCP 192.168.4.1:3333
+- ESP fallback Wi-Fi SSID ARGOS, parola yerel wifi_secrets.h dosyasinda, TCP 192.168.4.1:3333
 - D0/D1 ESP kullanimi icin Nucleo SB13/SB14 OFF, SB62/SB63 ON olmalidir.
 
 Not:

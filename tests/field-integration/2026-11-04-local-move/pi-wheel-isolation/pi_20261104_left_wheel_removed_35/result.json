@@ -1,0 +1,29 @@
+{
+  "target_rpm": 35,
+  "mean_rpm": [
+    35.596,
+    34.876999999999995
+  ],
+  "mean_within_5_percent": true,
+  "duration_seconds": 20.0,
+  "evaluation_start_seconds": 16.0,
+  "within_5_percent_fraction": [
+    1.0,
+    1.0
+  ],
+  "min_max_rpm": [
+    [
+      33.41,
+      36.51
+    ],
+    [
+      34.13,
+      35.83
+    ]
+  ],
+  "stop_confirmed": true,
+  "samples": 49,
+  "scope": "single signed raised-wheel run",
+  "instantaneous_within_5_percent": true,
+  "acceptance_status": "provisional_mean_pass"
+}

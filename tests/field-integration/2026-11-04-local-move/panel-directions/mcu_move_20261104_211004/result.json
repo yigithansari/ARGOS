@@ -1,0 +1,30 @@
+{
+  "execute": true,
+  "direction": "F",
+  "requested_value": 150.0,
+  "units": "mm",
+  "goals": [
+    26396,
+    26363
+  ],
+  "geometry": {
+    "version": 2,
+    "saved_at": "2026-10-29T23:35:23+03:00",
+    "measurement_turns": 10,
+    "wheel_diameter_mm": 87.0,
+    "track_width_mm": 255.0,
+    "geometry_updated_at": "2026-11-04",
+    "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending.",
+    "left_counts_per_wheel_rev": 48097.2,
+    "right_counts_per_wheel_rev": 48036.6,
+    "left_forward_sign": -1,
+    "right_forward_sign": 1
+  },
+  "exercise": "watchdog",
+  "completion": "MOVE ABORT WATCHDOG | COUNTS:14258/15006",
+  "stop_confirmed": true,
+  "final_encoder_mm": [
+    81.88100645079243,
+    86.66131658972272
+  ]
+}

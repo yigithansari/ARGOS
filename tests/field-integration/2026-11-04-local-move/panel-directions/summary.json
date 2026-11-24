@@ -1,0 +1,74 @@
+[
+  {
+    "folder": "mcu_move_20261104_210838",
+    "direction": "F",
+    "exercise": "complete",
+    "requested": 100.0,
+    "mean_mm": 95.69333483177329,
+    "heading_deg": 0.057770719586667255,
+    "left_mm": 95.56477795009899,
+    "right_mm": 95.82189171344758,
+    "completion": "MOVE DONE | COUNTS:16817/16697",
+    "stop": true
+  },
+  {
+    "folder": "mcu_move_20261104_210852",
+    "direction": "B",
+    "exercise": "complete",
+    "requested": 100.0,
+    "mean_mm": -95.48869923955372,
+    "heading_deg": -0.10626273186744417,
+    "left_mm": -95.25223333528925,
+    "right_mm": -95.7251651438182,
+    "completion": "MOVE DONE | COUNTS:-16762/-16697",
+    "stop": true
+  },
+  {
+    "folder": "mcu_move_20261104_210907",
+    "direction": "L",
+    "exercise": "complete",
+    "requested": 30.0,
+    "mean_mm": -0.2129070648613478,
+    "heading_deg": 28.607376896572912,
+    "left_mm": -63.87275400839106,
+    "right_mm": 63.44693987866837,
+    "completion": "MOVE DONE | COUNTS:-11241/11147",
+    "stop": true
+  },
+  {
+    "folder": "mcu_move_20261104_210924",
+    "direction": "R",
+    "exercise": "complete",
+    "requested": 30.0,
+    "mean_mm": -0.09419507717432296,
+    "heading_deg": -28.640682298801813,
+    "left_mm": 63.639766204623804,
+    "right_mm": -63.82815635897245,
+    "completion": "MOVE DONE | COUNTS:11161/-11191",
+    "stop": true
+  },
+  {
+    "folder": "mcu_move_20261104_211004",
+    "direction": "F",
+    "exercise": "watchdog",
+    "requested": 150.0,
+    "mean_mm": 84.27116152025758,
+    "heading_deg": 1.074084689114909,
+    "left_mm": 81.88100645079243,
+    "right_mm": 86.66131658972272,
+    "completion": "MOVE ABORT WATCHDOG | COUNTS:14258/15006",
+    "stop": true
+  },
+  {
+    "folder": "mcu_move_20261104_211022",
+    "direction": "B",
+    "exercise": "cancel",
+    "requested": 100.0,
+    "mean_mm": -18.22276068129778,
+    "heading_deg": -0.9237787977657929,
+    "left_mm": -16.167080529703966,
+    "right_mm": -20.278440832891587,
+    "completion": "MOVE CANCELLED | COUNTS:-2562/-3179",
+    "stop": true
+  }
+]

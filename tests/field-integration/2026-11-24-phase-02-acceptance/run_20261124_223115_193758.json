@@ -1,0 +1,36 @@
+{
+  "case": "PI +45",
+  "calibration": {
+    "version": 2,
+    "wheel_circumference_mm": 273.318560862312,
+    "track_width_mm": 255.0,
+    "left_counts_per_wheel_rev": 48097.2,
+    "right_counts_per_wheel_rev": 48036.6,
+    "left_forward_sign": -1,
+    "right_forward_sign": 1,
+    "saved_at": "2026-10-29T23:35:23+03:00",
+    "measurement_turns": 10,
+    "wheel_diameter_mm": 87.0,
+    "geometry_updated_at": "2026-11-04",
+    "geometry_method": "Unloaded outer tread diameter; track measured between wheel centre planes. Rolling circumference validation pending."
+  },
+  "stop_confirmed": true,
+  "reason": "speed completed",
+  "encoder_mm": [
+    4208.737148286717,
+    4335.59778969114
+  ],
+  "execution_pass": true,
+  "settled_samples": 18,
+  "sufficient_settled_data": true,
+  "mean_rpm": [
+    45.31611111111111,
+    45.090555555555554
+  ],
+  "mean_pass": true,
+  "in_band_fraction": [
+    0.16666666666666666,
+    1.0
+  ],
+  "tracking_pass": false
+}

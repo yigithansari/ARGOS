@@ -13,6 +13,10 @@ from collections import deque
 from datetime import datetime
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
+from argos_odometry import WheelOdometry
+from argos_exploration import (ExperimentLog, ScanPoseBuffer, wall_candidate, replay,
+                               exploration_step, save_map_svg, cruise_command, corner_step,
+                               corner_can_exit, side_scan, side_approaching, traction_clear)
 
 try:
     import serial
@@ -29,8 +33,9 @@ WIFI_PORT = 3333
 DISCOVERY_PORT = 3334
 WIFI_UPDATE_PORT = 3335
 WINDOWS_HOTSPOT_IP = "192.168.137.1"
-DEFAULT_WHEEL_CIRCUMFERENCE_MM = 260.0
-DEFAULT_TRACK_WIDTH_MM = 198.0
+# Robot geometry lives only in argos_motion_calibration.json; zero means unset.
+DEFAULT_WHEEL_CIRCUMFERENCE_MM = 0.0
+DEFAULT_TRACK_WIDTH_MM = 0.0
 ENCODER_CALIBRATION_TURNS = 10
 FIRMWARE_ENCODER_COUNTS_PER_REV = 1440.0
 LOWBAND_PWM_LEVELS = (50, 52, 54, 56, 58, 60)
@@ -53,9 +58,49 @@ def validate_ota_image(image):
         )
 
 
+def normalize_motion_geometry(calibration):
+    result = dict(calibration)
+    diameter = result.get("wheel_diameter_mm")
+    if diameter is None:
+        diameter = float(result["wheel_circumference_mm"]) / math.pi
+    diameter = float(diameter)
+    track = float(result["track_width_mm"])
+    if not all(math.isfinite(value) and value > 0 for value in (diameter, track)):
+        raise ValueError("Wheel diameter and track width must be finite and positive.")
+    result.update(wheel_diameter_mm=diameter,
+                  wheel_circumference_mm=math.pi * diameter, track_width_mm=track)
+    return result
+
+
+def plan_local_move(calibration, direction, value):
+    """Bounded experimental moves; geometry and encoder scale come from JSON."""
+    config = normalize_motion_geometry(calibration)
+    value = float(value)
+    if direction not in ("F", "B", "L", "R") or not math.isfinite(value):
+        raise ValueError("Invalid direction or value.")
+    turning = direction in ("L", "R")
+    low, high = (15, 90) if turning else (30, 150)
+    if not low <= value <= high:
+        raise ValueError(f"Use {low}..{high} {'degrees' if turning else 'mm'} during validation.")
+    if (config.get("left_forward_sign"), config.get("right_forward_sign")) != (-1, 1):
+        raise ValueError("Encoder direction configuration is not validated.")
+    distance = config["track_width_mm"] * math.pi * value / 360 if turning else value
+    goals = []
+    for side in ("left", "right"):
+        cpr = float(config[f"{side}_counts_per_wheel_rev"])
+        if not math.isfinite(cpr) or cpr <= 0:
+            raise ValueError("Invalid encoder calibration.")
+        counts = round(distance / config["wheel_circumference_mm"] * cpr)
+        if not 5000 <= counts <= int(cpr):
+            raise ValueError("Move exceeds firmware encoder limits for this geometry.")
+        goals.append(counts)
+    return f"G {direction} {goals[0]} {goals[1]}"
+
+
 class TcpLineTransport:
     def __init__(self, host, port):
         self.socket = socket.create_connection((host, port), timeout=0.8)
+        self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.socket.settimeout(0.08)
         self.buffer = bytearray()
         self.is_open = True
@@ -146,10 +191,33 @@ class ArgosControlPanel(tk.Tk):
         self.system_test_started_at = None
         self.system_test_report_path = Path(__file__).with_name("argos_system_test_report.txt")
         self.firmware_update_active = False
+        self.motion_active = False
+        self.motion_cruise = False
+        self.motion_direction = None
+        self.motion_timer = None
+        self.motion_terminal = None
+        self.motion_stop_confirmed = False
+        self.motion_status_var = tk.StringVar(value="Ready — experimental local move, 15 RPM")
         self.lowband_report_path = Path(__file__).with_name("argos_lowband_rpm_report.txt")
         self.connection_logbook_path = Path(__file__).with_name("argos_connection_logbook.jsonl")
         self.motion_calibration_path = Path(__file__).with_name("argos_motion_calibration.json")
         self.motion_calibration = self._load_motion_calibration()
+        self.odometry = WheelOdometry()
+        self.odometry_var = tk.StringVar(value="Odometry: waiting for encoder data")
+        self.explore_active = False
+        self.explore_session = False
+        self.explore_timer = None
+        self.side_sample = None
+        self.side_history = deque(maxlen=12)
+        self.map_ready_at = 0.0
+        self.experiment_log = None
+        self.experiment_last_path = None
+        self.experiment_window = None
+        self.experiment_points = deque(maxlen=1000)
+        self.scan_pose_buffer = ScanPoseBuffer()
+        self.experiment_track = deque(maxlen=500)
+        self.experiment_status = tk.StringVar(value="Not recording")
+        self.experiment_advice = tk.StringVar(value="Exploration idle")
         self.encoder_calibration_zero = None
         self.encoder_calibration_measurements = {}
         self.phase02_window = None
@@ -196,6 +264,7 @@ class ArgosControlPanel(tk.Tk):
         self.tilt_var = tk.StringVar(value="roll 0.0 / pitch 0.0")
         self.tof_left_distance_var = tk.StringVar(value="LEFT -")
         self.tof_right_distance_var = tk.StringVar(value="RIGHT -")
+        self.side_distance_var = tk.StringVar(value="LEFT SIDE — waiting")
         self.left_drive_var = tk.IntVar(value=0)
         self.right_drive_var = tk.IntVar(value=0)
         self.drive_speed_var = tk.IntVar(value=60)
@@ -293,8 +362,8 @@ class ArgosControlPanel(tk.Tk):
         try:
             stored = json.loads(self.motion_calibration_path.read_text(encoding="utf-8"))
             if isinstance(stored, dict):
-                calibration.update(stored)
-        except (OSError, ValueError, TypeError):
+                calibration.update(normalize_motion_geometry(stored))
+        except (OSError, ValueError, TypeError, KeyError):
             pass
         return calibration
 
@@ -556,6 +625,7 @@ class ArgosControlPanel(tk.Tk):
         drive_buttons.pack(fill="x")
         self._small_button(drive_buttons, "SEND", self.send_drive_command).pack(side="left", fill="x", expand=True)
         self._small_button(drive_buttons, "STOP", self.stop_drive).pack(side="left", fill="x", expand=True, padx=(8, 0))
+        self._small_button(drive, "EXPLORE / MAP", self.open_scan_experiment).pack(fill="x", pady=(6, 0))
 
         self._section_label(parent, "Live Sensors")
         sensor_live = tk.Frame(parent, bg="#0a141f")
@@ -574,6 +644,8 @@ class ArgosControlPanel(tk.Tk):
         self.system_test_button = self._action_button(
             parent, "SYSTEM TEST", self.open_system_test_menu, "#43b5ff")
         self.system_test_button.pack(fill="x", padx=16, pady=(0, 8))
+        self._action_button(parent, "PHASE 02 ACCEPTANCE", self.open_acceptance, "#23c483").pack(
+            fill="x", padx=16, pady=(0, 8))
         self._action_button(parent, "PHASE 02 CALIBRATION", self.open_phase02_calibration, "#a978ff").pack(
             fill="x", padx=16, pady=(0, 8))
         self._action_button(parent, "STM32 WIRELESS UPDATE", self.start_wireless_stm32_update, "#ff9f43").pack(
@@ -721,8 +793,15 @@ class ArgosControlPanel(tk.Tk):
         if self.lowband_test_active:
             return
         speed = self.drive_speed_var.get()
-        self.left_drive_var.set(left_sign * speed)
-        self.right_drive_var.set(right_sign * speed)
+        if (self.drive_active and left_sign != right_sign and
+                self.left_drive_var.get() > 0 and self.right_drive_var.get() > 0):
+            inner = self._drive_inner_speed(speed)
+            self.left_drive_var.set(inner if left_sign < 0 else speed)
+            self.right_drive_var.set(inner if right_sign < 0 else speed)
+            label = 'FORWARD LEFT' if left_sign < 0 else 'FORWARD RIGHT'
+        else:
+            self.left_drive_var.set(left_sign * speed)
+            self.right_drive_var.set(right_sign * speed)
         if self.send_drive_command():
             unit = "RPM" if self.drive_mode_var.get() == "RPM" else "%"
             self.drive_command_var.set(f"{label}  {speed} {unit}")
@@ -736,6 +815,10 @@ class ArgosControlPanel(tk.Tk):
     def _keyboard_input_allowed(self):
         focused = self.focus_get()
         return not isinstance(focused, (tk.Entry, tk.Text, tk.Scale, ttk.Combobox))
+
+    def _drive_inner_speed(self, speed):
+        floor = 15 if self.drive_mode_var.get() == "RPM" else 50
+        return min(speed, max(floor, round(speed * 0.88)))
 
     def _on_drive_key_press(self, event):
         if not self._keyboard_input_allowed():
@@ -766,10 +849,12 @@ class ArgosControlPanel(tk.Tk):
         return "break"
 
     def _apply_keyboard_drive(self):
+        if self.motion_active:
+            return
         throttle = int("Up" in self.pressed_drive_keys) - int("Down" in self.pressed_drive_keys)
         steer = int("Right" in self.pressed_drive_keys) - int("Left" in self.pressed_drive_keys)
         speed = self.drive_speed_var.get()
-        inner = max(0, round(speed * 0.38))
+        inner = self._drive_inner_speed(speed)
 
         if throttle > 0:
             left = inner if steer < 0 else speed
@@ -881,6 +966,8 @@ class ArgosControlPanel(tk.Tk):
         tk.Label(values, textvariable=self.tof_left_distance_var, bg="#0b1620", fg="#9cd6ff",
                  font=("Consolas", 10, "bold")).pack(side="left", padx=(0, 18))
         tk.Label(values, textvariable=self.tof_right_distance_var, bg="#0b1620", fg="#ffb38f",
+                 font=("Consolas", 10, "bold")).pack(side="left", padx=(0, 18))
+        tk.Label(values, textvariable=self.side_distance_var, bg="#0b1620", fg="#d9a4ff",
                  font=("Consolas", 10, "bold")).pack(side="left")
 
         self.tof_canvas = tk.Canvas(tof, height=125, bg="#050b12", highlightthickness=0)
@@ -1080,6 +1167,16 @@ class ArgosControlPanel(tk.Tk):
 
     def disconnect_serial(self):
         disconnected_link = self.connection_label
+        self._reset_odometry("Disconnected — new origin on reconnect")
+        if self.motion_active and self.serial_port is not None:
+            try:
+                # Do not recurse through send_command's disconnect-on-error path.
+                self.serial_port.write(b"x\r\n")
+                self._experiment_record('tx', command='x', reason='disconnect')
+            except Exception:
+                pass
+        self.motion_stop_confirmed = False
+        self._finish_local_move("Disconnected; firmware watchdog remains active.")
         self.intentional_disconnect = True
         if self.lowband_test_active:
             self._abort_lowband_rpm_test("Connection closed by operator.")
@@ -1111,6 +1208,8 @@ class ArgosControlPanel(tk.Tk):
         self._log("[DISCONNECTED]\n", "warn")
 
     def send_drive_command(self, allow_test=False, force_pwm=False):
+        if self.motion_active:
+            return False
         if self.lowband_test_active and not allow_test:
             self._log("[LOW-BAND] Manual drive command ignored while the test is active.\n", "warn")
             return False
@@ -1133,6 +1232,11 @@ class ArgosControlPanel(tk.Tk):
         return sent
 
     def stop_drive(self, abort_test=True):
+        if getattr(self, 'explore_active', False):
+            self._end_exploration('Operator stop')
+        if self.motion_active:
+            self.motion_terminal = "Cancelled — waiting for zero-output confirmation"
+            self.motion_status_var.set(self.motion_terminal)
         if self.lowband_test_active and abort_test:
             self._abort_lowband_rpm_test("Emergency/manual stop requested.")
             return
@@ -1147,7 +1251,548 @@ class ArgosControlPanel(tk.Tk):
             self.drive_state_label.configure(fg="#72f0c0")
         self.send_command("x")
 
+    def _reset_odometry(self, reason):
+        self.odometry.reset()
+        self.odometry_var.set("Odometry: " + reason)
+        self.experiment_points.clear()
+        self.scan_pose_buffer.reset()
+        self.experiment_track.clear()
+        self.side_sample = None
+        self.side_history.clear()
+        self.side_distance_var.set('LEFT SIDE — waiting')
+        self.tof_samples.clear()
+        self._experiment_record('origin_reset', reason=reason)
+
+    def reset_odometry_origin(self):
+        if self.motion_active or self.drive_active or not self.motion_stop_confirmed:
+            messagebox.showwarning("STOP required", "Confirm STOP before resetting the position origin.")
+            return
+        self._reset_odometry("origin reset; waiting for encoder data")
+
+    def _experiment_pose(self):
+        return dict(x_mm=self.odometry.x_mm, y_mm=self.odometry.y_mm,
+                    heading_rad=self.odometry.heading_rad, path_mm=self.odometry.path_mm)
+
+    def _experiment_record(self, event, **data):
+        logger = getattr(self, 'experiment_log', None)
+        if logger is not None:
+            try:
+                logger.record(event, **data)
+            except (OSError, ValueError, TypeError) as exc:
+                try:
+                    logger.file.close()
+                except OSError:
+                    pass
+                self.experiment_log = None
+                self.experiment_status.set(f"Recording failed: {exc}")
+
+    def _start_experiment(self, note, *, autonomous=False):
+        if self.experiment_log is not None:
+            return
+        try:
+            self.experiment_log = ExperimentLog(Path(__file__).with_name('experiment_logs'), dict(
+                note=note, calibration=self.motion_calibration, advisory_only=not autonomous,
+                sensor_origin='Nominal ToF midpoint at odometry origin; physical extrinsics not calibrated',
+                angle_convention='Telemetry yaw positive right; odometry heading positive CCW',
+                current_pose=self._experiment_pose()))
+        except (OSError, ValueError, TypeError) as exc:
+            self.experiment_status.set(f"Cannot record: {exc}")
+            return
+        self.experiment_last_path = self.experiment_log.path
+        self.experiment_points.clear()
+        self.scan_pose_buffer.reset()
+        self.experiment_track.clear()
+        self.experiment_status.set(f"RECORDING: {self.experiment_last_path}")
+
+    def _stop_experiment(self):
+        if self.experiment_log is not None:
+            try:
+                self.experiment_log.close()
+                self.experiment_status.set(f"Saved: {self.experiment_last_path}")
+            except OSError as exc:
+                self.experiment_status.set(f"Log close failed: {exc}")
+            finally:
+                self.experiment_log = None
+
+    def _export_experiment(self):
+        self._stop_experiment()
+        if self.experiment_last_path is None:
+            return
+        try:
+            result = replay(self.experiment_last_path)
+            output = self.experiment_last_path.with_suffix('.summary.json')
+            output.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
+            map_path = self.experiment_last_path.with_suffix('.map.svg')
+            save_map_svg(result, map_path)
+            self.experiment_status.set(f"Map saved: {map_path}")
+        except (OSError, ValueError) as exc:
+            self.experiment_status.set(f"Replay failed: {exc}")
+
+    def _request_stop_log(self):
+        if self.explore_session:
+            self.stop_drive()
+        else:
+            self._stop_experiment()
+
+    def _request_export(self):
+        if self.explore_session:
+            self.stop_drive()
+        else:
+            self._export_experiment()
+
+    def _start_exploration(self, note):
+        if self._acceptance_busy():
+            return False
+        if (self.explore_session or self.motion_active or
+                self.firmware_update_active or self.system_test_active or self.lowband_test_active):
+            self.experiment_advice.set('Finish the current exploration, motion, test or update before starting.')
+            return
+        if not self.robot_ready:
+            self.experiment_advice.set('Connect to the robot before exploration.')
+            return
+        try:
+            plan_local_move(self.motion_calibration, 'F', 50)
+            plan_local_move(self.motion_calibration, 'R', 90)
+        except (ValueError, TypeError, KeyError, OverflowError) as exc:
+            self.experiment_advice.set(f'Check motion calibration: {exc}')
+            return
+        self._stop_experiment()
+        self._start_experiment(note, autonomous=True)
+        if self.experiment_log is None:
+            return
+        self._experiment_record('exploration_start', manual_drive_active=self.drive_active)
+        self.motion_stop_confirmed = False
+        self.stop_drive()
+        if not self.send_command('S TOF 1') or not self.send_command('E'):
+            self._stop_experiment()
+            self.experiment_advice.set('Unable to request ranges and STOP status.')
+            return
+        self.explore_active = self.explore_session = True
+        self.explore_steps = 0
+        self.explore_search_mm = 0
+        self.explore_search_reduced = False
+        self.explore_turn_target = None
+        self.explore_curve_target = None
+        self.explore_curve_interrupted = False
+        self.explore_avoid_pending = False
+        self.explore_traction_pending = False
+        self.explore_traction_used = False
+        self.explore_search_invalid = 0
+        self.explore_curve_rearm_mm = 0.0
+        self.explore_retreating = False
+        self.explore_recovery_turning = False
+        self.explore_must_back = False
+        self.explore_origin = None
+        self.explore_after = time.monotonic()
+        self.explore_deadline = self.explore_after + 90
+        self._explore_tick()
+
+    def _end_exploration(self, reason):
+        self.explore_active = False
+        if self.explore_timer is not None:
+            self.after_cancel(self.explore_timer)
+            self.explore_timer = None
+        self.experiment_advice.set(reason)
+        self._experiment_record('exploration_stop', reason=reason)
+        if not self.motion_active and self.explore_session:
+            self.explore_session = False
+            self._export_experiment()
+
+    def _explore_tick(self):
+        self.explore_timer = None
+        if not self.explore_active:
+            return
+        now = time.monotonic()
+        if (not self.robot_ready or self.experiment_log is None or now >= self.explore_deadline or
+                (self.explore_origin is not None and self.explore_origin != self.odometry.origin_generation)):
+            self._end_exploration('Exploration stopped: time limit, log, link or pose changed.')
+            if self.motion_active:
+                self.stop_drive()
+            return
+        if not self.motion_active:
+            if self.explore_steps >= 40:
+                self._end_exploration('Step limit reached.')
+                return
+            front = self.tof_samples[-1] if self.tof_samples else None
+            side = self.side_sample
+            if (front and side and side['guard'] in (10, 11, 12) and self.motion_stop_confirmed and
+                    min(front['received_at'], side['received_at']) > self.explore_after and
+                    now - min(front['received_at'], side['received_at']) <= 1.5):
+                clearance = side['mm'] - side['inset'] if side['ok'] else None
+                open_space = side['guard'] == 12
+                step = exploration_step(front, clearance, side_closing=side_approaching(self.side_history, now),
+                                        side_receding=side_approaching(self.side_history, now, receding=True),
+                                        allow_curve=self.odometry.path_mm >= self.explore_curve_rearm_mm,
+                                        open_space=open_space,
+                                        previous_front=self.tof_samples[-2] if len(self.tof_samples) > 1 else None)
+                if self.explore_traction_pending:
+                    self.explore_traction_pending = False
+                    if not traction_clear(front, clearance):
+                        self._end_exploration('Traction retry blocked: front and left clearance not confirmed.')
+                        return
+                    self.explore_traction_used = True
+                    step = ('T', 40, None)
+                if self.explore_curve_target is not None:
+                    angle_error = (self.odometry.heading_rad - self.explore_curve_target + math.pi) % math.tau - math.pi
+                    front_close = any(front[f'{sensor}_ok'] and front[f'{sensor}_mm'] <= 200
+                                      for sensor in ('left', 'right'))
+                    self._experiment_record('curve_check', angle_error_deg=math.degrees(angle_error),
+                                            front=front, side=side)
+                    tolerance = 25 if self.explore_curve_interrupted else 15
+                    if abs(angle_error) > math.radians(tolerance) or front_close or (clearance is not None and clearance < 80):
+                        self._end_exploration('Forward curve ended without enough heading change or clearance.')
+                        return
+                    if step is not None:
+                        self.explore_curve_target = None
+                        self.explore_curve_rearm_mm = self.odometry.path_mm + 150
+                if step and step[0] == 'R' and self.explore_turn_target is None:
+                    self.explore_turn_target = self.odometry.heading_rad - math.pi / 2
+                if self.explore_turn_target is not None:
+                    remaining = math.degrees((self.odometry.heading_rad - self.explore_turn_target + math.pi) % math.tau - math.pi)
+                    if (self.explore_retreating and not self.explore_must_back and
+                            corner_can_exit(front, remaining, clearance)):
+                        self.explore_turn_target = None
+                        self.explore_retreating = self.explore_recovery_turning = False
+                        step = ('F', 50, 'R')
+                        self._experiment_record('corner_exit', remaining_deg=remaining, side_mm=clearance)
+                    else:
+                        step = corner_step(front, remaining, self.explore_retreating,
+                                           self.explore_must_back, self.explore_recovery_turning, clearance)
+                self._experiment_record('exploration_step', step=step, front=front, side=side)
+                if self.experiment_log is None:
+                    self._end_exploration('Exploration stopped: log unavailable.')
+                    return
+                if step is not None:
+                    if step[0] == 'S' and not open_space:
+                        budget = 300 - self.explore_search_mm
+                        if budget < 30:
+                            self._end_exploration('Wall search limit reached: 30 cm without a front return.')
+                            return
+                        step = ('S', min(budget, 50 if self.explore_search_reduced else step[1]), None)
+                    self.explore_origin = self.odometry.origin_generation
+                    if not self.start_local_move(step[0], step[1], automatic=True, inner=step[2]):
+                        self._end_exploration('Exploration stopped: command unavailable.')
+                        return
+                    self.explore_steps += 1
+                    if step[0] == 'Q':
+                        self.explore_curve_interrupted = False
+                        self.explore_curve_target = self.odometry.heading_rad - math.pi / 2
+                    if step[0] == 'S':
+                        self.explore_search_mm += step[1]
+                    else:
+                        self.explore_search_mm = 0
+                        self.explore_search_reduced = False
+                    if step[0] == 'B':
+                        self.explore_retreating = True
+                        self.explore_recovery_turning = False
+                    elif step[0] == 'H':
+                        self.explore_recovery_turning = True
+                    self.experiment_advice.set({'F': 'Cruising and scanning',
+                                                'T': 'Traction retry: 40 mm forward',
+                                                'S': f'Searching for a wall: {step[1]} mm step',
+                                                'B': f'Recovering: {step[1]} mm reverse step',
+                                                'H': f'Recovering: right wheel reverse, {step[1]}°',
+                                                'Q': 'Turning right in a forward curve',
+                                                'R': f'Turning right {step[1]}°'}[step[0]])
+            if not self.motion_active and now - self.explore_after > 4:
+                if not side or side['guard'] not in (10, 11, 12):
+                    reason = 'Exploration requires STM32 firmware with GUARD:10 or newer.'
+                elif not self.motion_stop_confirmed:
+                    reason = 'Exploration blocked: STM32 did not confirm STOP.'
+                elif not front or front['received_at'] <= self.explore_after or now - front['received_at'] > 1.5:
+                    reason = 'Exploration blocked: no fresh front ToF telemetry.'
+                elif not front['left_ok'] and not front['right_ok']:
+                    raw = (front.get('left_raw'), front.get('right_raw'))
+                    reason = f'No front range (raw L/R {raw[0]}/{raw[1]}). Wall search requires weak returns and left clearance.'
+                else:
+                    reason = 'Exploration blocked: no fresh usable range data.'
+                self._end_exploration(reason)
+                return
+            if not self.motion_active:
+                self.experiment_advice.set('Waiting for fresh front readings and confirmed STOP.')
+        self.explore_timer = self.after(150, self._explore_tick)
+
+    def open_scan_experiment(self):
+        if self.experiment_window is not None and self.experiment_window.winfo_exists():
+            self.experiment_window.lift()
+            return
+        window = self.experiment_window = tk.Toplevel(self)
+        window.title('ARGOS — Explore / map · live scan')
+        window.geometry('680x720')
+        ttk.Label(window, text='Room exploration · live map and recorded experiments', font=('Segoe UI', 12, 'bold')).pack(pady=10)
+        note = tk.StringVar(value='Room / setup / wheel arrangement')
+        ttk.Entry(window, textvariable=note, width=75).pack(padx=12)
+        row = ttk.Frame(window)
+        row.pack(pady=8)
+        for label, callback in (('START LOG', lambda: self._start_experiment(note.get())),
+                                ('MARK NOTE', lambda: self._experiment_record('note', text=note.get(), pose=self._experiment_pose())),
+                                ('STOP LOG', self._request_stop_log), ('EXPORT / REPLAY', self._request_export)):
+            ttk.Button(row, text=label, command=callback).pack(side='left', padx=4)
+        ttk.Label(window, textvariable=self.experiment_status, wraplength=640).pack(padx=12)
+        ttk.Label(window, textvariable=self.side_distance_var).pack(padx=12)
+        self.experiment_canvas = tk.Canvas(window, width=640, height=300, bg='#071018', highlightthickness=0)
+        self.experiment_canvas.pack(padx=12, pady=8, fill='both', expand=True)
+        ttk.Label(window, textvariable=self.experiment_advice, wraplength=640).pack(padx=12, pady=6)
+        ttk.Label(window, textvariable=self.motion_status_var, wraplength=640).pack(padx=12)
+        row = ttk.Frame(window)
+        row.pack(pady=6)
+        for label, callback in (('START EXPLORATION', lambda: self._start_exploration(note.get())),
+                                ('RESET POSITION', self.reset_odometry_origin), ('STOP', self.stop_drive)):
+            ttk.Button(row, text=label, command=callback).pack(side='left', padx=4)
+        ttk.Label(window, text='Low-speed bounded exploration. Keep the swept area clear and STOP within reach.',
+                  wraplength=640).pack(pady=8)
+
+        def close():
+            self._request_stop_log()
+            window.destroy()
+            self.experiment_window = None
+
+        window.protocol('WM_DELETE_WINDOW', close)
+
+    def _draw_experiment(self):
+        if self.experiment_window is None or not self.experiment_window.winfo_exists():
+            return
+        canvas = self.experiment_canvas
+        canvas.delete('all')
+        width, height = max(canvas.winfo_width(), 200), max(canvas.winfo_height(), 150)
+        pose = self._experiment_pose()
+        points = list(self.experiment_points)
+        xs = [p['x_mm'] for p in points]+[pose['x_mm'], 0]
+        ys = [p['y_mm'] for p in points]+[pose['y_mm'], 0]
+        cx, cy = (max(xs)+min(xs))/2, (max(ys)+min(ys))/2
+        scale = min((width-40)/max(200, max(ys)-min(ys)), (height-40)/max(200, max(xs)-min(xs)))
+
+        def project(x, y):
+            return width/2-(y-cy)*scale, height/2-(x-cx)*scale
+
+        track = [project(p['x_mm'], p['y_mm']) for p in self.experiment_track]
+        if len(track) > 1:
+            canvas.create_line(*[v for p in track for v in p], fill='#647c94')
+        for point in points:
+            x, y = project(point['x_mm'], point['y_mm'])
+            color = '#d9a4ff' if point.get('sensor') == 'ultrasonic_left' else (
+                '#43b5ff' if point['side'] == 'left' else '#ffc56e')
+            canvas.create_oval(x-2, y-2, x+2, y+2, fill=color, outline='')
+        x, y = project(pose['x_mm'], pose['y_mm'])
+        canvas.create_oval(x-5, y-5, x+5, y+5, fill='#72f0c0')
+        canvas.create_line(x, y, x-18*math.sin(pose['heading_rad']), y-18*math.cos(pose['heading_rad']), arrow='last', fill='#72f0c0')
+        wall = wall_candidate(points)
+        caption = f"{len(points)} endpoints | auto scale | encoder estimate"
+        if wall:
+            caption += f" | wall candidate RMS {wall['residual_mm']:.1f} mm ({wall['inliers']} points)"
+        canvas.create_text(10, 10, text=caption, anchor='nw', fill='#e8f1ff')
+
+    def start_local_move(self, direction, value, *, automatic=False, inner=None):
+        if self._acceptance_busy():
+            return False
+        if (self.motion_active or self.firmware_update_active or self.system_test_active or
+                self.lowband_test_active or self.drive_active):
+            messagebox.showwarning("Busy", "Stop the active drive/test before starting a local move.")
+            return False
+        if not self.robot_ready or not self.motion_stop_confirmed:
+            self.send_command("E")
+            messagebox.showwarning("STOP required", "Connect to STM32 and press STOP. Zero motor outputs must be confirmed before START.")
+            return False
+        try:
+            bounded_forward = automatic and direction in ('S', 'T')
+            single_wheel_turn = automatic and direction in ('H', 'Q')
+            plan_direction = 'F' if bounded_forward else 'R' if single_wheel_turn else direction
+            command = plan_local_move(self.motion_calibration, plan_direction, value)
+            if automatic:
+                if not self.explore_active:
+                    return False
+                if direction == 'F':
+                    command = cruise_command(inner)
+                elif bounded_forward or single_wheel_turn:
+                    command = f'G A {direction} ' + command[4:]
+                else:
+                    command = 'G A ' + command[2:]
+        except (ValueError, KeyError, TypeError, OverflowError) as exc:
+            messagebox.showerror("Invalid move", str(exc))
+            return False
+        if not automatic and not messagebox.askokcancel("Robot will move", f"{direction}: {value} {'degrees' if direction in ('L', 'R') else 'mm'}.\nConfirm the entire path is clear and the power switch is within reach.\nExperimental distance/turn control; STOP remains available."):
+            return False
+        self.pressed_drive_keys.clear()
+        self.last_keyboard_drive = (0, 0)
+        if not self.send_command(command):
+            return False
+        self.motion_active = True
+        self.motion_direction = direction
+        self.motion_cruise = automatic and direction == 'F'
+        self.motion_stop_confirmed = False
+        self.motion_terminal = None
+        self.motion_stopping_at = None
+        self.motion_started = self.motion_feedback = time.monotonic()
+        self.motion_status_var.set("Starting " + command)
+        self.drive_command_var.set("LOCAL MOVE")
+        self.motion_timer = self.after(250, self._local_move_tick)
+        return True
+
+    def _local_move_tick(self):
+        self.motion_timer = None
+        if not self.motion_active:
+            return
+        now = time.monotonic()
+        cruising = getattr(self, 'motion_cruise', False)
+        if ((not cruising and now - self.motion_started > 6) or now - self.motion_feedback > 1 or
+                (self.motion_stopping_at is not None and now - self.motion_stopping_at > 1)):
+            self.send_command("x")
+            self.motion_stop_confirmed = False
+            self._finish_local_move("Feedback/STOP timeout — stop sent; zero outputs not confirmed.")
+            return
+        command = "E" if self.motion_terminal else "G KEEP"
+        if cruising and not self.motion_terminal:
+            side = self.side_sample
+            clearance = (side['mm'] - side['inset'] if side and side['ok'] and
+                         now - side['received_at'] <= 1.5 else None)
+            front = self.tof_samples[-1] if self.tof_samples else None
+            if front and now - front['received_at'] > 0.6:
+                front = None
+            decision = exploration_step(front, clearance, side_closing=side_approaching(self.side_history, now),
+                                        side_receding=side_approaching(self.side_history, now, receding=True),
+                                        allow_curve=self.odometry.path_mm >= self.explore_curve_rearm_mm,
+                                        previous_front=self.tof_samples[-2] if len(self.tof_samples) > 1 else None)
+            if decision and decision[0] == 'R':
+                self.explore_avoid_pending = True
+                self.motion_terminal = 'Waiting for STOP before obstacle avoidance'
+                if not self.send_command('x'):
+                    self._finish_local_move('Unable to request STOP before obstacle avoidance.')
+                    return
+                self.motion_timer = self.after(250, self._local_move_tick)
+                return
+            if decision and decision[0] == 'Q':
+                command = 'G A Q ' + plan_local_move(self.motion_calibration, 'R', 90)[4:]
+                if not self.send_command(command):
+                    self._finish_local_move('Curve command unavailable.')
+                    return
+                self.explore_curve_target = self.odometry.heading_rad - math.pi / 2
+                self.explore_curve_interrupted = False
+                self.motion_cruise = False
+                self.motion_direction = 'Q'
+                self.motion_started = now
+                self.explore_steps += 1
+                self.experiment_advice.set('Turning right without stopping cruise')
+                self._experiment_record('rolling_curve', front=front, side=side)
+                self.motion_timer = self.after(250, self._local_move_tick)
+                return
+            else:
+                command = cruise_command(decision[2] if decision and decision[0] == 'F' else None, update=True)
+        if not self.send_command(command):
+            self._finish_local_move("Link error — STOP not confirmed.")
+            return
+        if self.motion_active:
+            self.motion_timer = self.after(250, self._local_move_tick)
+
+    def _finish_local_move(self, status):
+        if self.motion_timer is not None:
+            self.after_cancel(self.motion_timer)
+            self.motion_timer = None
+        was_active = self.motion_active
+        direction = getattr(self, 'motion_direction', None)
+        self.motion_active = False
+        self.motion_cruise = False
+        self.motion_direction = None
+        if was_active:
+            self.pressed_drive_keys.clear()
+            self.last_keyboard_drive = (0, 0)
+            self.motion_status_var.set(status)
+            self.drive_command_var.set("STOPPED" if self.motion_stop_confirmed else "STOP UNCONFIRMED")
+        if getattr(self, 'explore_session', False):
+            recoverable = ('MOVE DONE |', 'MOVE ABORT FRONT_INVALID |', 'MOVE ABORT FRONT_OBSTACLE |',
+                           'MOVE ERROR FRONT_INVALID', 'MOVE ERROR FRONT_OBSTACLE')
+            clearance_stop = 'TURN_CLEARANCE' in status or 'SIDE_CLEARANCE' in status
+            tight_turn = direction in ('R', 'H') and (clearance_stop or status.startswith(
+                ('MOVE ABORT STALL |', 'MOVE ABORT DURATION |', 'MOVE ABORT MISMATCH |')))
+            stalled_forward = direction in ('F', 'S') and status.startswith('MOVE ABORT STALL |')
+            if was_active and self.explore_active and self.motion_stop_confirmed and stalled_forward:
+                if not self.explore_traction_used and self.side_sample and self.side_sample['guard'] in (11, 12):
+                    self.explore_traction_pending = True
+                    self.explore_after = max(time.monotonic(), self.map_ready_at)
+                else:
+                    self._end_exploration('Exploration stopped: wheel stall; traction retry unavailable.')
+                return
+            search_retry = (direction == 'S' and not self.explore_search_reduced and
+                            status.startswith('MOVE ABORT MISMATCH |'))
+            curve_interrupted = direction == 'Q' and status.startswith('MOVE ABORT CURVE_')
+            if direction == 'S' and status.startswith(('MOVE ABORT FRONT_INVALID |', 'MOVE ERROR FRONT_INVALID')):
+                self.explore_search_invalid += 1
+                if self.explore_search_invalid >= 2:
+                    self._end_exploration('Exploration stopped: two search steps lost front ToF.')
+                    return
+            elif status.startswith('MOVE DONE |'):
+                self.explore_search_invalid = 0
+            avoidance_stop = direction == 'F' and self.explore_avoid_pending and status.startswith(
+                ('MOVE CANCELLED |', 'MOVE ABORT FRONT_OBSTACLE |', 'MOVE ABORT FRONT_INVALID |'))
+            if (was_active and self.explore_active and self.motion_stop_confirmed and
+                    (status.startswith(recoverable) or tight_turn or search_retry or
+                     curve_interrupted or avoidance_stop)):
+                if curve_interrupted:
+                    self.explore_curve_interrupted = True
+                if search_retry:
+                    self.explore_search_reduced = True
+                if status.startswith(('MOVE ABORT FRONT_OBSTACLE', 'MOVE ERROR FRONT_OBSTACLE')) or avoidance_stop:
+                    self.explore_turn_target = self.odometry.heading_rad - math.pi / 2
+                self.explore_avoid_pending = False
+                if tight_turn:
+                    self.explore_retreating = True
+                    self.explore_recovery_turning = False
+                    self.explore_must_back = not clearance_stop
+                if status.startswith('MOVE DONE |') and direction == 'B':
+                    self.explore_must_back = False
+                recovery_done = (direction == 'H' and self.explore_turn_target is not None and
+                                 (self.odometry.heading_rad - self.explore_turn_target + math.pi) % math.tau - math.pi
+                                 <= math.radians(15))
+                if status.startswith('MOVE DONE |') and (direction == 'R' or recovery_done):
+                    self.explore_turn_target = None
+                    self.explore_retreating = self.explore_must_back = False
+                    self.explore_recovery_turning = False
+                self.explore_after = max(time.monotonic(), self.map_ready_at)
+            else:
+                self._end_exploration(status)
+
+    def _handle_local_move_line(self, text):
+        for line in text.splitlines():
+            if line.startswith('DRIVE BLOCKED |'):
+                self.drive_active = self.keyboard_drive_active = False
+                self.pressed_drive_keys.clear()
+                self.last_keyboard_drive = (0, 0)
+                self.drive_command_var.set(line)
+            if line.startswith("MOTOR |"):
+                # The STM32 also streams motor state independently of MOVE ACTIVE replies.
+                if (self.motion_active and not self.motion_terminal and
+                        re.search(r"\bSAFE:RUN\b.*\bCTRL:PI\b", line)):
+                    self.motion_feedback = time.monotonic()
+                was_stopped = self.motion_stop_confirmed
+                self.motion_stop_confirmed = (
+                    line.startswith("MOTOR | LEFT:0 RPWM:0 LPWM:0 ") and
+                    "RIGHT:0 RPWM:0 LPWM:0 " in line and "SAFE:STOP" in line)
+                if self.motion_stop_confirmed and not was_stopped:
+                    self.map_ready_at = time.monotonic() + 0.45
+                if self.motion_active and self.motion_terminal and self.motion_stop_confirmed:
+                    self._finish_local_move(self.motion_terminal + " — STOP confirmed")
+            if not self.motion_active or not line.startswith("MOVE "):
+                continue
+            if line.startswith(("MOVE START |", "MOVE ACTIVE |")):
+                self.motion_feedback = time.monotonic()
+                if not self.motion_terminal:
+                    self.motion_status_var.set(line)
+            else:
+                # DONE, ABORT, CANCELLED, ERROR, IDLE or BUSY: stop, never restart.
+                self.motion_terminal = line
+                self.motion_stopping_at = time.monotonic()
+                self.motion_status_var.set(line + " — verifying STOP")
+                self.send_command("x")
+                self.send_command("E")
+
     def start_wireless_stm32_update(self):
+        if self._acceptance_busy():
+            return False
+        if self.explore_session:
+            messagebox.showwarning('Exploration active', 'Stop exploration before updating firmware.')
+            return
+        if self.motion_active:
+            messagebox.showwarning("Move active", "Stop the local move before updating firmware.")
+            return
         if self.firmware_update_active:
             messagebox.showinfo("Update active", "An STM32 update is already running.")
             return
@@ -1280,6 +1925,7 @@ class ArgosControlPanel(tk.Tk):
             try:
                 self.serial_port.write(payload)
                 self.tx_count += len(payload)
+                self._experiment_record('tx', command=payload.decode('ascii').strip())
             except Exception:
                 pass
         self.after(500, self._motor_keepalive)
@@ -1407,6 +2053,21 @@ class ArgosControlPanel(tk.Tk):
         direction = "+" if int(sign or 1) > 0 else "-"
         return f"saved {float(counts):.1f} count/rev  forward sign {direction}"
 
+    def _acceptance_busy(self):
+        active = getattr(self, "acceptance_run", None)
+        if active is not None and active.running:
+            self._log("[ACCEPTANCE] Finish or STOP the acceptance run first.\n", "warn")
+            return True
+        return False
+
+    def open_acceptance(self):
+        from argos_acceptance import Acceptance
+        current = getattr(self, "acceptance_run", None)
+        if current is not None and current.window.winfo_exists():
+            current.window.lift()
+        else:
+            self.acceptance_run = Acceptance(self, plan_local_move)
+
     def _phase02_connection_ready(self):
         if self.serial_port is None or not self.serial_port.is_open or not self.robot_ready:
             messagebox.showwarning("STM32 waiting", "Connect ARGOS and wait for STM32 telemetry first.")
@@ -1506,15 +2167,16 @@ class ArgosControlPanel(tk.Tk):
         except ValueError:
             messagebox.showerror("Invalid geometry", "Wheel circumference and track width must be numeric.")
             return
-        if circumference <= 0.0 or track <= 0.0:
+        if not all(math.isfinite(value) and value > 0 for value in (circumference, track)):
             messagebox.showerror("Invalid geometry", "Geometry values must be greater than zero.")
             return
 
         calibration = {
-            "version": 1,
+            "version": 2,
             "saved_at": datetime.now().astimezone().isoformat(timespec="seconds"),
             "measurement_turns": ENCODER_CALIBRATION_TURNS,
             "wheel_circumference_mm": circumference,
+            "wheel_diameter_mm": circumference / math.pi,
             "track_width_mm": track,
             "left_counts_per_wheel_rev": left["counts_per_wheel_rev"],
             "right_counts_per_wheel_rev": right["counts_per_wheel_rev"],
@@ -1523,7 +2185,9 @@ class ArgosControlPanel(tk.Tk):
         }
         try:
             self.motion_calibration_path.write_text(
-                json.dumps(calibration, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+                json.dumps({key: value for key, value in calibration.items()
+                            if key != "wheel_circumference_mm"},
+                           indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         except OSError as exc:
             messagebox.showerror("Save failed", str(exc))
             return
@@ -1597,6 +2261,12 @@ class ArgosControlPanel(tk.Tk):
             row=4, column=0, sticky="e", padx=18, pady=(0, 14))
 
     def start_lowband_rpm_test(self):
+        if self._acceptance_busy():
+            return False
+        if self.explore_session:
+            return
+        if self.motion_active:
+            return
         if self.lowband_test_active:
             self._abort_lowband_rpm_test("Operator cancelled the test.")
             return
@@ -1839,6 +2509,12 @@ class ArgosControlPanel(tk.Tk):
         return "\n".join(lines) + "\n"
 
     def start_system_test(self):
+        if self._acceptance_busy():
+            return False
+        if self.explore_session:
+            return
+        if self.motion_active:
+            return
         if self.lowband_test_active:
             messagebox.showwarning("Motor test active", "Cancel or finish the low-band RPM test first.")
             return
@@ -2174,6 +2850,24 @@ class ArgosControlPanel(tk.Tk):
         refresh()
 
     def send_command(self, command):
+        acceptance = getattr(self, "acceptance_run", None)
+        if acceptance is not None and acceptance.running and not acceptance.sending:
+            if command in ("x", "X"):
+                acceptance.cancel()
+                return True
+            if command != "E":
+                self._log("[ACCEPTANCE] Finish or STOP the current acceptance run first.\n", "warn")
+                return False
+        if (getattr(self, 'explore_active', False) and command not in ('x', 'X', 'E', 'G KEEP') and
+                not command.startswith(('G A ', 'G C ', 'G U '))):
+            return False
+        cruise_update = (getattr(self, 'motion_cruise', False) and
+                         getattr(self, 'explore_active', False) and command.startswith(('G U ', 'G A Q ')))
+        if self.motion_active and command not in ("x", "X", "E", "G KEEP") and not cruise_update:
+            self._log(f"[LOCAL MOVE] Command blocked: {command}\n", "warn")
+            return False
+        if command in ("x", "X") and self.motion_active and self.motion_stopping_at is None:
+            self.motion_stopping_at = time.monotonic()
         if self.firmware_update_active:
             self._log(f"[STM32 UPDATE] Command blocked during update: {command}\n", "warn")
             return False
@@ -2185,6 +2879,9 @@ class ArgosControlPanel(tk.Tk):
         try:
             self.serial_port.write(payload)
             self.tx_count += len(payload)
+            self._experiment_record('tx', command=command)
+            if command in ("Z", "z"):
+                self._reset_odometry("encoder counters reset; new origin")
             if self.system_test_active:
                 self._record_system_line(f">> {command}")
             if command == "M":
@@ -2226,6 +2923,9 @@ class ArgosControlPanel(tk.Tk):
                 if self.link_loss_handled:
                     continue
                 self.link_loss_handled = True
+                self._reset_odometry("Link lost — new origin on reconnect")
+                self.motion_stop_confirmed = False
+                self._finish_local_move("Link lost — STOP not confirmed; firmware watchdog active.")
                 self.reader_alive.clear()
                 if self.serial_port is not None:
                     try:
@@ -2270,7 +2970,12 @@ class ArgosControlPanel(tk.Tk):
                     "TOF RANGE", "ARGOS TEST PLATFORM")):
                 self._mark_robot_online()
             self.rx_count += len(text)
+            self._experiment_record('rx', text=text)
             self._update_metrics(text)
+            acceptance = getattr(self, "acceptance_run", None)
+            if acceptance is not None:
+                acceptance.handle(text)
+            self._handle_local_move_line(text)
             if (self.system_test_active and not self.system_test_finishing and
                     "motor ramp test bitti" in text.lower()):
                 self.system_test_finishing = True
@@ -2315,6 +3020,8 @@ class ArgosControlPanel(tk.Tk):
 
     def _update_metrics(self, text):
         lower = text.lower()
+        if "encoder sayaclari sifirlandi" in lower or "argos test platform" in lower:
+            self._reset_odometry("STM restart/counter reset — new origin")
         if self.system_test_active and "encoder sayaclari sifirlandi" in lower:
             self.system_test_start_counts = {"left": 0, "right": 0}
         if "toplam" in lower and "cihaz" in lower:
@@ -2371,6 +3078,26 @@ class ArgosControlPanel(tk.Tk):
 
         if "tof range" in lower:
             self._parse_tof_sample(text)
+        side = re.search(r"SIDE RANGE \| LEFT:(OK|YOK) (\d+) mm \| INSET:(\d+) \| GUARD:(\d+)\b", text)
+        if side:
+            self.side_sample = dict(ok=side[1] == 'OK', mm=int(side[2]), inset=int(side[3]), guard=int(side[4]),
+                                    received_at=time.monotonic())
+            sample = self.side_sample
+            if sample['ok']:
+                self.side_history.append((sample['received_at'], sample['mm']))
+            self.side_distance_var.set(
+                f"LEFT SIDE {sample['mm']} mm · edge clearance {sample['mm'] - sample['inset']} mm"
+                if sample['ok'] else 'LEFT SIDE — no echo')
+            pose = self._experiment_pose()
+            projection = side_scan(dict(sample, map_eligible=(
+                self.motion_stop_confirmed and not self.motion_active and not self.drive_active
+                and self.odometry.previous is not None and sample['received_at'] >= self.map_ready_at)),
+                self.motion_calibration)
+            self._experiment_record('side', sample=projection if projection is not None else sample, pose=pose)
+            if projection is not None and self.odometry.previous is not None:
+                self.experiment_points.extend(self.scan_pose_buffer.scan(sample['received_at'], projection, pose))
+            self._draw_experiment()
+            self._draw_tof_field()
 
         if "motor |" in lower:
             self._parse_motor_sample(text)
@@ -2407,8 +3134,10 @@ class ArgosControlPanel(tk.Tk):
             left_counts_per_rev = float(left_counts_per_rev)
             right_counts_per_rev = float(right_counts_per_rev)
             circumference_mm = float(circumference_mm)
-            left_rpm = self._calibrated_wheel_rpm("left", int(groups[5] or 0))
-            right_rpm = self._calibrated_wheel_rpm("right", int(groups[12] or 0))
+            # Current STM telemetry already reports calibrated, signed wheel RPM.
+            if "T_MS:" not in text:
+                left_rpm = self._calibrated_wheel_rpm("left", int(groups[5] or 0))
+                right_rpm = self._calibrated_wheel_rpm("right", int(groups[12] or 0))
             left_distance_mm = (int(groups[3]) * int(left_forward_sign) * circumference_mm /
                                 left_counts_per_rev)
             right_distance_mm = (int(groups[10]) * int(right_forward_sign) * circumference_mm /
@@ -2482,6 +3211,26 @@ class ArgosControlPanel(tk.Tk):
             "right_pi_i": int(right_pi_i) / 100.0,
         })
         self.motor_sample_seq += 1
+        try:
+            old_origin = self.odometry.origin_generation
+            tick = re.search(r"\bT_MS:(\d+)", text)
+            x, y, heading, path = self.odometry.update(
+                int(groups[3]), int(groups[10]), self.motion_calibration,
+                int(tick[1]) if tick else None)
+            if old_origin != self.odometry.origin_generation:
+                self.experiment_points.clear()
+                self.scan_pose_buffer.reset()
+                self.experiment_track.clear()
+                self._experiment_record('origin_reset', reason='Geometry/tick rebase; separate map segment')
+            self.odometry_var.set(
+                f"X {x:+.1f} mm   Y {y:+.1f} mm   Angle {heading:+.1f}°\nPath {path:.1f} mm")
+        except (ValueError, TypeError, KeyError):
+            self._reset_odometry("geometry/calibration required")
+        pose = self._experiment_pose()
+        self.experiment_track.append(pose)
+        if self.odometry.previous is not None:
+            self.experiment_points.extend(self.scan_pose_buffer.motor(time.monotonic(), pose))
+        self._experiment_record('motor', motor=dict(self.motor_state), pose=pose)
         rpm_suffix = "wheel rpm" if calibrated_units else "rpm est."
         if control_mode.upper() == "PI":
             self.left_motor_var.set(
@@ -2505,9 +3254,15 @@ class ArgosControlPanel(tk.Tk):
             return
 
         left_status, left_mm, right_status, right_mm, left_yaw, right_yaw, up_deg, baseline = match.groups()
+        raw = re.search(r"\| RAW L:(\d+) R:(\d+)", text)
         sample = {
+            "received_at": time.monotonic(),
+            "map_eligible": (self.motion_stop_confirmed and not self.motion_active and not self.drive_active
+                             and self.odometry.previous is not None and time.monotonic() >= self.map_ready_at),
             "left_ok": left_status.upper() == "OK",
             "right_ok": right_status.upper() == "OK",
+            "left_raw": int(raw[1]) if raw else None,
+            "right_raw": int(raw[2]) if raw else None,
             "left_mm": int(left_mm),
             "right_mm": int(right_mm),
             "left_yaw": int(left_yaw),
@@ -2516,6 +3271,13 @@ class ArgosControlPanel(tk.Tk):
             "baseline": int(baseline),
         }
         self.tof_samples.append(sample)
+        pose = self._experiment_pose()
+        self._experiment_record('tof', sample=sample, pose=pose)
+        try:
+            self.experiment_points.extend(self.scan_pose_buffer.scan(sample['received_at'], sample, pose))
+        except (ValueError, TypeError, KeyError):
+            pass
+        self._draw_experiment()
 
         self.tof_left_distance_var.set(
             f"LEFT {sample['left_mm']} mm" if sample["left_ok"] else "LEFT no range"
@@ -2686,6 +3448,11 @@ class ArgosControlPanel(tk.Tk):
                                 fill="#0f1c29", outline="#203247")
         canvas.create_text(cx, base_y, text="ARGOS FRONT", fill="#8da4bc",
                            font=("Segoe UI", 8, "bold"))
+        side = self.side_sample
+        side_ok = bool(side and side['ok'] and time.monotonic() - side['received_at'] <= 1.5)
+        self._draw_tof_beam(canvas, (cx - 55, base_y - 8), -90,
+                            side['mm'] if side else 0, side_ok, '#d9a4ff', scale, 0,
+                            max_draw_mm=(cx - 85) / scale)
 
         if latest is None:
             canvas.create_text(cx, height / 2, text="TOF STREAM bekleniyor", fill="#627891",
@@ -2699,9 +3466,11 @@ class ArgosControlPanel(tk.Tk):
         self._draw_tof_beam(canvas, right_sensor, latest["right_yaw"], latest["right_mm"],
                             latest["right_ok"], "#ffb38f", scale, up_deg)
 
-    def _draw_tof_beam(self, canvas, origin, yaw_deg, distance_mm, ok, color, scale, up_deg):
+    def _draw_tof_beam(self, canvas, origin, yaw_deg, distance_mm, ok, color, scale, up_deg, max_draw_mm=None):
         ox, oy = origin
         shown_mm = distance_mm if ok else 700
+        if max_draw_mm is not None:
+            shown_mm = min(shown_mm, max_draw_mm)
         horizontal_mm = shown_mm * math.cos(math.radians(up_deg))
         yaw = math.radians(yaw_deg)
         ex = ox + math.sin(yaw) * horizontal_mm * scale
@@ -2821,7 +3590,13 @@ class ArgosControlPanel(tk.Tk):
             self.console_autoscroll = bottom >= 0.995
 
     def on_close(self):
+        acceptance = getattr(self, "acceptance_run", None)
+        if acceptance is not None and acceptance.running:
+            acceptance.cancel()
+            if acceptance.running:
+                acceptance.finish(False)
         self.disconnect_serial()
+        self._stop_experiment()
         self.destroy()
 
 

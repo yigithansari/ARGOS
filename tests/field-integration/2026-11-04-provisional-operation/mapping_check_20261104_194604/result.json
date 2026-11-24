@@ -1,0 +1,20 @@
+[
+  {
+    "side": 0,
+    "encoder_delta": [
+      -13450,
+      0
+    ],
+    "matches_normal": true,
+    "stop": true
+  },
+  {
+    "side": 1,
+    "encoder_delta": [
+      0,
+      18076
+    ],
+    "matches_normal": true,
+    "stop": true
+  }
+]

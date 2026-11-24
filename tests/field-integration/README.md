@@ -2,14 +2,6 @@
 
 ## Current Result
 
-- Phase 01 mobile platform integration: **COMPLETE**
-- Phase 02 motion control: **ACTIVE - PI tuning**
-- Basic hotspot-controlled motion and safe stop: **OPERATIONAL**
-- Raised-wheel forward runs at 25/35/45 RPM: mean tracking target met in single runs
-- Open: repeated runs, reverse, disconnect-stop latency, floor tuning and odometry
-
-## Field Link Baseline
-
 - ESP32-C3 Wi-Fi/TCP/STM link regression: **PASS**
 - Validation date: `2026-10-08`
 - Evidence report: `2026-10-08-field-link-regression-report.md`
@@ -48,11 +40,3 @@ encoder, IMU, and ToF certification remains archived under `tests/phase-00/`.
 - Focused result: `2026-10-30-lowband-rpm-characterization.md`
 - Result: PASS; side/direction-specific feed-forward anchors are available and
   PI controller implementation may begin.
-
-## Phase 02 PI Progress
-
-- Implementation record: `2026-10-30-pi-speed-control-implementation.md`
-- Latest evidence: `2026-10-31-motion-progress/`
-- Result: feed-forward plus independent PI loops are operational. Single forward
-  raised-wheel 25/35/45 RPM runs completed with STOP confirmation. Acceptance is
-  still pending repeated, reverse, disconnect-stop latency and floor tests.

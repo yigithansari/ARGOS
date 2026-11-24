@@ -1,0 +1,6 @@
+START: -25 RPM both wheels, 20 seconds
+STOP confirmed=True
+Traceback (most recent call last):
+  File "C:\Users\yigit\OneDrive\Masaüstü\stm\argos ekstralar\tests\field-integration\2026-11-04-new-wheels\pi_raised_check.py", line 78, in <module>
+    raise RuntimeError('No fresh PI feedback; stopping')
+RuntimeError: No fresh PI feedback; stopping
